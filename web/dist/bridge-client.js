@@ -89,6 +89,19 @@
     const states={queued:["queued"],claimed:["running"],checkpoint:["running"],completed:["completed"],cancelled:["cancelled"],deferred:["queued","waiting_for_volume","failed"],failed:["failed"]};
     check(typeof v.type==="string" && Object.hasOwn(states,v.type) && states[v.type].includes(v.state));return value;
   }
+  function consumerStatus(value,consumerID) {
+    const v=fields(value,["statusVersion","consumerID","visibility","acknowledgedThrough","deliveredThrough"]);
+    check(v.statusVersion===1 && v.consumerID===consumerID && ["visible","notVisible"].includes(v.visibility));
+    if(v.visibility==="visible") { integer(v.acknowledgedThrough);integer(v.deliveredThrough,v.acknowledgedThrough); }
+    else check(v.acknowledgedThrough===null && v.deliveredThrough===null);
+    return value;
+  }
+  function eventContext(value,binding) {
+    const v=fields(value,["contextVersion","source","scopeID","userID","role","mode"]);
+    check(v.contextVersion===1 && v.source==="fixture-host" && typeof v.scopeID==="string" && /^[0-9a-f]{64}$/.test(v.scopeID));
+    check(["userID","role","mode"].every(key=>v[key]===binding[key]),"denied");
+    return value;
+  }
   function file(value, parent) {
     const v=fields(value,["name","relativePath","kind","modifiedAt"],["bytes"]);
     text(v.name,1024);check(!v.name.includes("/"));path(v.relativePath);check(v.relativePath===(parent?parent+"/":"")+v.name);
@@ -120,9 +133,9 @@
     integer(timeoutMs,1,60000,"invalidInput");integer(maximumPending,1,128,"invalidInput");
     check(typeof AbortController!=="undefined","unavailable");
     const adapter=M.createBridgeAdapter(transport,{requestIdPrefix:"dc-"+uuid()}),pending=new Set(),consumers=new Map(),statusQueries=new Set(),pages=new Map(),busyPages=new Set(),directories=new Map(),busyDirectories=new Set();
-    let closed=false,binding;
+    let closed=false,binding,eventBinding;
     function close() {
-      if (closed) return;closed=true;binding=undefined;consumers.clear();statusQueries.clear();pages.clear();busyPages.clear();directories.clear();busyDirectories.clear();
+      if (closed) return;closed=true;binding=undefined;eventBinding=undefined;consumers.clear();statusQueries.clear();pages.clear();busyPages.clear();directories.clear();busyDirectories.clear();
       for (const entry of [...pending]) entry.cancel();
       if (closeTransport) { try { Promise.resolve(closeTransport()).catch(()=>{}); } catch {} }
     }
@@ -242,12 +255,18 @@
         caller();text(consumerID,128,{code:"invalidInput"});
         check(!/[\r\n]/.test(consumerID),"invalidInput");
         check(!statusQueries.has(consumerID) && !consumers.get(consumerID)?.busy,"busy");statusQueries.add(consumerID);
-        try {return await invoke("eventConsumerStatus",{consumerID},value=>{
-          const v=fields(value,["statusVersion","consumerID","visibility","acknowledgedThrough","deliveredThrough"]);
-          check(v.statusVersion===1 && v.consumerID===consumerID && ["visible","notVisible"].includes(v.visibility));
-          if(v.visibility==="visible") { integer(v.acknowledgedThrough);integer(v.deliveredThrough,v.acknowledgedThrough); }
-          else check(v.acknowledgedThrough===null && v.deliveredThrough===null);
-          return value; // Observation only: do not seed ack/seen, confirm a view or grant ACK authority.
+        try {return await invoke("eventConsumerStatus",{consumerID},value=>consumerStatus(value,consumerID),opts);}
+        finally{statusQueries.delete(consumerID);}
+      },
+      async eventConsumerObservation(consumerID,opts) {
+        const who=caller();text(consumerID,128,{code:"invalidInput"});check(!/[\r\n]/.test(consumerID),"invalidInput");
+        check(!statusQueries.has(consumerID) && !consumers.get(consumerID)?.busy,"busy");statusQueries.add(consumerID);
+        try {return await invoke("eventConsumerObservation",{consumerID},value=>{
+          const v=fields(value,["observationVersion","context","status"]);check(v.observationVersion===1);
+          eventContext(v.context,who);consumerStatus(v.status,consumerID);
+          if(eventBinding)check(v.context.scopeID===eventBinding.scopeID,"denied");
+          else eventBinding=v.context;
+          return value; // Source equality and durable observation only; never seed ACK/seen or authorize writes.
         },opts);}finally{statusQueries.delete(consumerID);}
       },
       async listLibraries(opts) { caller();return invoke("listLibraries",{},libraries,opts); },

@@ -77,11 +77,18 @@ class WebStaticTests(unittest.TestCase):
     def test_directory_source_loads_in_order_and_keeps_paged_scope_explicit(self):
         scripts=re.findall(r'<script defer src="([^"]+)"',(ROOT/'web/dist/index.html').read_text())
         self.assertLess(scripts.index('model.js'),scripts.index('directory-view.js'))
-        self.assertLess(scripts.index('directory-view.js'),scripts.index('desktop.js'))
+        self.assertLess(scripts.index('directory-view.js'),scripts.index('file-browser.js'))
+        self.assertLess(scripts.index('file-browser.js'),scripts.index('desktop.js'))
         self.assertEqual(exchange('/directory-view.js')[0],200)
+        self.assertEqual(exchange('/file-browser.js')[0],200)
         js=(ROOT/'web/dist/desktop.js').read_text()
         self.assertNotIn('api.listFiles(',js);self.assertNotIn('api.previewFile(',js)
-        self.assertIn('t("filePageScope")',js);self.assertIn('el("span", "", file.name)',js)
+        self.assertIn('t("fileLoadedScope")',js);self.assertIn('el("span", "", file.name)',js)
         self.assertNotIn('t(file.name)',js);self.assertIn('win.filePager?.dispose()',js)
         self.assertIn('state.directorySource?.dispose()',js)
+    def test_new_internal_modules_and_user_requirement_ledgers_are_not_static_assets(self):
+        scripts=re.findall(r'<script defer src="([^"]+)"',(ROOT/'web/dist/index.html').read_text())
+        self.assertNotIn('notification-reconciliation.js',scripts)
+        for path in ['/notification-reconciliation.js','/bridge-client.js','/requirements/user-additions.json','/docs/plans/FUTURE-WEB-MAC-REMOTE-CONTROL.md']:
+            with self.subTest(path=path):self.assertEqual(exchange(path)[0],404)
 if __name__=='__main__':unittest.main()

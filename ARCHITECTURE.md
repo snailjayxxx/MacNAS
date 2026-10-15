@@ -1,6 +1,12 @@
-# MacNAS 原型架构（N-021）
+# MacNAS 原型架构（N-023）
 
 Swift 6 / macOS 15部署目标，PostgreSQL 18。当前为非root CLI、无监听的业务API和两个自研可信样例；没有生产HTTP登录、系统Helper或正式接管。
+
+N-022补充可信合成管道的事件来源上下文、第14个观察消息与显式旧批核对模型；宿主固定来源，事件写入使用捕获的StateStore，防止重绑把写入投向新库。上下文仅是防错等值标记，不构成生产认证/强fencing；核对不清旧批、不采用候选连接。见[ADR-016](docs/decisions/ADR-016-fixture-event-source-context.md)。
+
+N-023在既有目录来源之上增加file-browser.js：默认50项、累加最多1000项、64条历史，导航成功后更新位置，当前目录内搜索/排序/多选与只读预览有界。网页窗口接入侧栏、历史/路径、列表/图标和详情，但仍仅使用合成fixture，实际DOM/键盘/布局未验证。基础directory-view当前页协议不变，原生核心/SQL也未因N-023改变。见[ADR-017](docs/decisions/ADR-017-continuous-file-browser.md)。
+
+产品接续以用户流程为单位补齐文件管理与控制面板；当前业务缺口、macOS适配和网络配置/回滚要求见[DSM整体对照](docs/plans/DSM-FUNCTIONAL-BASELINE.md)与[控制面板及网络详细对照](docs/plans/DSM-CONTROL-PANEL-NETWORK-REFERENCE.md)。这些设计不等于已有生产服务，既有111父项和优先级保持。
 
 ```mermaid
 flowchart LR

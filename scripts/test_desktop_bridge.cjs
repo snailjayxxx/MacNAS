@@ -8,6 +8,7 @@ const C=require("../web/dist/bridge-client.js");
 const P=require("../web/dist/task-pages.js");
 const N=require("../web/dist/notification-view.js");
 const F=require("../web/dist/directory-view.js");
+const R=require("../web/dist/notification-reconciliation.js");
 const binary=path.join(process.env.MACNAS_BINARY_DIR||"","macnas");
 const root=process.env.MACNAS_BRIDGE_TEST_ROOT,readonly=process.env.MACNAS_BRIDGE_READONLY_ROOT;
 const hosts=new Set(),errorCode=code=>error=>error instanceof M.ServiceError&&error.code===code;
@@ -277,14 +278,14 @@ test("bounded notification presentation retries a committed ACK with withheld su
   }
 });
 
-test("committed notification ACK timeout keeps the old batch unresolved even when a restarted host proves durable advancement",async()=>{
+test("committed notification ACK timeout supports an explicit same-source check after host restart while retaining the old batch",async()=>{
   const host=new PipeHost(root);let committedResolve,lateResolve;
   const committed=new Promise(resolve=>{committedResolve=resolve;}),late=new Promise(resolve=>{lateResolve=resolve;});
   const client=host.typed({timeoutMs:10000,transport:async message=>{
     const response=await host.raw(JSON.stringify(message)+"\n");
     if(message.method==="acknowledgeEvents"){assert.equal(response.data,true);committedResolve();await late;}
     return response;
-  }}),view=await N.createClientNotificationView(client,{consumerID:"presentation-timeout"});
+  }}),view=await R.createClientReconciliationView(client,{consumerID:"presentation-timeout"});
   let batch;
   try {
     batch=await view.poll();assert.ok(batch.items.length>0);
@@ -303,7 +304,51 @@ test("committed notification ACK timeout keeps the old batch unresolved even whe
     await assert.rejects(query.acknowledgeEvents("presentation-timeout",observed.acknowledgedThrough),errorCode("denied"));
     assert.deepEqual(await restarted.api.request("pollEvents",{consumerID:"presentation-timeout",limit:100}),[]);
     assert.deepEqual(view.snapshot().items,batch.items);assert.equal(view.snapshot().confirmedThrough,0);
+    const checked=await view.reconcile(query);
+    assert.equal(checked.reconciliation.outcome,"acknowledged");assert.equal(checked.reconciliation.target,batch.items[0].sequence);
+    assert.deepEqual(checked.items,batch.items);assert.equal(checked.confirmedThrough,0);assert.equal(checked.ackRetryRequired,true);
   } finally {view.dispose();query.close();await restarted.finish();}
+});
+
+test("notification source check rejects a separate database reader and recovery host without changing the original batch",async()=>{
+  const host=new PipeHost(root),client=host.typed({transport:async message=>{
+    const response=await host.raw(JSON.stringify(message)+"\n");
+    if(message.method==="acknowledgeEvents"){assert.equal(response.data,true);return {apiVersion:1,requestId:message.requestId,error:{code:"database"}};}
+    return response;
+  }}),view=await R.createClientReconciliationView(client,{consumerID:"cross-source-check",capacity:1});
+  const otherRoot=root+"-other-source";
+  const created=spawnSync(binary,["fixture","create","--dest",otherRoot,"--schema","3"],{encoding:"utf8",timeout:30000,maxBuffer:1048576});
+  assert.equal(created.status,0);
+  try{
+    const batch=await view.poll();assert.equal(batch.items.length,1);await assert.rejects(view.acknowledge(),errorCode("database"));
+    for(const [source,user] of [[otherRoot,"fixture-owner"],[root,"fixture-family"],[readonly,"fixture-owner"]]){
+      const other=new PipeHost(source,user),candidate=other.typed();
+      try{
+        await candidate.overview();await assert.rejects(view.reconcile(candidate),errorCode("denied"));
+        assert.deepEqual(view.snapshot().items,batch.items);assert.equal(view.snapshot().confirmedThrough,0);
+        assert.equal(view.snapshot().reconciliation.outcome,"unresolved");assert.equal(candidate.closed,false);
+      }finally{candidate.close();await other.finish();}
+    }
+    const same=new PipeHost(root),candidate=same.typed();
+    try{
+      await candidate.overview();assert.equal((await view.reconcile(candidate)).reconciliation.outcome,"acknowledged");
+      view.dispose();assert.equal(candidate.closed,false);
+      await assert.rejects(candidate.acknowledgeEvents("cross-source-check",batch.items[0].sequence),errorCode("denied"));
+    }finally{candidate.close();await same.finish();}
+  }finally{view.dispose();client.close();await host.finish();}
+});
+
+test("versioned source observation stays opaque and does not reveal or create foreign consumer state",async()=>{
+  const owner=new PipeHost(root),reader=new PipeHost(root,"fixture-family"),client=owner.typed(),family=reader.typed();
+  try{
+    await client.overview();await family.overview();
+    const before=await client.eventConsumerObservation("context-unclaimed");
+    assert.equal(before.status.visibility,"notVisible");assert.equal(before.context.scopeID.length,64);
+    assert.deepEqual(await family.pollEvents("context-unclaimed"),[]);
+    assert.deepEqual(await client.eventConsumerObservation("context-unclaimed"),before);
+    const encoded=JSON.stringify(before);assert.ok(!encoded.includes(root)&&!encoded.includes("macnas_fixture_")&&!encoded.includes(process.env.MACNAS_PG_SOCKET));
+    await assert.rejects(owner.api.request("eventConsumerObservation",{consumerID:"context-unclaimed",scopeID:"chosen"}),errorCode("invalidInput"));
+  }finally{client.close();family.close();await Promise.all([owner.finish(),reader.finish()]);}
 });
 
 test("directory presentation preserves actual metadata and missing-volume authority while borrowing the shared client",async()=>{

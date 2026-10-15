@@ -1,4 +1,19 @@
 import Foundation
+import CryptoKit
+
+/// Opaque equality context for the trusted fixture pipe, not a production authentication credential.
+public struct EventSourceContext: Codable, Equatable {
+    public let contextVersion: Int
+    public let source: String
+    public let scopeID: String
+    public let userID: String
+    public let role: String
+    public let mode: String
+}
+public struct EventConsumerObservation {
+    public let context: EventSourceContext
+    public let status: EventConsumerStatus
+}
 
 public struct PrototypeSession: Sendable {
     let id:UUID
@@ -157,6 +172,54 @@ public final class PrototypePlatformAPI: @unchecked Sendable {
         let result=try render(status)
         try require(try eventConsumerReadScope(session)==scope,.denied)
         return result
+    }
+    private func eventSourceContext(_ scope:EventConsumerReadScope,store:StateStore) throws -> EventSourceContext {
+        try require(store.databaseName==scope.caller.databaseName,.denied)
+        // Database and relation OIDs distinguish a recreated fixture database/log without writing new metadata.
+        let rows=try store.rows("BEGIN READ ONLY; SET LOCAL lock_timeout='5000ms'; SET LOCAL statement_timeout='10000ms'; SELECT d.oid::text,c.oid::text FROM pg_database d,pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE d.datname=current_database() AND n.nspname='macnas' AND c.relname='event_consumers' AND c.relkind='r'; COMMIT;")
+        try require(rows.count==1 && rows[0].count==2 && rows[0].allSatisfy { UInt64($0) != nil },.invalidSchema)
+        let components=["macnas-fixture-event-source-v1",store.tools.socket.path,store.databaseName]+rows[0]+[
+            scope.identity.instanceID.uuidString.lowercased(),String(scope.identity.generation),
+            String(decoding:scope.caller.userID,as:UTF8.self),scope.caller.role,scope.caller.mode]
+        var framed=Data()
+        for component in components { let bytes=Data(component.utf8);framed.append(Data("\(bytes.count):".utf8));framed.append(bytes) }
+        // Domain-separated HMAC uses the explicitly provisioned synthetic fixture key. Key changes fail closed.
+        let key=HKDF<SHA256>.deriveKey(inputKeyMaterial:SymmetricKey(data:try PortableInstance.signingKey().rawRepresentation),
+            salt:Data("macnas-fixture-context-key-v1".utf8),info:Data("event-source-equality".utf8),outputByteCount:32)
+        let token=HMAC<SHA256>.authenticationCode(for:framed,using:key).map { String(format:"%02x",$0) }.joined()
+        return EventSourceContext(contextVersion:1,source:"fixture-host",scopeID:token,
+            userID:String(decoding:scope.caller.userID,as:UTF8.self),role:scope.caller.role,mode:scope.caller.mode)
+    }
+    func withJobEventSourceContext<T>(session:PrototypeSession,_ render:(EventSourceContext) throws -> T) throws -> T {
+        let scope=try eventConsumerReadScope(session),context=try eventSourceContext(scope,store:PortableInstance.store(root))
+        try require(try eventConsumerReadScope(session)==scope,.denied)
+        let result=try render(context)
+        try require(try eventConsumerReadScope(session)==scope,.denied)
+        try require(try eventSourceContext(scope,store:PortableInstance.store(root))==context,.denied)
+        try require(try eventConsumerReadScope(session)==scope,.denied)
+        return result
+    }
+    func withBoundJobEventQueue<T>(context:EventSourceContext,session:PrototypeSession,_ operation:(DurableJobQueue,JobAudience) throws -> T) throws -> T {
+        let scope=try eventConsumerReadScope(session),store=try PortableInstance.store(root)
+        try require(try eventSourceContext(scope,store:store)==context,.denied)
+        let queue=try DurableJobQueue(store:store)
+        return try withManagedWrite {
+            try require(try self.eventConsumerReadScope(session)==scope,.denied)
+            // Use this captured store, never resolve the mutable binding again when executing an event write.
+            let result=try operation(queue,.user(String(decoding:scope.caller.userID,as:UTF8.self)))
+            try require(try self.eventConsumerReadScope(session)==scope,.denied)
+            return result
+        }
+    }
+    public func jobEventConsumerObservation(consumerID:String,session:PrototypeSession) throws -> EventConsumerObservation {
+        try withJobEventConsumerObservation(consumerID:consumerID,session:session) { $0 }
+    }
+    func withJobEventConsumerObservation<T>(consumerID:String,session:PrototypeSession,_ render:(EventConsumerObservation) throws -> T) throws -> T {
+        try withJobEventSourceContext(session:session) { context in
+            try self.withJobEventConsumerStatus(consumerID:consumerID,session:session) {
+                try render(EventConsumerObservation(context:context,status:$0))
+            }
+        }
     }
     public func submitAppValueJob(id:String,key:String,valueID:String,value:String,grant:PluginGrant) throws -> DurableJob {
         try validate(grant)

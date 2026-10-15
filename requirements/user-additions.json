@@ -1,0 +1,30 @@
+{
+  "schema": "macnas-user-requirement-additions/v1",
+  "baseline": "v0.6",
+  "baseline_parent_count": 111,
+  "parents": [
+    {
+      "id": "SYS-09",
+      "name": "通过MacNAS网页远程查看和控制Mac桌面",
+      "priority": "后续需要",
+      "schedule": "VERY_LATE",
+      "phases": ["FUTURE"],
+      "status": "NOT_STARTED",
+      "requested_on": "2026-10-16",
+      "request_source": "本会话用户直接新增，随后明确放在很后期",
+      "user_request": "在MacNAS里以类似远程桌面的方式直接控制Mac本身，供没有VNC客户端或当前环境不方便使用客户端时处理特殊情况。",
+      "user_priority_instruction": "但是这个远程桌面的需求作为很后期的需求。",
+      "scope": "浏览器内查看Mac桌面与键鼠控制；以完成生产认证、受控原生代理、系统授权、TLS和安全远程接入为前置。当前只记录，未开发或启用。",
+      "evidence": ["docs/plans/FUTURE-WEB-MAC-REMOTE-CONTROL.md"],
+      "children": [
+        {"id": "SYS-09.design", "status": "NOT_STARTED", "evidence": ["docs/plans/FUTURE-WEB-MAC-REMOTE-CONTROL.md"]},
+        {"id": "SYS-09.implementation", "status": "NOT_STARTED", "evidence": []},
+        {"id": "SYS-09.automated_tests", "status": "NOT_STARTED", "evidence": []},
+        {"id": "SYS-09.macOS15", "status": "NOT_STARTED", "evidence": []},
+        {"id": "SYS-09.current_macOS", "status": "NOT_STARTED", "evidence": []},
+        {"id": "SYS-09.security_acceptance", "status": "NOT_STARTED", "evidence": []},
+        {"id": "SYS-09.owner_acceptance", "status": "NOT_STARTED", "evidence": []}
+      ]
+    }
+  ]
+}

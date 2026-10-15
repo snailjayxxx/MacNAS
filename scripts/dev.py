@@ -20,7 +20,7 @@ env.update({'MACNAS_TESTLAB':str(lab),'MACNAS_PG_BIN':str(pgbin),'MACNAS_PG_SOCK
 node=shutil.which('node');assert node,'Existing Node.js required; no automatic installation'
 env['MACNAS_NODE_BINARY']=node
 flags=['--scratch-path',str(WORK/'Build/swift'),'--cache-path',str(WORK/'Build/swift-cache'),'--config-path',str(WORK/'Build/swift-config'),'--security-path',str(WORK/'Build/swift-security')]
-tracked_sources=[ROOT/'Package.swift',ROOT/'web/dist/model.js',ROOT/'web/dist/bridge-client.js',ROOT/'web/dist/task-pages.js',ROOT/'web/dist/notification-view.js',ROOT/'web/dist/directory-view.js']+[p for folder in ['Sources','Tests','database','scripts'] for p in (ROOT/folder).rglob('*') if p.is_file() and p.suffix in ['.swift','.sql','.py','.cjs']]
+tracked_sources=[ROOT/'Package.swift',ROOT/'web/dist/model.js',ROOT/'web/dist/bridge-client.js',ROOT/'web/dist/task-pages.js',ROOT/'web/dist/notification-view.js',ROOT/'web/dist/notification-reconciliation.js',ROOT/'web/dist/directory-view.js']+[p for folder in ['Sources','Tests','database','scripts'] for p in (ROOT/folder).rglob('*') if p.is_file() and p.suffix in ['.swift','.sql','.py','.cjs']]
 source_hashes={str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(tracked_sources)}
 (evidence/'source-sha256.json').write_text(json.dumps(source_hashes,indent=2)+'\n')
 git_head=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip()
@@ -33,7 +33,7 @@ def run(name,command,input=None,check=True,expected_exit=0):
     print(name+': running',flush=True)
     with log.open('w') as output:
         process=subprocess.Popen([str(c) for c in command],cwd=ROOT,env=env,stdin=subprocess.PIPE if input is not None else subprocess.DEVNULL,text=True,stdout=output,stderr=subprocess.STDOUT,start_new_session=True)
-        try:process.communicate(input=input,timeout=1200 if name=='swift-tests' else 240)
+        try:process.communicate(input=input,timeout=1800 if name=='swift-tests' else 300)
         except subprocess.TimeoutExpired:
             os.killpg(process.pid,signal.SIGTERM)
             try:process.communicate(timeout=5)

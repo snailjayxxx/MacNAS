@@ -1,6 +1,6 @@
 (function () {
   "use strict";
-  const M = window.MacNASModel, I = window.MacNASI18n, P = window.MacNASTaskPages, N = window.MacNASNotifications, F = window.MacNASDirectoryView;
+  const M = window.MacNASModel, I = window.MacNASI18n, P = window.MacNASTaskPages, N = window.MacNASNotifications, F = window.MacNASDirectoryView, B = window.MacNASFileBrowser;
   const api = M.createFixtureAdapter();
   const $ = (query, root = document) => root.querySelector(query);
   const paths = {
@@ -350,31 +350,64 @@
     ]); input.focus(); input.select();
   }
   function renderFiles(win) {
-    const { page } = buildPage(win, "fileIntro"); win.previewRequest = (win.previewRequest || 0) + 1;
-    if (!win.filePager) { win.filePager = F.createDirectoryPager({ source: state.directorySource, pageSize: 3 }); win.libraryPhase = "idle"; win.libraries = []; }
-    const libraries = el("div", "file-libraries"), label = el("label", "", t("fileLibrary")); label.htmlFor = "file-library";
-    win.librarySelect = el("select"); win.librarySelect.id = label.htmlFor;
-    win.librarySelect.addEventListener("change", event => { void moveFilePage(win, "open", { libraryID: event.target.value }); });
-    win.libraryReload = button(t("reloadLibraries"), "secondary-button", () => loadFileLibraries(win), "refresh");
-    libraries.append(label, win.librarySelect, win.libraryReload); page.append(libraries);
-    win.librarySummary = el("p", "content-note"); win.librarySummary.setAttribute("role", "status"); page.append(win.librarySummary);
-    win.fileCrumbs = el("nav", "file-breadcrumbs"); win.fileCrumbs.setAttribute("aria-label", t("root")); page.append(win.fileCrumbs);
-    const toolbar = el("div", "files-toolbar");
-    const search = searchField("searchFiles", win.view.search, event => { win.view.search = event.target.value; renderFileRows(win); });
+    win.content.replaceChildren(); win.content.classList.add("file-browser-window");
+    win.previewRequest = (win.previewRequest || 0) + 1;
+    if (!win.filePager) { win.filePager = B.createFileBrowser({ source: state.directorySource }); win.libraryPhase = "idle"; win.libraries = []; }
+    const view = win.filePager.snapshot(), shell = el("div", "file-browser-shell"), side = el("aside", "file-browser-sidebar");
+    side.setAttribute("aria-label", t("fileLocations")); side.append(el("h2", "", t("fileLocations")));
+    win.libraryReload = button(t("reloadLibraries"), "text-button", () => loadFileLibraries(win), "refresh"); side.append(win.libraryReload);
+    win.fileLocations = el("nav"); win.fileLocations.setAttribute("aria-label", t("fileLibrary")); side.append(win.fileLocations);
+    win.fileFolders = el("nav"); win.fileFolders.setAttribute("aria-label", t("fileLoadedFolders")); side.append(el("h3", "", t("fileLoadedFolders")), win.fileFolders);
+    const main = el("section", "file-browser-main"), header = el("header", "file-browser-header");
+    const title = el("div", "file-browser-title"); title.append(el("h1", "", t("files")), el("span", "pill", t(canWrite() ? "demoShort" : "recover"))); header.append(title, el("p", "file-demo-note", t("demoHint")));
+    const compactLocation = el("div", "file-compact-location"), compactLabel = el("label", "", t("fileLibrary")); compactLabel.htmlFor = "file-library";
+    win.librarySelect = el("select"); win.librarySelect.id = compactLabel.htmlFor; win.librarySelect.addEventListener("change", event => { void moveFilePage(win, "open", { libraryID: event.target.value }); });
+    win.libraryReloadCompact = namedIconButton("reloadLibraries", "refresh", () => loadFileLibraries(win));
+    compactLocation.append(compactLabel, win.librarySelect, win.libraryReloadCompact); header.append(compactLocation);
+    const navigation = el("div", "file-navigation");
+    win.fileBack = namedIconButton("fileBack", "back", () => moveFilePage(win, "back"));
+    win.fileForward = namedIconButton("fileForward", "arrow", () => moveFilePage(win, "forward"));
+    win.fileUp = namedIconButton("fileUp", "arrow", () => moveFilePage(win, "up")); win.fileUp.classList.add("file-up");
+    win.fileReload = namedIconButton("reloadFiles", "refresh", () => moveFilePage(win, "reload")); win.fileReload.dataset.fileReload = "";
+    navigation.append(win.fileBack, win.fileForward, win.fileUp, win.fileReload);
+    win.fileCrumbs = el("nav", "file-breadcrumbs"); win.fileCrumbs.setAttribute("aria-label", t("fileCurrentPath")); navigation.append(win.fileCrumbs); header.append(navigation);
+    const toolbar = el("div", "files-toolbar file-browser-tools");
+    const search = searchField("fileSearchLoaded", view.settings.search, event => configureFiles(win, { search: event.target.value }));
     win.fileSearch = $("input", search); win.fileSearch.maxLength = 128; win.fileSearch.dataset.fileSearch = "";
-    const filter = selectField("file-type", "fileType", [["all", "allFiles"], ["directory", "foldersOnly"], ["file", "filesOnly"]], win.view.filter, event => { win.view.filter = event.target.value; renderFileRows(win); });
+    const filter = selectField("file-type", "fileType", [["all", "allFiles"], ["directory", "foldersOnly"], ["file", "filesOnly"]], view.settings.filter, event => configureFiles(win, { filter: event.target.value }));
     win.fileFilter = $("select", filter);
+    const sort = selectField("file-sort", "fileSort", [["name", "fileSortName"], ["size", "fileSortSize"], ["type", "fileSortType"], ["modified", "fileSortModified"]], view.settings.sort, event => configureFiles(win, { sort: event.target.value }));
+    win.fileSort = $("select", sort);
+    win.fileDirection = button(t(view.settings.direction === "ascending" ? "fileAscending" : "fileDescending"), "text-button", () => configureFiles(win, { direction: win.filePager.snapshot().settings.direction === "ascending" ? "descending" : "ascending" }));
     const grid = namedIconButton("fileView", win.view.grid ? "list" : "apps", () => { win.view.grid = !win.view.grid; renderFiles(win); }); grid.setAttribute("aria-pressed", String(win.view.grid));
-    toolbar.append(search, filter, grid); page.append(toolbar, el("p", "content-note file-scope", t("filePageScope")), el("p", "content-note", t("fileSyntheticHint")));
-    const navigation = el("div", "task-pagination"), actions = el("div", "task-page-actions");
-    win.fileCount = el("p", "toolbar-count"); win.fileCount.setAttribute("role", "status"); win.fileCount.setAttribute("aria-live", "polite"); win.fileCount.tabIndex = -1;
-    win.fileReload = button(t("reloadFiles"), "secondary-button", () => moveFilePage(win, "reload"), "refresh"); win.fileReload.dataset.fileReload = "";
-    win.fileNext = button(t("nextFilePage"), "secondary-button", () => moveFilePage(win, "next"), "arrow"); win.fileNext.dataset.fileNext = "";
-    actions.append(win.fileReload, win.fileNext); navigation.append(win.fileCount, actions); page.append(navigation);
-    win.fileFailure = el("p", "readonly-note"); win.fileFailure.setAttribute("role", "alert"); page.append(win.fileFailure);
-    win.fileList = el("div", "file-list" + (win.view.grid ? " grid" : "")); page.append(win.fileList);
-    win.fileEnd = el("p", "content-note"); page.append(win.fileEnd); renderFileRows(win);
+    toolbar.append(search, filter, sort, win.fileDirection, grid); header.append(toolbar);
+    header.append(el("p", "file-scope", t("fileLoadedScope")));
+    win.fileFailure = el("p", "readonly-note"); win.fileFailure.setAttribute("role", "alert"); header.append(win.fileFailure); main.append(header);
+    const workspace = el("div", "file-workspace"), listing = el("div", "file-listing");
+    const columns = el("div", "file-columns"); columns.hidden = win.view.grid; columns.setAttribute("aria-hidden", "true");
+    for (const key of ["fileSortName", "fileSortSize", "fileSortModified"]) columns.append(el("span", "", t(key))); listing.append(columns);
+    win.fileList = el("div", "file-list" + (win.view.grid ? " grid" : "")); win.fileList.setAttribute("role", "listbox"); win.fileList.setAttribute("aria-label", t("files")); win.fileList.setAttribute("aria-multiselectable", "true"); win.fileList.tabIndex = 0;
+    win.fileList.addEventListener("keydown", event => fileListKeydown(win, event)); listing.append(win.fileList);
+    win.fileDetails = el("aside", "file-details"); win.fileDetails.setAttribute("aria-label", t("fileDetails")); workspace.append(listing, win.fileDetails); main.append(workspace);
+    const footer = el("footer", "file-statusbar"); win.fileCount = el("p", "toolbar-count"); win.fileCount.setAttribute("role", "status"); win.fileCount.setAttribute("aria-live", "polite"); win.fileCount.tabIndex = -1;
+    win.fileNext = button(t("fileLoadMore"), "secondary-button", () => moveFilePage(win, "next"), "arrow"); win.fileNext.dataset.fileNext = "";
+    win.fileEnd = el("p", "file-end"); footer.append(win.fileCount, win.fileNext, win.fileEnd); main.append(footer);
+    win.librarySummary = el("p", "file-library-summary"); win.librarySummary.setAttribute("role", "status"); side.append(win.librarySummary);
+    shell.append(side, main); win.content.append(shell);
+    shell.addEventListener("keydown", event => {
+      if (!event.altKey || event.ctrlKey || event.metaKey || event.target.closest("input,select")) return;
+      const action = { ArrowLeft: "back", ArrowRight: "forward", ArrowUp: "up" }[event.key], current = win.filePager.snapshot();
+      if (!action) return; event.preventDefault(); event.stopPropagation();
+      if (current.phase !== "loading" && (action === "back" ? current.canGoBack : action === "forward" ? current.canGoForward : current.canGoUp)) void moveFilePage(win, action);
+    });
+    renderFileRows(win);
     if (win.libraryPhase === "idle") void loadFileLibraries(win);
+  }
+  function fileLibraryName(id) { return state.directorySource.context.source === "fixture" && ["shared", "personal"].includes(id) ? t(id === "shared" ? "fileSharedLocation" : "filePersonalLocation") : id; }
+  function configureFiles(win, settings) {
+    win.previewRequest = (win.previewRequest || 0) + 1;
+    if (win.fileModal && state.modal === win.fileModal) closeModal(false);
+    win.filePager.configure(settings); renderFileRows(win);
   }
   function fileError(error) {
     const keys = { staleState: "fileDirectoryChanged", expired: "fileContinuationLost", replay: "fileContinuationLost", denied: "fileAccessDenied", missingVolume: "fileVolumeMissing", budgetExceeded: "fileBudgetExceeded", unavailable: "fileUnavailable", timedOut: "fileUnavailable", cancelled: "fileUnavailable" };
@@ -387,11 +420,16 @@
     try {
       const libraries = await source.libraries();
       if (epoch !== state.epoch || !currentWindow(win) || serial !== win.libraryRequest) return;
+      const changed = JSON.stringify(win.libraries.map(x => x.libraryID).sort()) !== JSON.stringify(libraries.map(x => x.libraryID).sort());
       win.libraries = libraries; win.libraryPhase = "ready";
+      if (changed) {
+        win.filePager.dispose(); win.filePager = B.createFileBrowser({ source }); win.previewRequest = (win.previewRequest || 0) + 1;
+        if (win.fileModal && state.modal === win.fileModal) closeModal(false);
+      }
       const current = win.filePager.snapshot().libraryID;
       if (!libraries.some(item => item.libraryID === current)) {
         if (libraries.length) await moveFilePage(win, "open", { libraryID: libraries[0].libraryID }, false);
-        else { win.filePager.dispose(); win.filePager = F.createDirectoryPager({ source, pageSize: 3 }); }
+        else { win.filePager.dispose(); win.filePager = B.createFileBrowser({ source }); }
       }
     } catch (error) {
       if (epoch !== state.epoch || !currentWindow(win) || serial !== win.libraryRequest) return;
@@ -404,7 +442,6 @@
     const epoch = state.epoch, pager = win.filePager;
     win.previewRequest = (win.previewRequest || 0) + 1;
     if (win.fileModal && state.modal === win.fileModal) closeModal(false);
-    if (direction === "open") { win.view.search = ""; win.view.filter = "all"; win.fileSearch.value = ""; win.fileFilter.value = "all"; }
     const pending = direction === "open" ? pager.open(target) : pager[direction](); renderFileRows(win);
     try { await pending; } catch { /* The controller exposes only a fixed error code and retains its labelled last page. */ }
     if (epoch !== state.epoch || !currentWindow(win) || pager !== win.filePager) return;
@@ -419,46 +456,107 @@
     try { data = await pending; } catch { /* The current page shows the failure; no raw diagnostics enter the DOM. */ }
     if (epoch !== state.epoch || !currentWindow(win) || pager !== win.filePager || serial !== win.previewRequest) return;
     renderFileRows(win); if (!data || state.modalEpoch !== modalEpoch || state.active !== win.id) return;
-    [...win.fileList.querySelectorAll("[data-file-path]")].find(row => row.dataset.filePath === file.relativePath)?.focus();
+    focusFileRow(win, file.relativePath);
     const content = el("div"); content.append(el("p", "", t("filePreviewHint")), el("div", "preview-content", data.text));
     showModal(file.name, content, [{ key: "done", style: "secondary-button", action: closeModal }]); win.fileModal = state.modal;
   }
   function renderFileRows(win) {
     if (!currentWindow(win) || !win.fileList) return;
-    const view = win.filePager.snapshot(), busy = ["loading", "previewing"].includes(view.phase), available = win.libraryPhase === "ready";
-    const actionable = available && view.phase === "ready" && !view.requiresReload, visible = F.filterFiles(view.items, win.view);
-    win.librarySelect.replaceChildren();
-    for (const library of win.libraries) { const option = el("option", "", library.libraryID); option.value = library.libraryID; win.librarySelect.append(option); }
-    win.librarySelect.value = view.libraryID || ""; win.librarySelect.disabled = !available || !win.libraries.length;
+    if (win.filePager.snapshot().settings.locale !== prefs.locale) {
+      try { win.filePager.configure({ locale: prefs.locale }); } catch { /* A closed source still renders its labelled stale view. */ }
+    }
+    const view = win.filePager.snapshot(), busy = view.phase === "loading", available = win.libraryPhase === "ready";
+    const actionable = available && view.phase === "ready" && !view.requiresReload, visible = view.visibleItems;
+    win.fileSearch.value = view.settings.search; win.fileFilter.value = view.settings.filter; win.fileSort.value = view.settings.sort;
+    win.fileDirection.textContent = t(view.settings.direction === "ascending" ? "fileAscending" : "fileDescending");
     win.libraryReload.disabled = win.libraryPhase === "loading";
+    win.libraryReloadCompact.disabled = win.libraryPhase === "loading";
+    win.librarySelect.replaceChildren();
+    for (const library of win.libraries) { const option = el("option", "", fileLibraryName(library.libraryID)); option.value = library.libraryID; win.librarySelect.append(option); }
+    win.librarySelect.value = view.libraryID || ""; win.librarySelect.disabled = !available || busy || !win.libraries.length;
+    win.fileLocations.replaceChildren(); win.fileFolders.replaceChildren();
+    for (const library of win.libraries) {
+      const control = button(fileLibraryName(library.libraryID), view.libraryID === library.libraryID ? "selected" : "", () => moveFilePage(win, "open", { libraryID: library.libraryID }), "storage");
+      control.disabled = !available || busy; if (view.libraryID === library.libraryID) control.setAttribute("aria-current", "location"); win.fileLocations.append(control);
+    }
+    for (const file of view.items.filter(item => item.kind === "directory")) {
+      const control = button(file.name, "", () => moveFilePage(win, "open", { libraryID: view.libraryID, relativePath: file.relativePath }), "folder"); control.disabled = !actionable; win.fileFolders.append(control);
+    }
+    if (!win.fileFolders.childElementCount) win.fileFolders.append(el("p", "", t("fileNoLoadedFolders")));
     const selected = win.libraries.find(item => item.libraryID === view.libraryID);
     win.librarySummary.textContent = win.libraryPhase === "loading" ? t("librariesReading") : t("fileLibraryCount", { count: win.libraries.length }) + " " + (selected?.estimatedBytes === null || !selected ? t("fileEstimateUnavailable") : t("fileLibraryEstimate", { bytes: new Intl.NumberFormat(prefs.locale).format(selected.estimatedBytes) }));
     win.fileCrumbs.replaceChildren();
     if (view.libraryID) {
-      win.fileCrumbs.append(button(view.libraryID, "", () => moveFilePage(win, "open", { libraryID: view.libraryID })));
+      win.fileCrumbs.append(button(fileLibraryName(view.libraryID), "", () => moveFilePage(win, "open", { libraryID: view.libraryID })));
       const parts = view.relativePath ? view.relativePath.split("/") : [];
       parts.forEach((part, index) => { win.fileCrumbs.append(icon("arrow"), button(part, "", () => moveFilePage(win, "open", { libraryID: view.libraryID, relativePath: parts.slice(0, index + 1).join("/") }))); });
     }
-    win.fileCount.textContent = t(view.phase === "loading" ? "filesReading" : view.phase === "previewing" ? "filePreviewReading" : view.pageNumber ? "filePageCount" : "filePageStart", { page: view.pageNumber, count: view.items.length, matches: visible.length });
+    for (const control of win.fileCrumbs.querySelectorAll("button")) control.disabled = !available || busy;
+    win.fileCount.textContent = t(busy ? "filesReading" : view.previewPhase === "loading" ? "filePreviewReading" : "fileLoadedCount", { count: view.items.length, matches: visible.length, selected: view.selectedPaths.length });
+    win.fileBack.disabled = !available || busy || !view.canGoBack; win.fileForward.disabled = !available || busy || !view.canGoForward; win.fileUp.disabled = !available || busy || !view.canGoUp;
     win.fileReload.disabled = !available || busy || !view.libraryID || view.phase === "closed";
-    win.fileNext.disabled = !actionable || !view.hasNext;
+    win.fileNext.disabled = !actionable || !view.hasNext || view.limitReached; win.fileNext.hidden = !view.hasNext;
     const failure = win.libraryError || view.error;
     win.fileFailure.hidden = !failure;
     win.fileFailure.textContent = failure ? (win.libraryError ? t("fileLibrariesFailed") + " " : "") + fileError(failure) + (view.items.length ? " " + t("fileStaleView") : "") : "";
-    win.fileEnd.hidden = view.phase !== "ready" || view.hasNext; win.fileEnd.textContent = t("filePageEnd");
+    win.fileEnd.hidden = view.phase !== "ready"; win.fileEnd.textContent = t(view.limitReached ? "fileLoadedLimit" : view.hasNext ? "fileMoreAvailable" : "fileFolderEnd", { count: view.maximumLoaded });
     win.fileList.replaceChildren(); win.fileList.setAttribute("aria-busy", String(busy));
     win.fileList.classList.toggle("stale", !actionable && view.items.length > 0);
     if (busy && view.items.length) win.fileList.append(el("p", "content-note", t("filePreviousWhileLoading")));
     if (!visible.length && !busy && available && view.phase === "ready") win.fileList.append(emptyState("files", view.items.length ? "fileNoMatches" : "emptyFolder", view.items.length ? "fileNoMatchHint" : "fileEmptyHint"));
     if (available && !win.libraries.length) win.fileList.append(emptyState("files", "fileNoLibraries"));
     for (const file of visible) {
-      const row = button("", "file-row", () => file.kind === "directory" ? moveFilePage(win, "open", { libraryID: view.libraryID, relativePath: file.relativePath }) : previewFile(win, file));
-      row.disabled = !actionable || file.kind === "file" && !file.canPreview; row.dataset.filePath = file.relativePath;
-      if (file.kind === "file" && !file.canPreview) row.title = t("filePreviewUnsupported");
+      const row = el("div", "file-row"); row.setAttribute("role", "option"); row.setAttribute("aria-disabled", String(!actionable)); row.dataset.filePath = file.relativePath;
+      row.addEventListener("click", event => { if (!actionable) return; win.filePager.select(file.relativePath, { toggle: event.metaKey || event.ctrlKey, range: event.shiftKey }); updateFileSelection(win); row.focus(); });
+      row.addEventListener("dblclick", () => { if (actionable) activateFile(win, file); });
       const name = el("span"); name.append(icon(file.kind === "directory" ? "folder" : "file"), el("span", "", file.name));
       row.append(name, el("span", "", file.bytes === null ? t("folder") : t("fileBytes", { bytes: new Intl.NumberFormat(prefs.locale).format(file.bytes) })), el("span", "", file.modifiedAt === null ? t("fileTimeUnavailable") : new Intl.DateTimeFormat(prefs.locale, { dateStyle: "medium", timeStyle: "short" }).format(new Date(file.modifiedAt))));
       win.fileList.append(row);
     }
+    updateFileSelection(win);
+  }
+  function focusFileRow(win, path) { [...win.fileList.querySelectorAll("[data-file-path]")].find(row => row.dataset.filePath === path)?.focus(); }
+  function updateFileSelection(win) {
+    const view = win.filePager.snapshot(), rows = [...win.fileList.querySelectorAll("[data-file-path]")], actionable = win.libraryPhase === "ready" && view.phase === "ready" && !view.requiresReload;
+    const focusPath = view.activePath || rows[0]?.dataset.filePath;
+    for (const row of rows) { const selected = view.selectedPaths.includes(row.dataset.filePath); row.classList.toggle("selected", selected); row.setAttribute("aria-selected", String(selected)); row.tabIndex = actionable && row.dataset.filePath === focusPath ? 0 : -1; }
+    win.fileList.tabIndex = actionable && rows.length ? -1 : 0;
+    if (view.phase !== "loading" && view.previewPhase !== "loading") win.fileCount.textContent = t("fileLoadedCount", { count: view.items.length, matches: view.visibleItems.length, selected: view.selectedPaths.length });
+    renderFileDetails(win, view, actionable);
+  }
+  function renderFileDetails(win, view, actionable) {
+    const pane = win.fileDetails; pane.replaceChildren(); pane.append(el("h2", "", t("fileDetails")));
+    const files = view.selectedItems;
+    if (!files.length) { pane.append(icon("files"), el("p", "", t("fileSelectHint")), el("p", "file-keyboard-hint", t("fileKeyboardHint"))); return; }
+    if (files.length > 1) {
+      pane.append(icon("files"), el("h3", "", t("fileSelectionCount", { count: files.length })), el("p", "", t("fileSelectionBytes", { bytes: new Intl.NumberFormat(prefs.locale).format(files.reduce((sum, file) => sum + BigInt(file.bytes || 0), 0n)) }))); return;
+    }
+    const file = files[0]; pane.append(icon(file.kind === "directory" ? "folder" : "file"), el("h3", "", file.name));
+    const details = el("dl");
+    for (const [key, value] of [["fileSortType", file.kind === "directory" ? t("folder") : file.name.includes(".") ? file.name.split(".").at(-1).toUpperCase() : t("fileGenericType")], ["fileCurrentPath", fileLibraryName(view.libraryID) + "/" + file.relativePath], ["fileSortSize", file.bytes === null ? t("fileSizeUnknown") : t("fileBytes", { bytes: new Intl.NumberFormat(prefs.locale).format(file.bytes) })], ["fileSortModified", file.modifiedAt === null ? t("fileTimeUnavailable") : new Intl.DateTimeFormat(prefs.locale, { dateStyle: "medium", timeStyle: "short" }).format(new Date(file.modifiedAt))]]) details.append(el("dt", "", t(key)), el("dd", "", value));
+    pane.append(details);
+    const open = button(t(file.kind === "directory" ? "fileOpenFolder" : "fileOpenPreview"), "secondary-button", () => activateFile(win, file), file.kind === "directory" ? "folder" : "file"); open.disabled = !actionable || view.previewPhase === "loading" || file.kind === "file" && !file.canPreview; pane.append(open);
+    if (file.kind === "file" && !file.canPreview) pane.append(el("p", "", t("filePreviewUnsupported")));
+  }
+  function activateFile(win, file) {
+    const view = win.filePager.snapshot();
+    if (file.kind === "directory") void moveFilePage(win, "open", { libraryID: view.libraryID, relativePath: file.relativePath });
+    else if (file.canPreview) void previewFile(win, file);
+  }
+  function fileListKeydown(win, event) {
+    if (event.altKey) return;
+    const view = win.filePager.snapshot(); if (win.libraryPhase !== "ready" || view.phase !== "ready" || view.requiresReload) return;
+    const paths = view.visibleItems.map(file => file.relativePath), current = event.target.closest("[data-file-path]")?.dataset.filePath || view.activePath;
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "a") { event.preventDefault(); event.stopPropagation(); win.filePager.selectAll(); updateFileSelection(win); focusFileRow(win, win.filePager.snapshot().activePath); return; }
+    if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); win.filePager.clearSelection(); updateFileSelection(win); return; }
+    if (["ArrowDown", "ArrowRight", "ArrowUp", "ArrowLeft", "Home", "End"].includes(event.key) && paths.length) {
+      event.preventDefault(); event.stopPropagation(); const index = Math.max(0, paths.indexOf(current));
+      const next = event.key === "Home" ? 0 : event.key === "End" ? paths.length - 1 : Math.max(0, Math.min(paths.length - 1, index + (["ArrowDown", "ArrowRight"].includes(event.key) ? 1 : -1)));
+      win.filePager.select(paths[next], { range: event.shiftKey }); updateFileSelection(win); focusFileRow(win, paths[next]); return;
+    }
+    if (!current) return;
+    if (event.key === " ") { event.preventDefault(); event.stopPropagation(); win.filePager.select(current, { toggle: event.metaKey || event.ctrlKey, range: event.shiftKey }); updateFileSelection(win); }
+    if (event.key === "Enter") { event.preventDefault(); event.stopPropagation(); const file = view.visibleItems.find(item => item.relativePath === current); if (file) activateFile(win, file); }
   }
   function renderStorage(win) {
     const { page, heading } = buildPage(win, "storageIntro"); heading.append(el("span", "pill amber", t("storageReady")));

@@ -109,6 +109,11 @@ private struct DesktopEventConsumerStatus:Encodable {
         if let delivered=value.deliveredThrough { try c.encode(delivered,forKey:.deliveredThrough) } else { try c.encodeNil(forKey:.deliveredThrough) }
     }
 }
+private struct DesktopEventConsumerObservation:Encodable {
+    let observationVersion=1
+    let context:EventSourceContext
+    let status:DesktopEventConsumerStatus
+}
 private struct DesktopJobPage: Encodable {
     let pageVersion = 1
     let order = "id-utf8"
@@ -138,6 +143,7 @@ public final class DesktopBridge: @unchecked Sendable {
     private let lock = NSLock()
     private var closed = false
     private var usedRequestIDs: Set<String> = []
+    private var eventContext:EventSourceContext?
     public convenience init(api: PrototypePlatformAPI, session: PrototypeSession) throws {
         try self.init(api: api, session: session, limits: BridgeLimits())
     }
@@ -172,6 +178,13 @@ public final class DesktopBridge: @unchecked Sendable {
             throw BridgeFault.invalidResponse
         }
         return events
+    }
+    private func withEventContext<T>(_ render:(EventSourceContext) throws -> T) throws -> T {
+        try api.withJobEventSourceContext(session:session) { context in
+            if let bound=self.eventContext { try require(bound==context,.denied) }
+            else { self.eventContext=context }
+            return try render(context)
+        }
     }
     private func libraries() throws -> [FixtureLibrarySummary] {
         let values = try api.fixtureLibraries(session: session)
@@ -241,16 +254,34 @@ public final class DesktopBridge: @unchecked Sendable {
                 let p = try params.fields(required: ["consumerID"], optional: ["limit"])
                 let consumer = try p.text("consumerID"), limit = try p.integer("limit", range: 1...100, fallback: 50)
                 try writable()
-                return try response(events(api.jobEvents(consumerID: consumer, limit: Int(limit), session: session)), id: id)
+                return try withEventContext { context in
+                    try api.withBoundJobEventQueue(context:context,session:session) { queue,audience in
+                        try response(events(queue.poll(consumerID:consumer,audience:audience,limit:Int(limit))),id:id)
+                    }
+                }
             case "acknowledgeEvents":
                 let p = try params.fields(required: ["consumerID","through"])
                 let consumer = try p.text("consumerID"), through = try p.integer("through", range: 0...9_007_199_254_740_991)
-                try writable(); try api.acknowledgeJobEvents(consumerID: consumer, through: through, session: session)
-                return try response(true, id: id)
+                try writable()
+                return try withEventContext { context in
+                    try api.withBoundJobEventQueue(context:context,session:session) { queue,audience in
+                        try queue.acknowledge(consumerID:consumer,through:through,audience:audience)
+                        return try response(true,id:id)
+                    }
+                }
             case "eventConsumerStatus":
                 let p=try params.fields(required:["consumerID"]),consumer=try p.text("consumerID")
-                return try api.withJobEventConsumerStatus(consumerID:consumer,session:session) {
-                    try self.response(DesktopEventConsumerStatus($0),id:id)
+                return try withEventContext { _ in
+                    try api.withJobEventConsumerStatus(consumerID:consumer,session:session) {
+                        try self.response(DesktopEventConsumerStatus($0),id:id)
+                    }
+                }
+            case "eventConsumerObservation":
+                let p=try params.fields(required:["consumerID"]),consumer=try p.text("consumerID")
+                return try withEventContext { _ in
+                    try api.withJobEventConsumerObservation(consumerID:consumer,session:session) {
+                        try self.response(DesktopEventConsumerObservation(context:$0.context,status:DesktopEventConsumerStatus($0.status)),id:id)
+                    }
                 }
             case "listLibraries":
                 _ = try params.fields(required: [])

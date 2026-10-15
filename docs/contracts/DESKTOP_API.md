@@ -1,4 +1,4 @@
-# 网页桌面适配契约（N-011至N-021，v1）
+# 网页桌面适配契约（N-011至N-023，v1）
 
 页面当前使用model.js的createFixtureAdapter。业务内容为合成数据、刷新重置；管理员/读者/只读恢复选择器是演示场景，不是登录。不连接Swift、PostgreSQL、NAS文件、系统账户或真实存储池。
 
@@ -45,6 +45,7 @@ DesktopBridge绑定宿主已有的Schema 3 API和会话；createBridgeAdapter(tr
 |pollEvents|consumerID；可选limit|limit默认50、范围1至100；消费者绑定受众，轮询更新交付上界|
 |acknowledgeEvents|consumerID、through|through为0至9007199254740991的整数；只能确认本受众已交付范围|
 |eventConsumerStatus|consumerID|第13个固定方法；只读观察本受众ack/delivered，无权或不存在均notVisible/null，恢复可读|
+|eventConsumerObservation|consumerID|第14个固定方法；只读返回observationVersion=1、context及上述status，见N-022|
 |listLibraries|空对象|仅有权资料库的libraryID/volumeID/estimatedBytes/state，不返回根路径或内容授权|
 |listFiles|libraryID；可选relativePath、maximumEntries|路径默认空，最多4096字节；条目默认1000、范围1至1000；仍需显式卷和内容批准|
 |listFilesPage|libraryID；可选relativePath、pageSize、cursor|第12个方法；默认空路径及50项，1至100，目录标记/授权绑定继续；见N-019|
@@ -153,7 +154,7 @@ preview({libraryID,relativePath})固定最多65536 UTF-8字节、仅txt/md/json/
 
 控制器snapshot为冻结的{phase,libraryID,relativePath,items,pageNumber,hasNext,error,requiresReload}，phase为idle/loading/ready/previewing/error/closed；不暴露游标。open({libraryID,relativePath?})切换上下文并清旧页；reload从头、next替换，preview(relativePath)仅本页。参数错误/并发/非法继续可同步抛ServiceError；异步读取错误固定code并保留标注的旧页、禁用继续/预览，待显式重读。open可在旧读/预览中失效旧代次，迟到预览返回null，迟到页只清理位置，不覆盖新状态；dispose清空并拒绝迟到结果，不关闭共享来源。filterFiles只接最多100项、all/directory/file和最长256字符查询，仅查当前页普通名称。
 
-静态文件窗口每页3项，提供独立库摘要、面包屑、本页搜索/类型过滤、列表/网格、继续/重读和只读预览；界面重建、最小化或聚焦不自动重读。HTML/白名单仅新增directory-view.js，bridge-client.js不加载/提供，connect-src为none。实际浏览器功能、视觉/焦点与F01–F08全部待测。见[ADR-014](../decisions/ADR-014-directory-page-presentation.md)、[范围](../plans/N-020-ACCEPTANCE.md)及[回家清单](../../web/tests/BROWSER_ACCEPTANCE.md)。
+N-020历史静态窗口采用每页3项、下一页替换。N-023已在此来源上新增独立文件浏览器，当前交互见下文；基础createDirectoryPager的本页语义保留，不能把旧N-020的3/3/2预期用于新界面。实际浏览器功能、视觉/焦点与F01–F08全部待测。见[ADR-014](../decisions/ADR-014-directory-page-presentation.md)、[范围](../plans/N-020-ACCEPTANCE.md)及[回家清单](../../web/tests/BROWSER_ACCEPTANCE.md)。
 
 ## N-021通知消费位置只读观察
 
@@ -164,6 +165,30 @@ preview({libraryID,relativePath})固定最多65536 UTF-8字节、仅txt/md/json/
 具名客户端eventConsumerStatus(consumerID,{signal}?)需要已有overview，恢复模式可直接查询。精确校验/冻结结果，同客户端同ID与poll/ACK串行，沿用既有等待/并发预算。查询不分配本地delivery消费者、不回填ack/seen、不清旧通知批，也不赋予新连接ACK权限；可观察超过32个不同ID而不耗尽32个交付消费者槽，但在途仍受原并发预算限制。关闭/超时/取消丢弃迟到响应，无自动连接/重试或fixture回退。
 
 fixture同名方法借用注册会话，读取已有内存受众ack/delivered而不写Map；不存在与其它受众同样notVisible/null，恢复可查，持久性不由fixture证明。网页未调用此方法，notification-view未提供旧批核对入口。即使新宿主查询显示ACK已推进，旧批仍未自动确认；现有overview还不能证明跨连接同实例/同数据库，不能把查询成功或空轮询当作安全重连/批次清理。详见[ADR-015](../decisions/ADR-015-read-only-event-consumer-status.md)及[验收](../plans/N-021-ACCEPTANCE.md)。
+
+## N-022来源上下文与显式只读核对
+
+jobEventConsumerObservation / eventConsumerObservation精确返回{observationVersion:1,context,status}。context精确为{contextVersion:1,source:"fixture-host",scopeID,userID,role,mode}；scopeID为64位小写十六进制等值标记，绑定当前合成集群配置、数据库及事件表身份、实例/generation、用户原始字节及权限/模式。原始路径、数据库名、目录OID和密钥不输出；恢复、换库、重建事件表或权限变化失配。标记仅用于可信合成管道防错，不是未知宿主认证或生产安全凭据。
+
+宿主首次事件操作固定上下文；后续poll/ACK/status/observation必须匹配。事件写入使用通过校验并捕获的原StateStore，不在执行时重新解析可变绑定。操作前后再次检查，后检查失败不回滚已提交的原库操作，但不会把这次写入改投另一个新库。没有强fencing或对任意外部修改的原子授权承诺。
+
+具名客户端eventConsumerObservation(consumerID,{signal}?)要求已有overview，严格验证上下文、嵌套status及受众一致性；同ID与poll/ACK/status串行，查询不分配交付消费者或授予ACK权限。来源改变即失效，超时/取消/关闭不接受迟到结果。
+
+notification-reconciliation.js的async createClientReconciliationView(client,{consumerID,capacity?})借用已有客户端和有界通知视图；初始化先复制严格数据选项再异步捕获来源。ACK失败固定原consumerID、原批和目标，显式reconcile(另一个已初始化候选客户端)只读核对。全上下文相同、开发模式、可见且ack覆盖原目标时reconciliation.outcome="acknowledged"；不足/不可见为unresolved，错源/模式/权限或查询失败为固定错误。并发/迟到/dispose不能覆盖当前状态。
+
+核对结果不清旧items、不推进confirmedThrough、不清ackRetryRequired、不采用候选连接、不发ACK或自动重试。静态HTML和预览白名单均不加载/提供此模块或bridge-client.js；没有网络连接、fixture回退或生产认证接线。完整连接采用与旧批UI协调仍未完成。见[ADR-016](../decisions/ADR-016-fixture-event-source-context.md)。
+
+## N-023连续文件浏览
+
+file-browser.js在directory-view.js之后、desktop.js之前加载。createFileBrowser({source,pageSize=50,maximumLoaded=1000,maximumHistory=64})只接受既有显式目录来源，页大小仍1至100，加载上限不超过1000，历史2至128。来源和共享会话由调用者所有，dispose仅释放自身页位置/历史/选择，不关闭来源或客户端。
+
+open/back/forward/up/reload成功后才提交历史，失败保留原位置与已加载行、标注错误并要求重读；新导航截断前进历史。next累加当前目录的已加载页，保留前页条目；达到窗口预算停止继续，不静默丢弃项目。续页仍受后端目录标记、60秒链和原有扫描预算约束；没有total、文件系统快照或全目录搜索承诺。
+
+snapshot新增visibleItems、selectedItems、selectedPaths、activePath、导航能力、limitReached、maximumLoaded、settings及previewPhase；不公开游标/内部历史。configure接受search/filter/sort/direction/locale，搜索与自然名称/大小/类型/时间排序只作用于已加载项目，文件夹优先，未知值最后。相同设置不打断预览。select支持toggle/range，selectAll仅选择已显示项目，过滤清理隐藏选择，普通名称/内容不作翻译键。
+
+preview仅限当前目录已加载且可预览文件，可预览前页已加载条目；直接使用同一受控source而非绕过授权。上限仍64KiB纯文本，未知类型只可选择/看详情。导航、选择变化、过滤或dispose丢弃迟到预览。窗口/身份切换清理状态；资料库授权集合变化重建浏览器，避免保留已撤销库历史。
+
+窗口接入位置侧栏、面包屑、导航、列表/图标、多选与详情、键盘和已加载范围提示。共享根8项首次全部显示；基础页模型的小页单元测试不决定产品加载量。connect-src仍none，网页仍仅合成fixture；真实DOM/键盘/窄屏与F01–F08继续未执行。服务端全目录排序、真实NAS连接、上传/下载/改名/复制/移动/回收站及生产认证均需后续实现。见[阶段计划](../plans/N-023-FINDER-STYLE-FILE-BROWSING.md)和[DSM控制面板/网络对照](../plans/DSM-CONTROL-PANEL-NETWORK-REFERENCE.md)。
 
 ## 状态与恢复
 

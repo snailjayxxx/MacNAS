@@ -64,12 +64,14 @@
         {
           "id": "SYS-01.desktop_window_visual_interaction_qa",
           "status": "BLOCKED",
-          "scope": "Owner is now at Mac mini. Screenshot confirms correct origin Browse=Always allow, but tool still denies content access; cause unknown. W01-W10 and full checklist remain unexecuted.",
+          "scope": "All W01-W10, T01-T08, N01-N06 and current N023 F01-F08 remain NOT_EXECUTED. Owner removed only the 8766 exception; actual tool still denied. Preview stopped, no bypass or new attempt. Settings images are not functional acceptance.",
           "evidence": [
             "docs/evidence/n011-2026-10-15.json",
             "docs/plans/N-011-ACCEPTANCE.md",
             "web/tests/BROWSER_ACCEPTANCE.md",
-            "docs/evidence/n021-2026-10-15.json"
+            "docs/evidence/n021-2026-10-15.json",
+            "docs/evidence/n011-acceptance-recovery-2026-10-16.json",
+            "docs/plans/N-023-ACCEPTANCE.md"
           ]
         },
         {
@@ -136,13 +138,15 @@
         {
           "id": "SYS-01.task_page_browser_acceptance",
           "status": "NOT_STARTED",
-          "scope": "T01-T08 and W01-W10 remain unexecuted. Owner returned home and the correct origin allow rule is verified by screenshot; tool permission state still disagrees.",
+          "scope": "All W01-W10, T01-T08, N01-N06 and current N023 F01-F08 remain NOT_EXECUTED. Owner removed only the 8766 exception; actual tool still denied. Preview stopped, no bypass or new attempt. Settings images are not functional acceptance.",
           "evidence": [
             "docs/evidence/n017-2026-10-15.json",
             "docs/plans/N-017-ACCEPTANCE.md",
             "docs/decisions/ADR-011-task-page-presentation.md",
             "web/tests/BROWSER_ACCEPTANCE.md",
-            "docs/evidence/n021-2026-10-15.json"
+            "docs/evidence/n021-2026-10-15.json",
+            "docs/evidence/n011-acceptance-recovery-2026-10-16.json",
+            "docs/plans/N-023-ACCEPTANCE.md"
           ]
         },
         {
@@ -159,25 +163,48 @@
         {
           "id": "SYS-01.notification_view_browser_acceptance",
           "status": "NOT_STARTED",
-          "scope": "N01-N06 remain unexecuted. Authorized temporary preview displays manually; screenshot confirms Browse=Always allow, but tool content access is still denied.",
+          "scope": "All W01-W10, T01-T08, N01-N06 and current N023 F01-F08 remain NOT_EXECUTED. Owner removed only the 8766 exception; actual tool still denied. Preview stopped, no bypass or new attempt. Settings images are not functional acceptance.",
           "evidence": [
             "docs/evidence/n018-2026-10-15.json",
             "docs/plans/N-018-ACCEPTANCE.md",
             "docs/decisions/ADR-012-bounded-notification-view.md",
             "web/tests/BROWSER_ACCEPTANCE.md",
-            "docs/evidence/n021-2026-10-15.json"
+            "docs/evidence/n021-2026-10-15.json",
+            "docs/evidence/n011-acceptance-recovery-2026-10-16.json",
+            "docs/plans/N-023-ACCEPTANCE.md"
           ]
         },
         {
           "id": "SYS-01.directory_page_browser_acceptance",
           "status": "NOT_STARTED",
-          "scope": "F01-F08 and other 24 cases remain unexecuted. Correct allow rule is confirmed, tool still denies; manual display and settings screenshot are not DOM/layout/focus acceptance.",
+          "scope": "All W01-W10, T01-T08, N01-N06 and current N023 F01-F08 remain NOT_EXECUTED. Owner removed only the 8766 exception; actual tool still denied. Preview stopped, no bypass or new attempt. Settings images are not functional acceptance.",
           "evidence": [
             "docs/evidence/n020-2026-10-15.json",
             "docs/plans/N-020-ACCEPTANCE.md",
             "docs/decisions/ADR-014-directory-page-presentation.md",
             "web/tests/BROWSER_ACCEPTANCE.md",
-            "docs/evidence/n021-2026-10-15.json"
+            "docs/evidence/n021-2026-10-15.json",
+            "docs/evidence/n011-acceptance-recovery-2026-10-16.json",
+            "docs/plans/N-023-ACCEPTANCE.md"
+          ]
+        },
+        {
+          "id": "SYS-01.explicit_same_source_batch_observation",
+          "status": "MOCK_PASS",
+          "scope": "Bounded explicit candidate-client observation verifies the original consumer and target; old items and confirmedThrough remain unchanged. No connection adoption, retries or fallback.",
+          "evidence": [
+            "docs/evidence/n022-2026-10-16.json",
+            "docs/plans/N-022-ACCEPTANCE.md",
+            "docs/decisions/ADR-016-fixture-event-source-context.md"
+          ]
+        },
+        {
+          "id": "SYS-01.dsm_control_panel_network_reference",
+          "status": "IN_PROGRESS",
+          "scope": "Official DSM functional research mapped to concrete pages, current gaps, existing parents and macOS adaptation/acceptance; control-panel business and real network management remain unimplemented.",
+          "evidence": [
+            "docs/plans/DSM-FUNCTIONAL-BASELINE.md",
+            "docs/plans/DSM-CONTROL-PANEL-NETWORK-REFERENCE.md"
           ]
         }
       ]
@@ -589,6 +616,16 @@
             "docs/evidence/n021-2026-10-15.json",
             "docs/plans/N-021-ACCEPTANCE.md",
             "docs/decisions/ADR-015-read-only-event-consumer-status.md"
+          ]
+        },
+        {
+          "id": "SYS-06.fixture_event_source_context_readonly",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "Opaque trusted-fixture equality context across API/session restarts; separate database, instance, generation, role, user, mode and event-table recreation fail closed. Not production authentication.",
+          "evidence": [
+            "docs/evidence/n022-2026-10-16.json",
+            "docs/plans/N-022-ACCEPTANCE.md",
+            "docs/decisions/ADR-016-fixture-event-source-context.md"
           ]
         }
       ]
@@ -1820,12 +1857,15 @@
         {
           "id": "FIL-01.directory_page_web_integration",
           "status": "IN_PROGRESS",
-          "scope": "Static fixture file window wired to explicit borrowed directory source/current-page controller; actual DOM, focus, keyboard, layout and translations remain unverified",
+          "scope": "N023 continuous loaded-directory workflow uses the existing explicit source; HTML is fixture-only and actual DOM/focus/keyboard/layout acceptance remains pending.",
           "evidence": [
             "docs/evidence/n020-2026-10-15.json",
             "docs/plans/N-020-ACCEPTANCE.md",
             "docs/decisions/ADR-014-directory-page-presentation.md",
-            "web/tests/BROWSER_ACCEPTANCE.md"
+            "web/tests/BROWSER_ACCEPTANCE.md",
+            "docs/evidence/n023-2026-10-16.json",
+            "docs/plans/N-023-ACCEPTANCE.md",
+            "docs/decisions/ADR-017-continuous-file-browser.md"
           ]
         },
         {
@@ -1847,6 +1887,27 @@
             "docs/evidence/n020-2026-10-15.json",
             "docs/plans/N-020-ACCEPTANCE.md",
             "docs/decisions/ADR-014-directory-page-presentation.md",
+            "web/tests/BROWSER_ACCEPTANCE.md"
+          ]
+        },
+        {
+          "id": "FIL-01.continuous_browsing_model",
+          "status": "MOCK_PASS",
+          "scope": "Bounded loaded-page accumulation, successful history, natural sorting, multi-selection and earlier-loaded preview; deterministic synthetic tests, not actual DOM or scale acceptance.",
+          "evidence": [
+            "docs/evidence/n023-2026-10-16.json",
+            "docs/plans/N-023-ACCEPTANCE.md",
+            "docs/decisions/ADR-017-continuous-file-browser.md"
+          ]
+        },
+        {
+          "id": "FIL-01.continuous_browsing_web_workflow",
+          "status": "IN_PROGRESS",
+          "scope": "Window source wired to locations, navigation, list/icons, sorting, multi-selection and details; actual double-click, keyboard, focus and responsive behavior remain unexecuted.",
+          "evidence": [
+            "docs/evidence/n023-2026-10-16.json",
+            "docs/plans/N-023-ACCEPTANCE.md",
+            "docs/decisions/ADR-017-continuous-file-browser.md",
             "web/tests/BROWSER_ACCEPTANCE.md"
           ]
         }
@@ -4746,12 +4807,35 @@
         },
         {
           "id": "APP-09.same_source_reconnection_and_batch_reconciliation",
-          "status": "NOT_STARTED",
-          "scope": "Same-instance/database/user/consumer source proof and explicit old-batch reconciliation remain pending; no automatic connection, ACK or fixture fallback.",
+          "status": "IN_PROGRESS",
+          "scope": "Trusted-fixture source context and explicit read-only observation implemented. Candidate connection adoption, old-batch clearing/UI and production trust remain pending.",
           "evidence": [
             "docs/evidence/n021-2026-10-15.json",
             "docs/plans/N-021-ACCEPTANCE.md",
-            "docs/decisions/ADR-015-read-only-event-consumer-status.md"
+            "docs/decisions/ADR-015-read-only-event-consumer-status.md",
+            "docs/evidence/n022-2026-10-16.json",
+            "docs/plans/N-022-ACCEPTANCE.md",
+            "docs/decisions/ADR-016-fixture-event-source-context.md"
+          ]
+        },
+        {
+          "id": "APP-09.source_observation_message_and_pipe",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "14th fixed observation message, captured original-store event writes and actual PostgreSQL pipe checks after committed ACK response loss; candidate query grants no ACK authority.",
+          "evidence": [
+            "docs/evidence/n022-2026-10-16.json",
+            "docs/plans/N-022-ACCEPTANCE.md",
+            "docs/decisions/ADR-016-fixture-event-source-context.md"
+          ]
+        },
+        {
+          "id": "APP-09.production_reconnect_and_connection_adoption",
+          "status": "NOT_STARTED",
+          "scope": "Production authentication, transport identity, explicit connection adoption and old-batch UI coordination remain unimplemented.",
+          "evidence": [
+            "docs/evidence/n022-2026-10-16.json",
+            "docs/plans/N-022-ACCEPTANCE.md",
+            "docs/decisions/ADR-016-fixture-event-source-context.md"
           ]
         }
       ]
@@ -4956,6 +5040,14 @@
           "id": "SEC-01.owner_acceptance",
           "status": "NOT_STARTED",
           "evidence": []
+        },
+        {
+          "id": "SEC-01.network_control_panel_platform_adapter",
+          "status": "NOT_STARTED",
+          "scope": "Read-only host interface/address/DNS/route/service overview must be implemented and validated before controlled configuration; no actual host network changes.",
+          "evidence": [
+            "docs/plans/DSM-CONTROL-PANEL-NETWORK-REFERENCE.md"
+          ]
         }
       ]
     },
