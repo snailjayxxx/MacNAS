@@ -1,0 +1,140 @@
+{
+  "task": "N-011 browser acceptance permission diagnostics",
+  "date": "2026-10-15",
+  "timezone": "Asia/Tokyo",
+  "status": "PER_REQUEST_RETRY_DENIED_MANUAL_ACCEPTANCE_AVAILABLE",
+  "priority": "User requested permission repair before further backend development",
+  "base_commit": "57d9f61d6a0099bd44516f76d1ce3889aa2af597",
+  "target_origin": "http://127.0.0.1:8766",
+  "development_volume_uuid_verified": "C1755FBB-FCA8-4EA4-BEE2-AA6BF3258B6C",
+  "synthetic_static_preview_only": true,
+  "preview_started": true,
+  "preview_stopped": true,
+  "port_8766_listener_after_stop": "ABSENT",
+  "postgres_started": false,
+  "new_dependencies": [],
+  "product_code_changed": false,
+  "agent_changed_security_settings": false,
+  "browser_attempt": {
+    "provider": "Codex In-app Browser",
+    "initial_inventory_tabs": 0,
+    "operation": "create a tab at the exact authorized origin",
+    "result": "DENIED_BY_ORIGIN_APPROVAL_GATE_BEFORE_NETWORK_EGRESS",
+    "reported_reason": "A saved permission or managed policy denies access",
+    "DOM_observed": false,
+    "page_screenshot_acquired": false,
+    "alternate_browser_or_address_attempted": false,
+    "raw_CDP_or_indirect_page_access_attempted": false
+  },
+  "read_only_findings": {
+    "human_screenshot": "Exact target origin has Browse=Always allow; Download=Requires approval",
+    "user_config_target_access": "allow",
+    "browser_plugin_enabled": true,
+    "additional_user_browser_policy_tables": 0,
+    "project_config_overrides_found": false,
+    "system_requirements_file_found": false,
+    "legacy_managed_config_file_found": false,
+    "effective_macOS_managed_requirements_key_found": false,
+    "effective_macOS_managed_defaults_key_found": false,
+    "installed_app_version": "26.1007.71326",
+    "installed_app_build": "20398",
+    "installed_release_channel": "prod",
+    "official_update_check": "up_to_date",
+    "bundled_cli_version": "0.162.0-alpha.17.2",
+    "fresh_same_version_config_RPC": {
+      "transport": "private stdin/stdout only; no listening service",
+      "methods": [
+        "initialize",
+        "config/read",
+        "configRequirements/read"
+      ],
+      "target_origin_access": "allow",
+      "default_origin_policy": null,
+      "origin_rule_count": 1,
+      "requirements": null,
+      "diagnostic_process_stopped": true,
+      "raw_configuration_or_credentials_exported": false,
+      "limitation": "Independent diagnostic process; not a direct observation of the active thread browser broker policy"
+    },
+    "existing_daemon_proxy_probe": {
+      "result": "READ_TIMEOUT",
+      "owned_proxy_process_stopped": true,
+      "existing_daemon_not_restarted_or_modified": true
+    },
+    "after_user_reported_requires_approval": {
+      "user_reported_setting": "Browse=Requires approval",
+      "configuration_file_target_access": "allow",
+      "persistence_or_active_policy_mismatch_cause": "UNCONFIRMED"
+    },
+    "port_conflict_check": {
+      "user_reported_other_project": "TV recording development uses 127.0.0.1 with a different port",
+      "target_listener_owned_by_this_project": true,
+      "same_address_with_different_ports_is_not_itself_a_bind_conflict": true,
+      "other_project_files_or_session_not_read": true,
+      "actual_other_project_automatic_browser_operation": "OPTIONAL_USER_CLARIFICATION_PENDING"
+    }
+  },
+  "working_hypothesis": "Configuration and the active browser permission execution path disagree; exact root cause remains unconfirmed",
+  "next_diagnostic": {
+    "user_action_requested": "Change only the target origin Browse setting from Always allow to Requires approval using the normal client settings UI",
+    "reason": "Narrow access and distinguish persistent approval handling from per-request approval handling",
+    "state": "USER_CONFIRMED_CHANGE_SINGLE_RETRY_DENIED",
+    "browser_retry_before_confirmed_change": false,
+    "global_or_other_site_permissions_to_change": [],
+    "result": "No origin authority acquired; user file still reports allow despite reported UI setting change",
+    "next_safe_step": "Use selected human manual acceptance fallback; optionally compare whether the other project actually permits automated browser actions. Resume automation only after a legitimate authority change."
+  },
+  "acceptance": {
+    "W01-W10": "NOT_EXECUTED",
+    "T01-T08": "NOT_EXECUTED",
+    "N01-N06": "NOT_EXECUTED",
+    "F01-F08": "NOT_EXECUTED",
+    "total_cases_pending": 32,
+    "human_manual_acceptance_fallback_selected": true,
+    "automatic_acceptance_pass_claimed": false
+  },
+  "official_sources": [
+    "https://learn.chatgpt.com/docs/browser?surface=app",
+    "https://learn.chatgpt.com/docs/config-file/config-basic#configuration-precedence",
+    "https://learn.chatgpt.com/docs/enterprise/managed-configuration#control-browser-and-computer-use",
+    "https://learn.chatgpt.com/docs/reference/troubleshooting#feedback-and-logs",
+    "https://learn.chatgpt.com/docs/app-server#read-admin-requirements-configrequirementsread"
+  ],
+  "private_redacted_diagnostics_directory": "Evidence/browser-permission-20261015",
+  "application_log_bodies_and_user_screenshots_committed": false,
+  "updated_at": "2026-10-15T23:56:24+09:00",
+  "preview_runs": [
+    {
+      "session": 97534,
+      "purpose": "initial permission check after client restart",
+      "stopped": true,
+      "listener_after_stop": "ABSENT"
+    },
+    {
+      "session": 76899,
+      "purpose": "single permission check after user confirmed narrower approval setting",
+      "listener_before_check": {
+        "pid": 99712,
+        "bind": "127.0.0.1:8766",
+        "command": "Python -u scripts/preview_web.py",
+        "cwd_matches_this_repository": true,
+        "listener_count": 1
+      },
+      "stopped": true,
+      "listener_after_stop": "ABSENT"
+    }
+  ],
+  "browser_attempt_after_user_reported_setting_change": {
+    "provider": "Codex In-app Browser",
+    "target_origin": "http://127.0.0.1:8766",
+    "operation": "create a tab at the same authorized origin",
+    "attempt_count": 1,
+    "result": "DENIED_BY_ORIGIN_APPROVAL_GATE_BEFORE_NETWORK_EGRESS",
+    "reported_reason": "A saved permission or managed policy denies access",
+    "DOM_observed": false,
+    "page_screenshot_acquired": false,
+    "alternate_browser_or_address_attempted": false,
+    "raw_CDP_or_indirect_page_access_attempted": false,
+    "auxiliary_tool_telemetry_error": "Statsig requests also reported HTTP 403; relation to origin rejection not established"
+  }
+}
