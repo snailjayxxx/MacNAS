@@ -6,7 +6,7 @@
 <meta name="color-scheme" content="light dark"><meta name="description" content="MacNAS 本地网页桌面原型 · 合成数据">
 <title>MacNAS — 本地桌面预览</title>
 <link rel="icon" href="icon.svg" type="image/svg+xml"><link rel="stylesheet" href="desktop.css">
-<script defer src="model.js"></script><script defer src="i18n.js"></script><script defer src="task-pages.js"></script><script defer src="desktop.js"></script>
+<script defer src="model.js"></script><script defer src="i18n.js"></script><script defer src="task-pages.js"></script><script defer src="notification-view.js"></script><script defer src="desktop.js"></script>
 </head>
 <body>
 <header class="menubar">
@@ -37,6 +37,7 @@
  <header><div><h2 id="notifications-title"></h2><p id="unread-count"></p></div><button class="icon-button" data-close-panel="notifications" data-icon="close"></button></header>
  <div class="notification-tools"><button id="read-all" class="text-button"></button><button class="icon-button" id="refresh-events" data-icon="refresh"></button></div>
  <p class="readonly-note" id="notification-readonly" hidden></p>
+ <p class="readonly-note" id="notification-status" role="status" aria-live="polite" hidden></p>
  <div id="notification-list" class="notification-list"></div><p class="panel-footnote" id="notification-hint"></p>
 </aside>
 <div class="profile-menu floating-panel" id="profile-menu" hidden><div class="profile-info" id="profile-info"></div><button id="open-preferences" data-icon="user"></button><button id="open-about" data-icon="info"></button></div>

@@ -142,6 +142,28 @@
             "docs/decisions/ADR-011-task-page-presentation.md",
             "web/tests/BROWSER_ACCEPTANCE.md"
           ]
+        },
+        {
+          "id": "SYS-01.notification_view_dom_integration",
+          "status": "IN_PROGRESS",
+          "scope": "Static notification controls/status and identity guards wired; actual DOM/focus/layout and translation quality unverified",
+          "evidence": [
+            "docs/evidence/n018-2026-10-15.json",
+            "docs/plans/N-018-ACCEPTANCE.md",
+            "docs/decisions/ADR-012-bounded-notification-view.md",
+            "web/tests/BROWSER_ACCEPTANCE.md"
+          ]
+        },
+        {
+          "id": "SYS-01.notification_view_browser_acceptance",
+          "status": "NOT_STARTED",
+          "scope": "N01-N06, W01-W10 and T01-T08 deferred until user returns home; no new browser/preview/settings attempts",
+          "evidence": [
+            "docs/evidence/n018-2026-10-15.json",
+            "docs/plans/N-018-ACCEPTANCE.md",
+            "docs/decisions/ADR-012-bounded-notification-view.md",
+            "web/tests/BROWSER_ACCEPTANCE.md"
+          ]
         }
       ]
     },
@@ -519,6 +541,28 @@
             "docs/evidence/n017-2026-10-15.json",
             "docs/plans/N-017-ACCEPTANCE.md",
             "docs/decisions/ADR-011-task-page-presentation.md",
+            "web/tests/BROWSER_ACCEPTANCE.md"
+          ]
+        },
+        {
+          "id": "SYS-06.bounded_pending_notification_view",
+          "status": "MOCK_PASS",
+          "scope": "Synthetic notification view capped at 100 unconfirmed events; full-buffer backpressure, replay/conflict checks and clear only after successful ACK",
+          "evidence": [
+            "docs/evidence/n018-2026-10-15.json",
+            "docs/plans/N-018-ACCEPTANCE.md",
+            "docs/decisions/ADR-012-bounded-notification-view.md",
+            "web/tests/BROWSER_ACCEPTANCE.md"
+          ]
+        },
+        {
+          "id": "SYS-06.notification_ack_uncertainty_and_disposal",
+          "status": "MOCK_PASS",
+          "scope": "Headless serial consumer operations, exact-target explicit ACK retry, retained unresolved batch on connection loss and late-result disposal; not DOM proof",
+          "evidence": [
+            "docs/evidence/n018-2026-10-15.json",
+            "docs/plans/N-018-ACCEPTANCE.md",
+            "docs/decisions/ADR-012-bounded-notification-view.md",
             "web/tests/BROWSER_ACCEPTANCE.md"
           ]
         }
@@ -4567,6 +4611,17 @@
             "docs/evidence/n017-2026-10-15.json",
             "docs/plans/N-017-ACCEPTANCE.md",
             "docs/decisions/ADR-011-task-page-presentation.md",
+            "web/tests/BROWSER_ACCEPTANCE.md"
+          ]
+        },
+        {
+          "id": "APP-09.notification_presentation_pipe_adapter",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "Explicit typed-client notification presentation on actual Swift/PostgreSQL pipes; committed ACK response withheld, same-position retry and timeout ambiguity; no browser transport",
+          "evidence": [
+            "docs/evidence/n018-2026-10-15.json",
+            "docs/plans/N-018-ACCEPTANCE.md",
+            "docs/decisions/ADR-012-bounded-notification-view.md",
             "web/tests/BROWSER_ACCEPTANCE.md"
           ]
         }

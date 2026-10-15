@@ -67,4 +67,11 @@ class WebStaticTests(unittest.TestCase):
         self.assertNotIn('bridge-client.js',scripts)
         self.assertEqual(exchange('/bridge-client.js')[0],404)
         self.assertEqual(exchange('/task-pages.js')[0],200)
+    def test_notification_view_loads_before_desktop_and_has_accessible_status(self):
+        html=(ROOT/'web/dist/index.html').read_text()
+        scripts=re.findall(r'<script defer src="([^"]+)"',html)
+        self.assertLess(scripts.index('model.js'),scripts.index('notification-view.js'))
+        self.assertLess(scripts.index('notification-view.js'),scripts.index('desktop.js'))
+        self.assertEqual(exchange('/notification-view.js')[0],200)
+        self.assertRegex(html,r'id="notification-status"[^>]*role="status"[^>]*aria-live="polite"')
 if __name__=='__main__':unittest.main()

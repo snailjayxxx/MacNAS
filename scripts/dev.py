@@ -18,7 +18,7 @@ env.update({'MACNAS_TESTLAB':str(lab),'MACNAS_PG_BIN':str(pgbin),'MACNAS_PG_SOCK
  'CLANG_MODULE_CACHE_PATH':str(WORK/'Build/clang-module-cache'),'SWIFTPM_MODULECACHE_OVERRIDE':str(WORK/'Build/swift-module-cache'),
  'LC_ALL':'C','LANG':'C','HOME':str(socket)})
 flags=['--scratch-path',str(WORK/'Build/swift'),'--cache-path',str(WORK/'Build/swift-cache'),'--config-path',str(WORK/'Build/swift-config'),'--security-path',str(WORK/'Build/swift-security')]
-tracked_sources=[ROOT/'Package.swift',ROOT/'web/dist/model.js',ROOT/'web/dist/bridge-client.js',ROOT/'web/dist/task-pages.js']+[p for folder in ['Sources','Tests','database','scripts'] for p in (ROOT/folder).rglob('*') if p.is_file() and p.suffix in ['.swift','.sql','.py','.cjs']]
+tracked_sources=[ROOT/'Package.swift',ROOT/'web/dist/model.js',ROOT/'web/dist/bridge-client.js',ROOT/'web/dist/task-pages.js',ROOT/'web/dist/notification-view.js']+[p for folder in ['Sources','Tests','database','scripts'] for p in (ROOT/folder).rglob('*') if p.is_file() and p.suffix in ['.swift','.sql','.py','.cjs']]
 source_hashes={str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(tracked_sources)}
 (evidence/'source-sha256.json').write_text(json.dumps(source_hashes,indent=2)+'\n')
 git_head=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip()

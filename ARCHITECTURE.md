@@ -1,4 +1,4 @@
-# MacNAS 原型架构（N-017）
+# MacNAS 原型架构（N-018）
 
 Swift 6 / macOS 15部署目标，PostgreSQL 18。当前为非root CLI、无监听的业务API和两个自研可信样例；没有生产HTTP登录、系统Helper或正式接管。
 
@@ -84,3 +84,11 @@ task-pages.js把显式fixture来源/具名客户端来源投影为有界任务�
 静态任务窗口每页3项，首页另有2项编号顺序预览，统计独立读取；搜索/过滤明确限当前页，下一页替换而不累积，错误等待显式重读。HTML只新增task-pages脚本，主机客户端仍未加载，没有浏览器传输或数据库回退。本地discardJobPage不撤销宿主预算；宿主令牌仍依照60秒期限清理。
 
 模型/Node与真实管道验证不能证明DOM、焦点、布局或翻译质量。W01–W10及T01–T08全待实测，父阶段P03未验收；见[ADR-011](docs/decisions/ADR-011-task-page-presentation.md)和[验收范围](docs/plans/N-017-ACCEPTANCE.md)。
+
+## N-018待确认通知视图
+
+notification-view.js显式借用fixture会话或具名客户端，保持固定容量（默认100）、不可变事件投影与同提供者/消费者操作串行。未确认满额停止读取，成功ACK后清理展示；失败锁定原批/原交付目标，显式重试不能带上后续事件。未知任务用普通文案，不反向读取所有任务；数量只表示本地已加载待确认内容。
+
+dispose不关闭共享连接，不回滚数据库操作，迟到成功/失败不能恢复旧视图。恢复模式在调用前拒绝轮询/确认；断连保留未解决批次，不自动重连，当前协议缺少持久消费状态查询/安全重连核对。真实持久性继续由PostgreSQL 18原有事务和收据保证，无Schema变化。
+
+HTML仅增加通知视图脚本，具名客户端不加载/静态提供，connect-src仍为none。网页仍为内存演示，Node/真实管道不证明DOM或浏览器业务连接。W01–W10、T01–T08、N01–N06全部等待用户回家；见[ADR-012](docs/decisions/ADR-012-bounded-notification-view.md)及[验收范围](docs/plans/N-018-ACCEPTANCE.md)。

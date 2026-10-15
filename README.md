@@ -58,3 +58,5 @@ N-016加入[有界任务页及统计](docs/decisions/ADR-010-bounded-job-pages.m
 **网页窗口尚未实测。** 用户准备回家后验收，已整理[启动步骤与W01–W10窗口清单](web/tests/BROWSER_ACCEPTANCE.md)，覆盖打开/关闭、层级、最小化/恢复、拖动/缩放、最大化、dock、键盘和窄屏。全部保留待测，自动测试不代替浏览器验收。
 
 N-017加入[当前页任务展示](docs/decisions/ADR-011-task-page-presentation.md)：每页3条、下一页/重新读取、本页搜索范围、独立统计及关闭后的迟到结果丢弃。真实客户端展示适配只通过Node/管道验证，静态页仍是fixture；[W01–W10与T01–T08](web/tests/BROWSER_ACCEPTANCE.md)全部等待回家实测。
+
+N-018加入[有界通知展示](docs/decisions/ADR-012-bounded-notification-view.md)：最多100条已加载待确认通知，满额停止读取，确认成功后清理本批；失败保留原批/原位置供显式重试，断连不伪装确认或自动重连。名称仅查当前页/预览，静态页仍不连接数据库。回家清单新增N01–N06，窗口/任务/通知及实际DOM均待测；后续计划为[有界目录查询](docs/plans/N-019-BOUNDED-DIRECTORY-PAGES.md)。

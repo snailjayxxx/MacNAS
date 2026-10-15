@@ -20,8 +20,8 @@ def run(name,command):
     print(name+(': PASS' if result.returncode==0 else ': FAIL'),flush=True)
     if result.returncode:print(result.stdout);raise RuntimeError(name)
 try:
-    for name in ['model.js','bridge-client.js','task-pages.js','i18n.js','desktop.js']:run('syntax-'+name,[node,'--check','web/dist/'+name])
-    run('model-tests',[node,'--test','web/tests/model.test.cjs','web/tests/bridge.test.cjs','web/tests/client.test.cjs','web/tests/task-pages.test.cjs'])
+    for name in ['model.js','bridge-client.js','task-pages.js','notification-view.js','i18n.js','desktop.js']:run('syntax-'+name,[node,'--check','web/dist/'+name])
+    run('model-tests',[node,'--test','web/tests/model.test.cjs','web/tests/bridge.test.cjs','web/tests/client.test.cjs','web/tests/task-pages.test.cjs','web/tests/notification-view.test.cjs'])
     run('static-http-policy-tests',['/usr/bin/python3','scripts/test_web.py'])
     run('requirements',['/usr/bin/python3','scripts/verify_requirements.py'])
     run('requirements-negative-tests',['/usr/bin/python3','scripts/test_requirements.py'])

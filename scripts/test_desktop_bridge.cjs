@@ -6,6 +6,7 @@ const path=require("node:path"),fs=require("node:fs");
 const M=require("../web/dist/model.js");
 const C=require("../web/dist/bridge-client.js");
 const P=require("../web/dist/task-pages.js");
+const N=require("../web/dist/notification-view.js");
 const binary=path.join(process.env.MACNAS_BINARY_DIR||"","macnas");
 const root=process.env.MACNAS_BRIDGE_TEST_ROOT,readonly=process.env.MACNAS_BRIDGE_READONLY_ROOT;
 const hosts=new Set(),errorCode=code=>error=>error instanceof M.ServiceError&&error.code===code;
@@ -237,4 +238,61 @@ test("task presentation projects actual host pages and refreshes cancellation in
       if(source.context.role==="reader")assert.equal(view.items.length,0);
     } finally {pager.dispose();await source.close();await host.finish();}
   }
+});
+
+test("bounded notification presentation retries a committed ACK with withheld success at the same delivered position",async()=>{
+  const host=new PipeHost(root),throughs=[];let withheld=true;
+  const client=host.typed({transport:async message=>{
+    const response=await host.raw(JSON.stringify(message)+"\n");
+    if(message.method==="acknowledgeEvents") {
+      throughs.push(message.params.through);assert.equal(response.data,true);
+      if(withheld){withheld=false;return {apiVersion:1,requestId:message.requestId,error:{code:"database"}};}
+    }
+    return response;
+  }}),view=await N.createClientNotificationView(client,{consumerID:"presentation-ack",capacity:2});
+  try {
+    const batch=await view.poll();assert.equal(batch.items.length,2);assert.equal(batch.full,true);
+    await assert.rejects(view.poll(),errorCode("budgetExceeded"));
+    await assert.rejects(view.acknowledge(),errorCode("database"));
+    assert.deepEqual(view.snapshot().items,batch.items);assert.equal(view.snapshot().confirmedThrough,0);
+    const durable=await host.api.request("pollEvents",{consumerID:"presentation-ack",limit:2});
+    assert.ok(durable.every(event=>event.sequence>batch.items[0].sequence));
+    await assert.rejects(view.poll(),errorCode("staleState"));
+    await view.acknowledge();assert.deepEqual(throughs,[batch.items[0].sequence,batch.items[0].sequence]);
+    assert.deepEqual(view.snapshot().items,[]);
+    const next=await view.poll();assert.ok(next.items.every(event=>event.sequence>batch.items[0].sequence));
+    if(next.items.length)await view.acknowledge();
+  } finally {view.dispose();client.close();await host.finish();}
+  for(const [target,user] of [[root,"fixture-family"],[readonly,"fixture-owner"]]) {
+    const host=new PipeHost(target,user),client=host.typed(),view=await N.createClientNotificationView(client,{consumerID:"notification-scope"});
+    try {
+      if(view.context.mode!=="synthetic_development")await assert.rejects(view.poll(),errorCode("readOnly"));
+      else {assert.deepEqual((await view.poll()).items,[]);await assert.rejects(view.acknowledge(),errorCode("denied"));}
+      assert.equal(view.snapshot().confirmedThrough,0);
+    } finally {view.dispose();client.close();await host.finish();}
+  }
+});
+
+test("committed notification ACK timeout keeps the old batch unresolved even when a restarted host proves durable advancement",async()=>{
+  const host=new PipeHost(root);let committedResolve,lateResolve;
+  const committed=new Promise(resolve=>{committedResolve=resolve;}),late=new Promise(resolve=>{lateResolve=resolve;});
+  const client=host.typed({timeoutMs:10000,transport:async message=>{
+    const response=await host.raw(JSON.stringify(message)+"\n");
+    if(message.method==="acknowledgeEvents"){assert.equal(response.data,true);committedResolve();await late;}
+    return response;
+  }}),view=await N.createClientNotificationView(client,{consumerID:"presentation-timeout"});
+  let batch;
+  try {
+    batch=await view.poll();assert.ok(batch.items.length>0);
+    const pending=view.acknowledge(),rejected=assert.rejects(pending,errorCode("timedOut"));
+    await committed;await rejected;
+    assert.equal(client.closed,true);assert.deepEqual(view.snapshot().items,batch.items);
+    assert.equal(view.snapshot().confirmedThrough,0);assert.equal(view.snapshot().unavailable,true);
+    lateResolve();await Promise.resolve();await assert.rejects(view.acknowledge(),errorCode("unavailable"));
+  } finally {lateResolve();client.close();await host.finish();}
+  const restarted=new PipeHost(root);
+  try {
+    assert.deepEqual(await restarted.api.request("pollEvents",{consumerID:"presentation-timeout",limit:100}),[]);
+    assert.deepEqual(view.snapshot().items,batch.items);assert.equal(view.snapshot().confirmedThrough,0);
+  } finally {view.dispose();await restarted.finish();}
 });

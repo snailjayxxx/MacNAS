@@ -15,3 +15,4 @@ body[data-theme=dawn] .wallpaper-art{background:radial-gradient(ellipse at 20% 0
 @media(forced-colors:active){button,.card,.task-row,.app-window,.floating-panel{border:1px solid CanvasText}.progress-track{border:1px solid CanvasText}}
 
 .task-pagination{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 14px}.task-page-actions{display:flex;gap:8px;flex-wrap:wrap}.task-scope{margin:0 0 12px}.task-pagination .toolbar-count{line-height:1.8;overflow-wrap:anywhere}.task-page-actions .icon{width:14px;height:14px}
+.notification-item>div{min-width:0;overflow-wrap:anywhere}.notification-tools{gap:12px;flex-shrink:0}.notification-panel>.readonly-note{flex-shrink:0;overflow-wrap:anywhere}

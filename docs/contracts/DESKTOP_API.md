@@ -1,4 +1,4 @@
-# 网页桌面适配契约（N-011 / N-014 / N-015 / N-016 / N-017，v1）
+# 网页桌面适配契约（N-011 / N-014 / N-015 / N-016 / N-017 / N-018，v1）
 
 页面当前使用model.js的createFixtureAdapter。业务内容为合成数据、刷新重置；管理员/读者/只读恢复选择器是演示场景，不是登录。不连接Swift、PostgreSQL、NAS文件、系统账户或真实存储池。
 
@@ -21,7 +21,7 @@
 
 任务状态沿用queued、running、waiting_for_volume、paused、failed、completed、cancelled。样例展示重试预算、错误、等待卷与终态；页面不运行工作者，也没有暂停/恢复/手动重试接口。进度0/2、1/2、2/2只描述两步检查点。
 
-事件含sequence、job_id、revision、type、state。mergeEvents检查安全整数、类型和状态，按sequence去重，内容冲突拒绝。“全部已读”只确认实际交付上界。消费者/游标/收据仅在fixture内存中；真实持久性和事务顺序由N-010核心保证，尚未连通前端。
+事件含sequence、job_id、revision、type、state。旧mergeEvents通用函数仍保留，网页已改用N-018有界待确认视图；“确认本批通知”只使用实际交付上界，成功后清理展示。消费者/游标/收据仅在fixture内存中；真实持久性和事务顺序由N-010核心保证，尚未连通网页。
 
 ## N-014无监听宿主桥接
 
@@ -109,6 +109,20 @@ createTaskPager({source,pageSize=50})接受以上来源，pageSize为1至100；s
 网页任务窗口每页3条，首页2项编号顺序预览；搜索和状态过滤仅当前页。空页、无本页匹配、末页、加载、修改及失败分别显示，失败页注明是上次结果并禁用继续/修改；创建后从首页重读，取消后更新当前行及独立统计。身份/窗口/模态框和刷新代次检查用于防止旧结果覆盖，但实际DOM/焦点仍待浏览器验收。
 
 HTML/白名单只新增task-pages.js，bridge-client.js仍不加载/不静态提供，connect-src仍为none。当前fixture权威队列仍在内存，显示页上限不是生产数据库规模证明。详细范围见[ADR-011](../decisions/ADR-011-task-page-presentation.md)及[验收记录](../../web/tests/BROWSER_ACCEPTANCE.md)。
+
+## N-018有界通知展示
+
+notification-view.js在model之后、desktop之前加载，导出async createFixtureNotificationView(api,session,{consumerID,capacity?})、async createClientNotificationView(client,{consumerID,capacity?})及notificationTaskName(event,tasks,translate)。必须显式传入来源，无连接创建/fixture回退。consumerID为1至128个UTF-8字节，capacity默认100、范围1至100；未知字段、getter和错类型拒绝。来源overview固定用户/角色/模式，恢复模式在调用提供者前拒绝poll与ACK。
+
+返回视图公开context、snapshot()、poll()、acknowledge()及dispose()。snapshot为冻结的{phase,items,capacity,full,confirmedThrough,error,ackRetryRequired,unavailable}；items仅含sequence、jobID、revision、type、state，倒序显示、最多capacity条。精确字段、正安全整数、升序原始交付、类型/状态及重放内容均检查。confirmedThrough只代表当前视图已收到成功响应的位置，不是数据库消费状态查询；初始0不推断持久ACK。
+
+同一视图及同提供者/consumerID串行操作，进行中锁表最多32项；跨独立客户端/fixture包装器仍需宿主协调。poll请求完整capacity以容纳重放；满额明确budgetExceeded并停止请求，不截断未确认内容或伪ACK。合并超预算保留旧内容并报错，非法/冲突响应隔离视图。acknowledge无外部位置参数，捕获当前已加载最高序号；失败保留原批及目标并阻止poll，显式重试始终同一位置，成功true才清空并推进。
+
+ACK可能已提交但成功响应丢失。连接可用时可显式重试相同位置；客户端超时关闭时保留未解决内容，旧视图不可继续。当前协议没有消费状态查询/安全重连核对；不能以新连接轮询为空推定旧批已确认，也不自动重连或回退fixture。dispose清理并忽略迟到成功/失败，不回滚数据库ACK、不删除事件/收据、不关闭借用的共享会话/客户端。调用方身份切换需先dispose视图，再关闭旧会话。
+
+名称仅查当前页加2项预览，辅助函数最多接受102行；固定名称key可以翻译，普通标题保持文字，缺失用普通通知文案，不按jobID翻译或全量取任务。静态界面容量100、仅显示已加载待确认数；确认成功后清空，本批之外等待手动刷新，关闭面板保留批次。没有定时后台轮询。
+
+静态HTML/白名单只增加notification-view.js，bridge-client.js仍不加载/提供，connect-src为none。Node/Swift管道证明不等于网页连接数据库或DOM验收。详见[ADR-012](../decisions/ADR-012-bounded-notification-view.md)、[范围](../plans/N-018-ACCEPTANCE.md)及[回家N01–N06](../../web/tests/BROWSER_ACCEPTANCE.md)，W/T/N均待测。
 
 ## 状态与恢复
 

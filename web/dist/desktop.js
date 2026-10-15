@@ -1,6 +1,6 @@
 (function () {
   "use strict";
-  const M = window.MacNASModel, I = window.MacNASI18n, P = window.MacNASTaskPages;
+  const M = window.MacNASModel, I = window.MacNASI18n, P = window.MacNASTaskPages, N = window.MacNASNotifications;
   const api = M.createFixtureAdapter();
   const $ = (query, root = document) => root.querySelector(query);
   const paths = {
@@ -44,7 +44,7 @@
   let storage;
   try { storage = window.localStorage; } catch { storage = { getItem: () => null, setItem: () => { throw new Error("unavailable"); } }; }
   const prefs = M.readPreferences(storage);
-  const state = { prefs, session: null, taskSource: null, overview: null, previewJobs: [], events: [], ack: 0, consumer: "desktop-preview", scenario: "owner", epoch: 0, dataRequest: 0, z: 10, windows: new Map(), active: null, panel: null, modal: null };
+  const state = { prefs, session: null, taskSource: null, overview: null, previewJobs: [], notifications: null, scenario: "owner", epoch: 0, dataRequest: 0, z: 10, windows: new Map(), active: null, panel: null, modal: null };
   const t = (key, vars) => I.t(prefs.locale, key, vars);
   const appIDs = ["overview", "files", "storage", "apps", "tasks", "settings"];
   const canWrite = () => state.overview?.mode === "synthetic_development";
@@ -470,21 +470,36 @@
   }
   function renderNotifications() {
     $("#notifications-title").textContent = t("notifications");
-    const count = state.events.filter(e => e.sequence > state.ack).length;
-    $("#unread-count").textContent = t(count ? "unread" : "allRead", { count });
-    $("#read-all").textContent = t("markRead"); $("#read-all").disabled = !count || !canWrite(); $("#refresh-events").disabled = !canWrite();
+    const view = state.notifications?.snapshot(), items = view?.items || [], count = items.length;
+    const busy = ["polling", "acknowledging"].includes(view?.phase), blocked = !view || view.unavailable || !canWrite();
+    $("#unread-count").textContent = t("notificationLoaded", { count });
+    $("#read-all").textContent = t(view?.ackRetryRequired ? "notificationRetryAck" : "notificationAcknowledge");
+    $("#read-all").disabled = blocked || busy || !count;
+    $("#refresh-events").disabled = blocked || busy || view.full || view.ackRetryRequired;
     $("#refresh-events").setAttribute("aria-label", t("refresh")); $("#refresh-events").title = t("refresh");
-    $("#notification-readonly").hidden = canWrite(); $("#notification-readonly").textContent = t("notificationRecovery"); $("#notification-hint").textContent = t("notificationHint");
-    $("#notification-button").setAttribute("aria-label", t("notifications") + (count ? " · " + t("unread", { count }) : ""));
+    $("#notification-readonly").hidden = canWrite(); $("#notification-readonly").textContent = t("notificationRecovery");
+    $("#notification-hint").textContent = t("notificationBoundedHint", { capacity: view?.capacity || 100 });
+    const status = $("#notification-status"); status.hidden = !busy && !view?.error && !view?.full;
+    status.textContent = view?.error ? t(view.unavailable ? "notificationDisconnected" : view.ackRetryRequired ? "notificationAckUncertain" : "notificationPollFailed") + " " + errorMessage({ code: view.error }) : busy ? t(view.phase === "polling" ? "notificationLoading" : "notificationConfirming") : view?.full ? t("notificationFull") : "";
+    $("#notification-button").setAttribute("aria-label", t("notifications") + (count ? " · " + t("notificationLoaded", { count }) : ""));
     $(".notification-dot").hidden = !count;
     const list = $("#notification-list"); list.replaceChildren();
-    for (const event of state.events) {
-      const row = el("article", "notification-item " + event.state + (event.sequence > state.ack ? " unread" : "")); row.dataset.eventSequence = String(event.sequence);
+    const tasks = [...(state.windows.get("tasks")?.pager?.snapshot().items || []), ...state.previewJobs];
+    for (const event of items) {
+      const row = el("article", "notification-item " + event.state + " unread"); row.dataset.eventSequence = String(event.sequence);
       row.append(icon(event.state === "failed" ? "error" : event.state === "waiting_for_volume" ? "storage" : event.type === "cancelled" ? "close" : event.state === "completed" ? "check" : "tasks"));
-      const copy = el("div"), job = [...(state.windows.get("tasks")?.pager?.snapshot().items || []), ...state.previewJobs].find(j => j.id === event.job_id);
-      copy.append(el("strong", "", eventTitle(event)), el("p", "", job ? jobName(job) : t("tasks"))); row.append(copy); list.append(row);
+      const copy = el("div");
+      copy.append(el("strong", "", eventTitle(event)), el("p", "", N.notificationTaskName(event, tasks, t))); row.append(copy); list.append(row);
     }
-    if (!state.events.length) list.append(emptyState("bell", "emptyNotifications"));
+    if (!items.length) list.append(emptyState("bell", "notificationEmptyLoaded"));
+  }
+  async function updateNotifications(action) {
+    const epoch = state.epoch, notifications = state.notifications;
+    if (!notifications) return;
+    const pending = notifications[action](); renderNotifications();
+    try { await pending; }
+    catch (error) { if (epoch === state.epoch && notifications === state.notifications) toast(errorMessage(error)); }
+    finally { if (epoch === state.epoch && notifications === state.notifications) renderNotifications(); }
   }
   function hidePanels(restore = false) {
     const previous = state.panelFocus;
@@ -523,30 +538,32 @@
     closeModal(false); prefs.locale = locale; const saved = persist(); refreshViews(); if (!saved) toast(t("prefsUnavailable"));
   }
   async function refreshData() {
-    const epoch = state.epoch, serial = ++state.dataRequest, session = state.session, source = state.taskSource;
+    const epoch = state.epoch, serial = ++state.dataRequest, source = state.taskSource;
     const overview = await source.overview(), preview = await source.page({ pageSize: 2 });
     source.discardCursor(preview.nextCursor);
     if (epoch !== state.epoch || serial !== state.dataRequest || source !== state.taskSource) return;
-    state.overview = overview; state.previewJobs = preview.tasks; state.consumer = "desktop-preview-" + overview.userID;
-    if (canWrite()) {
-      const events = await api.pollEvents(state.consumer, session);
-      if (epoch !== state.epoch || serial !== state.dataRequest) return;
-      state.events = M.mergeEvents(state.events, events);
-    }
+    state.overview = overview; state.previewJobs = preview.tasks;
+    const notifications = state.notifications?.snapshot();
+    if (canWrite() && notifications && !notifications.full && !notifications.ackRetryRequired && !notifications.unavailable && !["polling", "acknowledging"].includes(notifications.phase)) await updateNotifications("poll");
+    if (epoch !== state.epoch || serial !== state.dataRequest || source !== state.taskSource) return;
     refreshViews();
   }
   async function switchScenario(scenario, showPreferences = false) {
     const epoch = ++state.epoch, old = state.session;
     document.body.dataset.ready = "false"; closeModal(false); hidePanels();
     for (const win of state.windows.values()) { win.pager?.dispose(); win.element.remove(); }
-    const oldSource = state.taskSource;
-    state.windows.clear(); state.active = null; state.previewJobs = []; state.events = []; state.ack = 0; state.overview = null; state.taskSource = null; state.session = null;
+    const oldSource = state.taskSource; state.notifications?.dispose();
+    state.windows.clear(); state.active = null; state.previewJobs = []; state.notifications = null; state.overview = null; state.taskSource = null; state.session = null;
     if (oldSource) await oldSource.close(); else await api.endSession(old);
     const session = await api.beginFixtureSession(scenario);
     if (epoch !== state.epoch) { await api.endSession(session); return; }
     const source = await P.createFixtureTaskSource(api, session);
     if (epoch !== state.epoch) { await source.close(); return; }
-    state.session = session; state.taskSource = source; state.scenario = scenario; await refreshData();
+    let notifications;
+    try { notifications = await N.createFixtureNotificationView(api, session, { consumerID: "desktop-preview-" + source.context.userID }); }
+    catch (error) { await source.close(); throw error; }
+    if (epoch !== state.epoch) { notifications.dispose(); await source.close(); return; }
+    state.session = session; state.taskSource = source; state.notifications = notifications; state.scenario = scenario; await refreshData();
     if (epoch !== state.epoch) return;
     await openWindow("overview", { route: true });
     if (showPreferences) await openWindow("preferences");
@@ -561,12 +578,8 @@
   $("#profile-button").addEventListener("click", () => togglePanel("profile-menu"));
   $("#open-preferences").addEventListener("click", () => openWindow("preferences"));
   $("#open-about").addEventListener("click", () => { hidePanels(); const copy = el("div"); copy.append(el("p", "", t("aboutText"))); showModal(t("about"), copy, [{ key: "done", style: "secondary-button", action: closeModal }]); });
-  $("#refresh-events").addEventListener("click", async () => { const epoch = state.epoch; try { await refreshData(); } catch (error) { if (epoch === state.epoch) toast(errorMessage(error)); } });
-  $("#read-all").addEventListener("click", async () => {
-    const epoch = state.epoch, session = state.session, last = Math.max(0, ...state.events.map(e => e.sequence)), control = $("#read-all");
-    control.disabled = true;
-    try { await api.acknowledgeEvents(state.consumer, last, session); if (epoch === state.epoch) { state.ack = last; renderNotifications(); } } catch (error) { toast(errorMessage(error)); } finally { if (epoch === state.epoch) renderNotifications(); }
-  });
+  $("#refresh-events").addEventListener("click", () => updateNotifications("poll"));
+  $("#read-all").addEventListener("click", () => updateNotifications("acknowledge"));
   for (const close of document.querySelectorAll("[data-close-panel]")) close.addEventListener("click", () => hidePanels(true));
   document.addEventListener("pointerdown", event => {
     if (state.panel && !event.target.closest(".floating-panel,#search-button,#notification-button,#profile-button,#brand-button,.launcher-button")) hidePanels();
