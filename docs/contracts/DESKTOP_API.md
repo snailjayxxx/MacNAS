@@ -1,4 +1,4 @@
-# 网页桌面适配契约（N-011 / N-014，v1）
+# 网页桌面适配契约（N-011 / N-014 / N-015，v1）
 
 页面当前使用model.js的createFixtureAdapter。业务内容为合成数据、刷新重置；管理员/读者/只读恢复选择器是演示场景，不是登录。不连接Swift、PostgreSQL、NAS文件、系统账户或真实存储池。
 
@@ -57,7 +57,30 @@ submitLabelJob/cancelJob/pollEvents/acknowledgeEvents在恢复模式返回readOn
 
 请求最多65536字节、16层和4096值节点；响应最多1048576字节，客户端最多65536值节点。拒绝重复解码键、非UTF-8及非法代理项。CLI `macnas bridge fixture --source SYNTHETIC_INSTANCE --user fixture-owner` 只使用调用方已有的stdin/stdout，按换行分帧；CRLF可用。stdout只含业务JSON，stderr只含固定启动/帧错误。超长帧/超过4096帧/非空EOF截断输出错误后退出；其它错误逐帧继续。完整环境由scripts/dev.py准备，不连接既有正式库。
 
-尚待实现：生产认证、可靠浏览器传输/超时/重连、完整业务DTO验证、真实文件授权及DOM接线。宿主会话从现有fixture API显式取得，不能视为生产认证；close/退出撤销会话。系统副作用继续走现有授权门槛。静态页connect-src为none，不自动连接HTTP/WebSocket。设计依据见[ADR-008](../decisions/ADR-008-desktop-message-bridge.md)。
+尚待实现：生产认证、实际浏览器传输/重连、真实文件授权及DOM接线。宿主会话从现有fixture API显式取得，不能视为生产认证；close/退出撤销会话。系统副作用继续走现有授权门槛。静态页connect-src为none，不自动连接HTTP/WebSocket。设计依据见[ADR-008](../decisions/ADR-008-desktop-message-bridge.md)。
+
+## N-015具名客户端
+
+bridge-client.js提供createDesktopClient({transport, closeTransport?, timeoutMs?, maximumPending?})和prepareLabelJob(value)。Node可require该模块；未来浏览器加载须先有model.js。当前不加入index.html或静态预览路由，网页仍显式使用fixture。
+
+客户端先调用overview()固定宿主userID/role/mode，其余业务方法不接受会话、角色或身份参数。overview/authorizeApp/listJobs/listLibraries与对应白名单方法同名；submitLabelJob接收{id,key,value}，cancelJob接收任务ID，pollEvents接收consumerID和可选limit，acknowledgeEvents接收consumerID及through，listFiles/previewFile接收上表的参数对象。所有方法最后可传{signal}；未知字段、显式null默认值及错误参数类型拒绝。close()幂等，closed可读。
+
+|结果|额外DTO校验|
+|---|---|
+|overview|来源/版本/角色/模式/语言固定集合，安全计数，逻辑容量与有权资料库估计值之和一致；后续身份/角色/模式变化拒绝并关闭|
+|任务|仅当前用户且无套件受众；label或fixtureHash，固定titleKey，尝试不超过1至8的预算，revision正整数；completed须有已完成检查点/一次效果，其余状态不能伪装提交；不接受payload/租约/未知字段|
+|事件|序号升序且不重复，revision正整数，类型与状态匹配；相同序号重放内容须一致|
+|资料库|逻辑ID唯一、UUID格式、已知卷状态、安全估计值；元数据不产生内容授权|
+|目录项|相对路径必须恰好为请求目录加文件名；拒绝碰撞、越界和错误种类；普通文件必须有安全字节数，目录省略bytes；UTC日期需有效|
+|文本|libraryID/relativePath与请求一致，实际UTF-8字节数等于声明且在预算内；HTML及NUL只作为文本数据|
+
+返回对象递归冻结，文件名和标题不能作为i18n键。标签提交响应须保持业务key/value，幂等重试允许返回原任务ID；取消响应须对应请求ID并为终态。
+
+默认等待15000ms、并发32；配置范围1至60000ms、1至128。超时返回timedOut，主动取消/关闭使未完成调用返回cancelled，后续调用unavailable。无效响应、传输失败或身份变化使连接失效，迟到响应丢弃。普通业务拒绝保留连接。AbortSignal通过transport的第二个上下文参数传递，closeTransport可选回调负责实际通道清理；不提供自动重连/重试，也不保证不配合的传输被强制结束。
+
+每个客户端使用独立随机请求前缀，通用适配器可选requestIdPrefix（1至96个允许ASCII字符，默认desktop），单适配器最多4096次请求，不能绕过宿主4096总数限制。新业务操作调用prepareLabelJob一次，保留其不可变id/key/value；超时不能证明数据库未提交，重试沿用原业务键和值。客户端不把意图写入localStorage。
+
+每客户端至多32个消费者，每消费者最多100条未确认事件，并串行轮询/确认。只能确认已交付序号或重复确认已知位置，确认成功后才清理；它不代替宿主数据库受众与交付上界校验。详细取舍见[ADR-009](../decisions/ADR-009-typed-desktop-client.md)。
 
 ## 状态与恢复
 

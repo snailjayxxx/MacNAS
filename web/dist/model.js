@@ -186,19 +186,21 @@
     check(typeof encoded === "string" && encoder.encode(encoded).length <= maximumBytes, budget);
     return JSON.parse(encoded);
   }
-  function createBridgeAdapter(transport) {
+  function createBridgeAdapter(transport, { requestIdPrefix = "desktop" } = {}) {
+    check(typeof requestIdPrefix === "string" && /^[A-Za-z0-9._-]{1,96}$/.test(requestIdPrefix));
     const allowed = new Set(["overview", "authorizeApp", "listJobs", "submitLabelJob", "cancelJob", "pollEvents", "acknowledgeEvents", "listLibraries", "listFiles", "previewFile"]);
     const errors = new Set(["invalidInput","invalidResponse","unsupported","denied","readOnly","unavailable","budgetExceeded","replay","collision","missingVolume","unsafePath","unsafeFile","integrity","database","busy","expired","staleState","interrupted","timedOut","cancelled","pluginFailed"]);
     let serial = 0;
     return Object.freeze({
       source: "bridge",
-      async request(method, params = {}) {
+      async request(method, params = {}, context) {
         check(allowed.has(method) && params && Object.getPrototypeOf(params) === Object.prototype, "invalidInput");
         check(typeof transport === "function", "unavailable");
-        const requestId = "desktop-" + (++serial);
+        check(serial < 4096, "budgetExceeded");
+        const requestId = requestIdPrefix + "-" + (++serial);
         const message = checkedBridgeJSON({ apiVersion: 1, requestId, method, params }, 65536, 4096, "invalidInput");
         let raw;
-        try { raw = await transport(message); } catch { throw new ServiceError("unavailable"); }
+        try { raw = await transport(message, context); } catch { throw new ServiceError("unavailable"); }
         const response = checkedBridgeJSON(raw, 1048576, 65536, "invalidResponse");
         check(response && !Array.isArray(response) && response.apiVersion === 1 && response.requestId === requestId, "invalidResponse");
         const keys = Object.keys(response), hasData = Object.hasOwn(response, "data"), hasError = Object.hasOwn(response, "error");

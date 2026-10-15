@@ -4,6 +4,7 @@ const {test,before,after}=require("node:test"),assert=require("node:assert/stric
 const {spawn,spawnSync}=require("node:child_process"),{createInterface}=require("node:readline");
 const path=require("node:path"),fs=require("node:fs");
 const M=require("../web/dist/model.js");
+const C=require("../web/dist/bridge-client.js");
 const binary=path.join(process.env.MACNAS_BINARY_DIR||"","macnas");
 const root=process.env.MACNAS_BRIDGE_TEST_ROOT,readonly=process.env.MACNAS_BRIDGE_READONLY_ROOT;
 const hosts=new Set(),errorCode=code=>error=>error instanceof M.ServiceError&&error.code===code;
@@ -29,6 +30,9 @@ class PipeHost {
     this.api=M.createBridgeAdapter(message=>this.raw(JSON.stringify(message)+"\n"));
   }
   fail(error){for(const entry of this.pending.splice(0)){clearTimeout(entry.timer);entry.reject(error);}}
+  typed(config={}) {
+    return C.createDesktopClient({transport:message=>this.raw(JSON.stringify(message)+"\n"),timeoutMs:20000,closeTransport:()=>this.child.stdin.end(),...config});
+  }
   raw(bytes){
     return new Promise((resolve,reject)=>{
       const entry={resolve,reject,timer:setTimeout(()=>{this.fail(Error("bridge response timeout"));this.child.kill("SIGKILL");},20000)};
@@ -126,4 +130,65 @@ test("NDJSON rejects duplicate keys, replay, oversize and truncated frames with 
   truncated.child.stdin.end();
   assert.deepEqual(await reply,{apiVersion:1,requestId:null,error:{code:"invalidInput"}});
   await truncated.finish(1);assert.equal(truncated.stderr.trim(),"macnas: invalidSchema");
+});
+
+test("typed clients validate actual durable DTOs and owner, reader and restored contexts",async()=>{
+  const host=new PipeHost(root),client=host.typed();
+  try {
+    const overview=await client.overview();assert.equal(overview.source,"fixture-host");
+    const intent={id:"typed-job",key:"typed-key",value:"真实管道中的合成任务 🐚"};
+    assert.equal((await client.submitLabelJob(intent)).id,intent.id);
+    assert.equal((await client.submitLabelJob({...intent,id:"typed-retry"})).id,intent.id);
+    assert.equal((await client.cancelJob(intent.id)).state,"cancelled");
+    assert.ok((await client.listJobs()).some(job=>job.id===intent.id));
+    const events=await client.pollEvents("typed-consumer",100);assert.ok(events.length>0);
+    assert.equal(await client.acknowledgeEvents("typed-consumer",events.at(-1).sequence),true);
+    assert.deepEqual(await client.pollEvents("typed-consumer"),[]);
+    const libraries=await client.listLibraries();assert.equal(libraries[0].state,"missing");
+    await assert.rejects(client.listFiles({libraryID:libraries[0].libraryID}),errorCode("missingVolume"));
+  } finally {client.close();await host.finish();}
+  for(const [source,user] of [[root,"fixture-family"],[readonly,"fixture-owner"]]) {
+    const host=new PipeHost(source,user),client=host.typed();
+    try {
+      const info=await client.overview();assert.ok(Array.isArray(await client.listJobs()));
+      await assert.rejects(client.submitLabelJob({id:"blocked",key:"blocked",value:"blocked"}),errorCode(info.role==="reader"?"denied":"readOnly"));
+      if(info.role==="reader") {
+        assert.deepEqual(await client.listLibraries(),[]);
+        await assert.rejects(client.authorizeApp("settings"),errorCode("denied"));
+      }
+    } finally {client.close();await host.finish();}
+  }
+});
+
+test("a timed-out committed write is recovered with the same durable business key",{timeout:60000},async()=>{
+  const host=new PipeHost(root);let sawCommit;
+  const committed=new Promise(resolve=>{sawCommit=resolve;});
+  const client=host.typed({timeoutMs:10000,transport:async message=>{
+    const response=await host.raw(JSON.stringify(message)+"\n");
+    if(message.method==="submitLabelJob") {
+      assert.equal(response.data.id,"lost-response-job");sawCommit();
+      return new Promise(()=>{}); // The actual committed response never reaches the typed client.
+    }
+    return response;
+  }});
+  const intent={id:"lost-response-job",key:"lost-response-key",value:"合成响应丢失重试"};
+  try {
+    await client.overview();const pending=client.submitLabelJob(intent).catch(error=>error);
+    await committed;assert.equal((await pending).code,"timedOut");assert.equal(client.closed,true);
+  } finally {client.close();await host.finish();}
+  const nextHost=new PipeHost(root),next=nextHost.typed();
+  try {
+    await next.overview();const recovered=await next.submitLabelJob({...intent,id:"new-retry-id"});
+    assert.equal(recovered.id,intent.id);assert.equal((await next.listJobs()).filter(job=>job.idempotency_key===intent.key).length,1);
+  } finally {next.close();await nextHost.finish();}
+});
+
+test("new typed client prefixes prevent replay on a caller-retained host",async()=>{
+  const host=new PipeHost(root);
+  try {
+    for(let i=0;i<2;i++) {
+      const client=host.typed({closeTransport:()=>{}});
+      assert.equal((await client.overview()).userID,"fixture-owner");client.close();
+    }
+  } finally {await host.finish();}
 });

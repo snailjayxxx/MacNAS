@@ -64,7 +64,7 @@
         {
           "id": "SYS-01.desktop_window_visual_interaction_qa",
           "status": "BLOCKED",
-          "scope": "Saved browser permission blocks preview; built-in iab is unavailable",
+          "scope": "Deferred at owner request until return home; saved browser tool block unresolved. W01-W10 and full browser checklist not executed.",
           "evidence": [
             "docs/evidence/n011-2026-10-15.json",
             "docs/plans/N-011-ACCEPTANCE.md",
@@ -89,6 +89,26 @@
             "docs/evidence/n014-2026-10-15.json",
             "docs/plans/N-014-ACCEPTANCE.md",
             "docs/decisions/ADR-008-desktop-message-bridge.md"
+          ]
+        },
+        {
+          "id": "SYS-01.typed_desktop_business_dtos",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "Named client validates actual host overview/jobs/events and synthetic file DTOs; no browser DOM connection",
+          "evidence": [
+            "docs/evidence/n015-2026-10-15.json",
+            "docs/plans/N-015-ACCEPTANCE.md",
+            "docs/decisions/ADR-009-typed-desktop-client.md"
+          ]
+        },
+        {
+          "id": "SYS-01.bounded_client_connection_lifecycle",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "Bounded waits, close/abort, pending limits and late-response refusal; JavaScript event-loop limits only",
+          "evidence": [
+            "docs/evidence/n015-2026-10-15.json",
+            "docs/plans/N-015-ACCEPTANCE.md",
+            "docs/decisions/ADR-009-typed-desktop-client.md"
           ]
         }
       ]
@@ -395,6 +415,16 @@
             "docs/evidence/n014-2026-10-15.json",
             "docs/plans/N-014-ACCEPTANCE.md",
             "docs/decisions/ADR-008-desktop-message-bridge.md"
+          ]
+        },
+        {
+          "id": "SYS-06.committed_response_loss_idempotent_retry",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "Real Swift/PostgreSQL commit followed by withheld response, client timeout and same-key retry returning the original job",
+          "evidence": [
+            "docs/evidence/n015-2026-10-15.json",
+            "docs/plans/N-015-ACCEPTANCE.md",
+            "docs/decisions/ADR-009-typed-desktop-client.md"
           ]
         }
       ]
@@ -1582,6 +1612,16 @@
             "docs/plans/N-014-ACCEPTANCE.md",
             "docs/decisions/ADR-008-desktop-message-bridge.md"
           ]
+        },
+        {
+          "id": "FIL-01.typed_relative_file_metadata",
+          "status": "MOCK_PASS",
+          "scope": "Synthetic response schema/path/date/size/name collision checks only; no browser filesystem access",
+          "evidence": [
+            "docs/evidence/n015-2026-10-15.json",
+            "docs/plans/N-015-ACCEPTANCE.md",
+            "docs/decisions/ADR-009-typed-desktop-client.md"
+          ]
         }
       ]
     },
@@ -1785,6 +1825,16 @@
             "docs/evidence/n014-2026-10-15.json",
             "docs/plans/N-014-ACCEPTANCE.md",
             "docs/decisions/ADR-008-desktop-message-bridge.md"
+          ]
+        },
+        {
+          "id": "FIL-05.typed_utf8_preview_correlation",
+          "status": "MOCK_PASS",
+          "scope": "Synthetic preview ID/path/byte checks and plain string preservation only; no actual browser rendering",
+          "evidence": [
+            "docs/evidence/n015-2026-10-15.json",
+            "docs/plans/N-015-ACCEPTANCE.md",
+            "docs/decisions/ADR-009-typed-desktop-client.md"
           ]
         }
       ]
@@ -4084,6 +4134,16 @@
             "docs/plans/N-014-ACCEPTANCE.md",
             "docs/decisions/ADR-008-desktop-message-bridge.md"
           ]
+        },
+        {
+          "id": "APP-04.pinned_client_identity_and_scope",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "Pin host user/role/mode and reject cross-user task DTOs; host authorization remains authoritative",
+          "evidence": [
+            "docs/evidence/n015-2026-10-15.json",
+            "docs/plans/N-015-ACCEPTANCE.md",
+            "docs/decisions/ADR-009-typed-desktop-client.md"
+          ]
         }
       ]
     },
@@ -5170,6 +5230,16 @@
             "docs/evidence/n014-2026-10-15.json",
             "docs/plans/N-014-ACCEPTANCE.md",
             "docs/decisions/ADR-008-desktop-message-bridge.md"
+          ]
+        },
+        {
+          "id": "OPS-02.typed_consumer_delivery_and_ack_bounds",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "Bounded consumer state, serialized poll/ACK, event consistency and delivered-sequence checks",
+          "evidence": [
+            "docs/evidence/n015-2026-10-15.json",
+            "docs/plans/N-015-ACCEPTANCE.md",
+            "docs/decisions/ADR-009-typed-desktop-client.md"
           ]
         }
       ]

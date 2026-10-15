@@ -50,3 +50,7 @@ macnas storage demo --source SYNTHETIC_INSTANCE
 命令只在有效合成实例中创建新的随机fixture目录；只读恢复模式拒绝。scripts/dev.py自动演练这一流程，并检查恢复拒绝时没有创建占位目录。[范围与限制](docs/plans/N-012-013-ACCEPTANCE.md)。
 
 N-014加入[无监听桌面消息桥接](docs/decisions/ADR-008-desktop-message-bridge.md)。在验证入口准备的合成数据库环境中，`macnas bridge fixture --source SYNTHETIC_INSTANCE --user fixture-owner`通过标准输入输出交换有界逐行JSON；10个固定方法涵盖任务、事件及已批准合成文件，不接受身份、数据库或根目录参数。scripts/dev.py会用JavaScript客户端调用独立Swift进程，检查真实PostgreSQL持久任务、权限和只读拒写。静态网页仍为演示模式，尚无生产登录或浏览器连接。
+
+N-015加入[具名业务客户端](web/dist/bridge-client.js)：完整展示数据校验、固定宿主身份、调用超时/关闭、迟到响应丢弃和业务幂等重试。仍通过Node与CLI管道验证，未接入网页。参见[ADR-009](docs/decisions/ADR-009-typed-desktop-client.md)与[接口](docs/contracts/DESKTOP_API.md)。
+
+**网页窗口尚未实测。** 用户准备回家后验收，已整理[启动步骤与W01–W10窗口清单](web/tests/BROWSER_ACCEPTANCE.md)，覆盖打开/关闭、层级、最小化/恢复、拖动/缩放、最大化、dock、键盘和窄屏。全部保留待测，自动测试不代替浏览器验收。

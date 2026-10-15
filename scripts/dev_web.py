@@ -20,12 +20,12 @@ def run(name,command):
     print(name+(': PASS' if result.returncode==0 else ': FAIL'),flush=True)
     if result.returncode:print(result.stdout);raise RuntimeError(name)
 try:
-    for name in ['model.js','i18n.js','desktop.js']:run('syntax-'+name,[node,'--check','web/dist/'+name])
-    run('model-tests',[node,'--test','web/tests/model.test.cjs','web/tests/bridge.test.cjs'])
+    for name in ['model.js','bridge-client.js','i18n.js','desktop.js']:run('syntax-'+name,[node,'--check','web/dist/'+name])
+    run('model-tests',[node,'--test','web/tests/model.test.cjs','web/tests/bridge.test.cjs','web/tests/client.test.cjs'])
     run('static-http-policy-tests',['/usr/bin/python3','scripts/test_web.py'])
     run('requirements',['/usr/bin/python3','scripts/verify_requirements.py'])
     run('requirements-negative-tests',['/usr/bin/python3','scripts/test_requirements.py'])
-    baseline_path=next(path for path in [ROOT/'docs/evidence/n014-2026-10-15.json',ROOT/'docs/evidence/n012-n013-2026-10-15.json',ROOT/'docs/evidence/n010-2026-10-15.json'] if path.exists())
+    baseline_path=next(path for path in [ROOT/'docs/evidence/n015-2026-10-15.json',ROOT/'docs/evidence/n014-2026-10-15.json',ROOT/'docs/evidence/n012-n013-2026-10-15.json',ROOT/'docs/evidence/n010-2026-10-15.json'] if path.exists())
     baseline=json.loads(baseline_path.read_text())['source_sha256']
     core={name:digest for name,digest in baseline.items() if name=='Package.swift' or name.startswith(('Sources/','Tests/','database/'))}
     assert core and all(hashlib.sha256((ROOT/name).read_bytes()).hexdigest()==digest for name,digest in core.items()),'Core or tests changed; latest full regression receipt is required'
