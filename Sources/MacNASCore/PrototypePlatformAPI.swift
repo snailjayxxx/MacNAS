@@ -27,6 +27,7 @@ public final class PrototypePlatformAPI: @unchecked Sendable {
     let fixtureVolumes: FixtureVolumeRegistry
     let fixtureContent = FixtureContentRegistry()
     let jobPages = JobPageRegistry()
+    let directoryPages = DirectoryPageRegistry()
     private let sessionLock=NSLock()
     private var sessions:[UUID:String]=[:]
     private var libraries:[UUID:URL]=[:]
@@ -48,7 +49,7 @@ public final class PrototypePlatformAPI: @unchecked Sendable {
         guard let id,let user=try config().users.first(where:{$0.id==id}) else { throw NASError.denied }
         try require(!administrator || user.role == "administrator",.denied);return user
     }
-    public func endSession(_ session:PrototypeSession) { sessionLock.lock();sessions.removeValue(forKey:session.id);sessionLock.unlock(); fixtureVolumes.endSession(session.id);jobPages.endSession(session.id) }
+    public func endSession(_ session:PrototypeSession) { sessionLock.lock();sessions.removeValue(forKey:session.id);sessionLock.unlock(); fixtureVolumes.endSession(session.id);jobPages.endSession(session.id);directoryPages.endSession(session.id) }
     private func writable() throws {
         let binding=try PortableInstance.strictRead(HostBinding.self,SafeFS.resolve(root,"host-binding/binding.json"))
         try require(binding.mode == "synthetic_development",.denied)
@@ -100,7 +101,7 @@ public final class PrototypePlatformAPI: @unchecked Sendable {
         let caller=try user(session)
         return try DurableJobQueue(store:PortableInstance.store(root)).statistics(audience:.user(caller.id))
     }
-    private func pageScope(_ session:PrototypeSession) throws -> JobPageScope {
+    func pageScope(_ session:PrototypeSession) throws -> JobPageScope {
         let caller=try user(session),identity=try PortableInstance.validateLayout(root,exported:false).instanceID
         try require(identity==instanceID,.denied)
         let binding=try PortableInstance.strictRead(HostBinding.self,SafeFS.resolve(root,"host-binding/binding.json"))

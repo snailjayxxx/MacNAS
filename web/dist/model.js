@@ -235,7 +235,7 @@
   }
   function createBridgeAdapter(transport, { requestIdPrefix = "desktop" } = {}) {
     check(typeof requestIdPrefix === "string" && /^[A-Za-z0-9._-]{1,96}$/.test(requestIdPrefix));
-    const allowed = new Set(["overview", "authorizeApp", "listJobs", "listJobsPage", "submitLabelJob", "cancelJob", "pollEvents", "acknowledgeEvents", "listLibraries", "listFiles", "previewFile"]);
+    const allowed = new Set(["overview", "authorizeApp", "listJobs", "listJobsPage", "submitLabelJob", "cancelJob", "pollEvents", "acknowledgeEvents", "listLibraries", "listFiles", "listFilesPage", "previewFile"]);
     const errors = new Set(["invalidInput","invalidResponse","unsupported","denied","readOnly","unavailable","budgetExceeded","replay","collision","missingVolume","unsafePath","unsafeFile","integrity","database","busy","expired","staleState","interrupted","timedOut","cancelled","pluginFailed"]);
     let serial = 0;
     return Object.freeze({

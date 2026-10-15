@@ -1,4 +1,4 @@
-# 网页桌面适配契约（N-011 / N-014 / N-015 / N-016 / N-017 / N-018，v1）
+# 网页桌面适配契约（N-011 / N-014 / N-015 / N-016 / N-017 / N-018 / N-019，v1）
 
 页面当前使用model.js的createFixtureAdapter。业务内容为合成数据、刷新重置；管理员/读者/只读恢复选择器是演示场景，不是登录。不连接Swift、PostgreSQL、NAS文件、系统账户或真实存储池。
 
@@ -45,6 +45,7 @@ DesktopBridge绑定宿主已有的Schema 3 API和会话；createBridgeAdapter(tr
 |acknowledgeEvents|consumerID、through|through为0至9007199254740991的整数；只能确认本受众已交付范围|
 |listLibraries|空对象|仅有权资料库的libraryID/volumeID/estimatedBytes/state，不返回根路径或内容授权|
 |listFiles|libraryID；可选relativePath、maximumEntries|路径默认空，最多4096字节；条目默认1000、范围1至1000；仍需显式卷和内容批准|
+|listFilesPage|libraryID；可选relativePath、pageSize、cursor|第12个方法；默认空路径及50项，1至100，目录标记/授权绑定继续；见N-019|
 |previewFile|libraryID、relativePath；可选maximumBytes|默认65536、范围1至65536；仅已批准合成文件的UTF-8纯文本|
 
 除已列可选字段外，未知/缺失/错类型一律拒绝。所有字符串拒绝NUL；consumerID/libraryID/id/key最多128字节。协议整数不接受布尔、负数、小数或指数形式。SQL、shell、根URL、用户、角色、模式、数据库选择、会话创建、卷清单/绑定、目录批准、读者变更和套件执行不进入消息白名单。
@@ -123,6 +124,18 @@ ACK可能已提交但成功响应丢失。连接可用时可显式重试相同�
 名称仅查当前页加2项预览，辅助函数最多接受102行；固定名称key可以翻译，普通标题保持文字，缺失用普通通知文案，不按jobID翻译或全量取任务。静态界面容量100、仅显示已加载待确认数；确认成功后清空，本批之外等待手动刷新，关闭面板保留批次。没有定时后台轮询。
 
 静态HTML/白名单只增加notification-view.js，bridge-client.js仍不加载/提供，connect-src为none。Node/Swift管道证明不等于网页连接数据库或DOM验收。详见[ADR-012](../decisions/ADR-012-bounded-notification-view.md)、[范围](../plans/N-018-ACCEPTANCE.md)及[回家N01–N06](../../web/tests/BROWSER_ACCEPTANCE.md)，W/T/N均待测。
+
+## N-019目录页与客户端继续链
+
+listFilesPage参数为{libraryID,relativePath?,pageSize?,cursor?}，默认空路径及50条，每页1至100。wire结果恰好为{pageVersion:1,order:"name-utf8",consistency:"directory-stamped-live-metadata",libraryID,relativePath,pageSize,items,nextCursor}；items沿用普通文件元数据，终页nextCursor显式null，有继续令牌时必须满页。没有total/搜索/外部after名称/任意根路径参数。
+
+服务端每次完整有界扫描，最多8192项、名称共1MiB、单调5秒，保留最多101份候选及有界碰撞摘要。UTF-8名称排序；页外不安全条目同样拒绝。超过预算整体budgetExceeded，时间检查timedOut；5秒不是OS强制中断I/O的保证。目录标记在翻页和扫描/编码前后核对，变化staleState并要求重读；文件原地修改可只改变文件元数据，因此后页内容是live，不能称为目录或文件内容快照。
+
+宿主每API最多64个待用/64个消费墓碑，整条链60秒单调寿命；绑定会话/实例/数据库/用户/角色/模式、资料库/路径/大小及卷/挂载/介质/批准/修订/内容reader身份。格式错误invalidInput，范围或未知位置denied，已知到期expired，保留墓碑重放replay。授权与路径读取/编码后再核对，成功编码/复查才消费原位置；响应传输丢失可能已消费，需要显式重读。无数据库Schema变化或持久目录令牌。
+
+具名客户端listFilesPage(params,options?)校验精确页形状、上下文、名称/相对路径、安全字节数、日期、普通类型、页内碰撞及UTF-8页内/跨页递增；最多64条目录链，和任务链独立，同令牌串行。staleState/expired/denied/replay/missingVolume移除本地位置，不自动重试或聚合全部页。discardFilePage(cursor)同步本地释放，进行中busy、未知false，无RPC，不能释放宿主预算。close清空并拒绝迟到结果，继续受既有并发/超时/4096请求上限约束。
+
+恢复只读可查询同进程既有批准目录，不能扩大批准；新宿主/恢复实例没有自动目录授权。实际Node子进程管道由Swift测试宿主先显式批准新建合成目录，不为生产CLI添加自动批准入口。静态fixture页面尚未接入本方法，主机客户端仍不加载/提供，HTML/CSP/白名单不变。详见[ADR-013](../decisions/ADR-013-bounded-directory-pages.md)、[合成资料库契约](FIXTURE_STORAGE_API.md)及[N-019范围](../plans/N-019-ACCEPTANCE.md)。
 
 ## 状态与恢复
 

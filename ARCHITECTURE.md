@@ -1,4 +1,4 @@
-# MacNAS 原型架构（N-018）
+# MacNAS 原型架构（N-019）
 
 Swift 6 / macOS 15部署目标，PostgreSQL 18。当前为非root CLI、无监听的业务API和两个自研可信样例；没有生产HTTP登录、系统Helper或正式接管。
 
@@ -92,3 +92,13 @@ notification-view.js显式借用fixture会话或具名客户端，保持固定�
 dispose不关闭共享连接，不回滚数据库操作，迟到成功/失败不能恢复旧视图。恢复模式在调用前拒绝轮询/确认；断连保留未解决批次，不自动重连，当前协议缺少持久消费状态查询/安全重连核对。真实持久性继续由PostgreSQL 18原有事务和收据保证，无Schema变化。
 
 HTML仅增加通知视图脚本，具名客户端不加载/静态提供，connect-src仍为none。网页仍为内存演示，Node/真实管道不证明DOM或浏览器业务连接。W01–W10、T01–T08、N01–N06全部等待用户回家；见[ADR-012](docs/decisions/ADR-012-bounded-notification-view.md)及[验收范围](docs/plans/N-018-ACCEPTANCE.md)。
+
+## N-019有界目录查询
+
+DescriptorLibrary新增UTF-8名称顺序的受限目录页；每次扫描最多8192项、名称共1MiB、单调5秒，只保留最多101份候选元数据及有界名称碰撞摘要。超过预算完整拒绝，旧1000项数组语义不变。这是逐页重扫原型，尚无生产大目录索引或吞吐证明，5秒检查也不能强制中断任意文件系统I/O。
+
+目录标记在扫描前后、继续页及编码后核对，变化要求从头读取；普通文件原地变化可能不改变父目录标记，元数据仍是live，不是文件系统快照。随机一次性目录能力绑定现有会话/实例/数据库/受众以及库/路径/卷批准/修订/内容reader，每API64待用/64墓碑，整链60秒。成功编码和复查后才消费，目录授权仍需显式批准，恢复不能扩大授权。
+
+第12个固定方法listFilesPage与具名客户端支持精确页DTO、跨页UTF-8顺序及有界本地继续链；普通名称不进入词典，客户端本地discardFilePage无RPC，不释放宿主预算。Schema 3/SQL表与生产身份保持原范围。实际Node子进程管道仅由测试宿主先批准新建合成目录，生产消息/CLI没有新增自动授权入口。
+
+静态网页尚未接入目录页，HTML/CSP/白名单不变，W/T/N及完整浏览器清单仍全部待测。取舍与验证范围见[ADR-013](docs/decisions/ADR-013-bounded-directory-pages.md)及[N-019验收范围](docs/plans/N-019-ACCEPTANCE.md)。

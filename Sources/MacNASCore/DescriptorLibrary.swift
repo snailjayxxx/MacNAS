@@ -1,8 +1,8 @@
 import Foundation
 import Darwin
 
-public enum FixtureFileKind: String, Codable { case directory, file }
-public struct FixtureFileEntry: Codable, Equatable {
+public enum FixtureFileKind: String, Codable, Sendable { case directory, file }
+public struct FixtureFileEntry: Codable, Equatable, Sendable {
     public let name: String
     public let relativePath: String
     public let kind: FixtureFileKind
@@ -18,6 +18,7 @@ public struct FixtureTextPreview: Codable, Equatable {
 
 /// Read-only, descriptor-relative access. Only the typed fixture API can publish this content.
 final class DescriptorLibrary: @unchecked Sendable {
+    let identity = UUID()
     private let rootURL: URL
     private let descriptor: Int32
     private let device: dev_t
@@ -142,6 +143,60 @@ final class DescriptorLibrary: @unchecked Sendable {
         try require(Self.sameContentStamp(before, try Self.attributes(fd)), .staleState)
         try validateDirectory(fd, relative: relative)
         return entries.sorted { $0.name < $1.name }
+    }
+    func validatePage(_ stamp: DirectoryStamp, relative: String) throws {
+        try validateRoot()
+        let fd=try Self.descend(from:descriptor,relative:relative,device:device); defer { close(fd) }
+        try require(DirectoryStamp(try Self.attributes(fd))==stamp, .staleState)
+        try validateDirectory(fd,relative:relative)
+    }
+    /// Bounded full scan with only pageSize+1 candidate DTOs and bounded collision digests.
+    /// Metadata is live; directory stamps detect membership changes, not file-content snapshots.
+    func page(relative: String="", after: String?=nil, expected: DirectoryStamp?=nil, size: Int=50,
+              budget: DirectoryScanBudget=DirectoryScanBudget(), now: () -> TimeInterval={ProcessInfo.processInfo.systemUptime},
+              afterScan: (() throws -> Void)?=nil) throws -> DirectorySlice {
+        try require((1...100).contains(size) && budget.entries>0 && budget.nameBytes>0 && budget.seconds>0, .invalidSchema)
+        let deadline=now()+budget.seconds
+        try validateRoot()
+        let fd=try Self.descend(from:descriptor,relative:relative,device:device)
+        guard let stream=fdopendir(fd) else { close(fd); throw NASError.unsafeFile }
+        defer { closedir(stream) }
+        let before=DirectoryStamp(try Self.attributes(fd))
+        if let expected { try require(before==expected, .staleState) }
+        var names=DirectoryNameBudget(), selected: [(entry:FixtureFileEntry,stamp:DirectoryStamp)]=[]
+        while true {
+            try require(now()<deadline, .timedOut)
+            errno=0
+            guard let record=readdir(stream) else { try require(errno==0, .unsafeFile); break }
+            let count=Int(record.pointee.d_namlen)+1
+            let name=withUnsafePointer(to:&record.pointee.d_name) { $0.withMemoryRebound(to:CChar.self,capacity:count) { String(validatingCString:$0) } }
+            guard let name else { throw NASError.unsafeFile }
+            if name=="." || name==".." { continue }
+            try names.add(name,budget:budget)
+            var info=stat()
+            try require(fstatat(fd,name,&info,AT_SYMLINK_NOFOLLOW)==0, .staleState)
+            let kind=info.st_mode & S_IFMT
+            try require(info.st_dev==device && (kind==S_IFDIR || (kind==S_IFREG && info.st_nlink==1)), .unsafeFile)
+            let path=relative.isEmpty ? name:relative+"/"+name
+            try require(path.utf8.count<=4096 && path.split(separator:"/").count<=128, .budgetExceeded)
+            if let after, !after.utf8.lexicographicallyPrecedes(name.utf8) { continue }
+            if selected.count==size+1,let last=selected.last, !name.utf8.lexicographicallyPrecedes(last.entry.name.utf8) { continue }
+            let entry=FixtureFileEntry(name:name,relativePath:path,kind:kind==S_IFDIR ? .directory:.file,
+                bytes:kind==S_IFREG ? Int64(info.st_size):nil,
+                modifiedAt:Date(timeIntervalSince1970:Double(info.st_mtimespec.tv_sec)+Double(info.st_mtimespec.tv_nsec)/1_000_000_000))
+            let index=selected.firstIndex { name.utf8.lexicographicallyPrecedes($0.entry.name.utf8) } ?? selected.endIndex
+            selected.insert((entry,DirectoryStamp(info)),at:index)
+            if selected.count>size+1 { selected.removeLast() }
+        }
+        try afterScan?()
+        for candidate in selected {
+            var current=stat()
+            try require(fstatat(fd,candidate.entry.name,&current,AT_SYMLINK_NOFOLLOW)==0 && DirectoryStamp(current)==candidate.stamp, .staleState)
+        }
+        try require(DirectoryStamp(try Self.attributes(fd))==before, .staleState)
+        try validateDirectory(fd,relative:relative)
+        try require(now()<deadline, .timedOut)
+        return DirectorySlice(entries:selected.prefix(size).map(\.entry),stamp:before,hasMore:selected.count>size)
     }
     /// The hook is internal and used only to deterministically exercise filesystem races in tests.
     func read(relative: String, maximumBytes: Int = 65536, afterOpen: (() throws -> Void)? = nil) throws -> Data {

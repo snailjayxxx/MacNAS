@@ -55,6 +55,27 @@ private struct DesktopJob: Encodable {
         last_error = job.last_error.map { NASError(rawValue: $0) == nil ? "unavailable" : $0 }
     }
 }
+private struct DesktopDirectoryPage: Encodable {
+    let pageVersion=1
+    let order="name-utf8"
+    let consistency="directory-stamped-live-metadata"
+    let libraryID:String
+    let relativePath:String
+    let pageSize:Int
+    let items:[FixtureFileEntry]
+    let nextCursor:String?
+    enum CodingKeys:String,CodingKey { case pageVersion,order,consistency,libraryID,relativePath,pageSize,items,nextCursor }
+    init(_ page:FixtureDirectoryPage) throws {
+        guard page.entries.allSatisfy({ $0.bytes.map { $0>=0 && $0<=9_007_199_254_740_991 } ?? true }) else { throw BridgeFault.invalidResponse }
+        libraryID=page.libraryID;relativePath=page.relativePath;pageSize=page.pageSize;items=page.entries;nextCursor=page.nextCursor
+    }
+    func encode(to encoder:Encoder) throws {
+        var c=encoder.container(keyedBy:CodingKeys.self)
+        try c.encode(pageVersion,forKey:.pageVersion);try c.encode(order,forKey:.order);try c.encode(consistency,forKey:.consistency)
+        try c.encode(libraryID,forKey:.libraryID);try c.encode(relativePath,forKey:.relativePath);try c.encode(pageSize,forKey:.pageSize);try c.encode(items,forKey:.items)
+        if let nextCursor { try c.encode(nextCursor,forKey:.nextCursor) } else { try c.encodeNil(forKey:.nextCursor) }
+    }
+}
 private struct DesktopOverview: Encodable {
     let apiVersion = 1
     let source = "fixture-host"
@@ -216,6 +237,11 @@ public final class DesktopBridge: @unchecked Sendable {
                 let library = try p.text("libraryID"), path = try p.text("relativePath", maximum: 4096, fallback: "", allowEmpty: true)
                 let count = try p.integer("maximumEntries", range: 1...1000, fallback: 1000)
                 return try response(api.listFixtureLibrary(libraryID: library, relativePath: path, maximumEntries: Int(count), session: session), id: id)
+            case "listFilesPage":
+                let p=try params.fields(required:["libraryID"],optional:["relativePath","pageSize","cursor"])
+                let library=try p.text("libraryID"),path=try p.text("relativePath",maximum:4096,fallback:"",allowEmpty:true)
+                let size=try p.integer("pageSize",range:1...100,fallback:50),cursor=try p["cursor"].map { try $0.text(maximumBytes:36) }
+                return try api.withFixtureLibraryPage(libraryID:library,relativePath:path,pageSize:Int(size),cursor:cursor,session:session) { try self.response(DesktopDirectoryPage($0),id:id) }
             case "previewFile":
                 let p = try params.fields(required: ["libraryID","relativePath"], optional: ["maximumBytes"])
                 let library = try p.text("libraryID"), path = try p.text("relativePath", maximum: 4096)

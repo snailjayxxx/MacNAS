@@ -21,14 +21,21 @@ def run(name,command):
     if result.returncode:print(result.stdout);raise RuntimeError(name)
 try:
     for name in ['model.js','bridge-client.js','task-pages.js','notification-view.js','i18n.js','desktop.js']:run('syntax-'+name,[node,'--check','web/dist/'+name])
-    run('model-tests',[node,'--test','web/tests/model.test.cjs','web/tests/bridge.test.cjs','web/tests/client.test.cjs','web/tests/task-pages.test.cjs','web/tests/notification-view.test.cjs'])
+    run('model-tests',[node,'--test','web/tests/model.test.cjs','web/tests/bridge.test.cjs','web/tests/client.test.cjs','web/tests/task-pages.test.cjs','web/tests/notification-view.test.cjs','web/tests/directory-pages.test.cjs'])
     run('static-http-policy-tests',['/usr/bin/python3','scripts/test_web.py'])
     run('requirements',['/usr/bin/python3','scripts/verify_requirements.py'])
     run('requirements-negative-tests',['/usr/bin/python3','scripts/test_requirements.py'])
-    baseline_path=next(path for path in [ROOT/'docs/evidence/n016-2026-10-15.json',ROOT/'docs/evidence/n015-2026-10-15.json',ROOT/'docs/evidence/n014-2026-10-15.json',ROOT/'docs/evidence/n012-n013-2026-10-15.json',ROOT/'docs/evidence/n010-2026-10-15.json'] if path.exists())
-    baseline=json.loads(baseline_path.read_text())['source_sha256']
+    baseline_path=next(path for path in [ROOT/'docs/evidence/n019-2026-10-15.json',ROOT/'docs/evidence/n016-2026-10-15.json',ROOT/'docs/evidence/n015-2026-10-15.json',ROOT/'docs/evidence/n014-2026-10-15.json',ROOT/'docs/evidence/n012-n013-2026-10-15.json',ROOT/'docs/evidence/n010-2026-10-15.json'] if path.exists())
+    baseline_report=json.loads(baseline_path.read_text())
+    baseline=baseline_report['source_sha256']
     core={name:digest for name,digest in baseline.items() if name=='Package.swift' or name.startswith(('Sources/','Tests/','database/'))}
+    actual_core={'Package.swift'}|{str(p.relative_to(ROOT)) for folder in ['Sources','Tests','database'] for p in (ROOT/folder).rglob('*') if p.is_file() and p.suffix in ['.swift','.sql']}
+    assert actual_core==set(core),'Core source set changed; latest full regression receipt is required'
     assert core and all(hashlib.sha256((ROOT/name).read_bytes()).hexdigest()==digest for name,digest in core.items()),'Core or tests changed; latest full regression receipt is required'
+    dependencies=baseline_report.get('core_full_regression',{}).get('embedded_node_pipe_dependencies',{})
+    if baseline_report.get('task')=='N-019':
+        assert set(dependencies)=={'web/dist/model.js','web/dist/bridge-client.js','scripts/test_directory_bridge.cjs'},'Embedded pipe dependency receipt is required'
+    assert all(hashlib.sha256((ROOT/name).read_bytes()).hexdigest()==digest for name,digest in dependencies.items()),'Embedded Node/Swift pipe dependencies changed; rerun that scenario and reconcile the full baseline before reuse'
 except Exception as error:outcome='FAILED';print(str(error),flush=True)
 unchanged=all(hashlib.sha256((ROOT/name).read_bytes()).hexdigest()==digest for name,digest in hashes.items())
 if not unchanged:outcome='FAILED'

@@ -33,6 +33,28 @@ extension PrototypePlatformAPI {
             try $0.list(relative: relativePath, maximumEntries: maximumEntries)
         }
     }
+    public func fixtureLibraryPage(libraryID: String, relativePath: String="", pageSize: Int=50,
+                                   cursor: String?=nil, session: PrototypeSession) throws -> FixtureDirectoryPage {
+        try withFixtureLibraryPage(libraryID:libraryID,relativePath:relativePath,pageSize:pageSize,cursor:cursor,session:session) { $0 }
+    }
+    func withFixtureLibraryPage<T>(libraryID: String, relativePath: String, pageSize: Int, cursor: String?,
+                                   session: PrototypeSession, _ render: (FixtureDirectoryPage) throws -> T) throws -> T {
+        try require(!libraryID.isEmpty && libraryID.utf8.count<=128 && !libraryID.contains("\0"), .invalidSchema)
+        if !relativePath.isEmpty { try SafeFS.relative(relativePath) }
+        try require(relativePath.utf8.count<=4096 && relativePath.split(separator:"/").count<=128, .budgetExceeded)
+        let caller=try pageScope(session), volumes=try checkedFixtureVolumes()
+        let permit=try volumes.permit(libraryID:libraryID,user:try user(session)), reader=try fixtureContent.reader(permit)
+        let scope=DirectoryPageScope(caller:caller,libraryID:Data(libraryID.utf8),relativePath:Data(relativePath.utf8),volumeID:permit.reference.volumeID,
+            mediaID:permit.observation.mediaID,mountID:permit.observation.mountID,approvalID:permit.approvalID,inventoryRevision:permit.revision,readerID:reader.identity)
+        return try directoryPages.page(scope:scope,size:pageSize,cursor:cursor,query: { after,stamp in
+            try reader.page(relative:relativePath,after:after,expected:stamp,size:pageSize)
+        },validate: { stamp in
+            try require(try self.pageScope(session)==caller, .denied)
+            try self.checkedFixtureVolumes().validate(permit,user:try self.user(session))
+            try require(try self.fixtureContent.reader(permit).identity==reader.identity, .staleState)
+            try reader.validatePage(stamp,relative:relativePath)
+        },render:render)
+    }
     public func previewFixtureText(libraryID: String, relativePath: String, maximumBytes: Int = 65536,
                                    session: PrototypeSession) throws -> FixtureTextPreview {
         try require((1...65536).contains(maximumBytes), .budgetExceeded)

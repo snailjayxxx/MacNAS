@@ -1,5 +1,7 @@
 # N-019下一步：有界目录查询与变化检测
 
+本机核心、消息/客户端及合成管道范围已完成，结果见[验收范围](N-019-ACCEPTANCE.md)和[结构化证据](../evidence/n019-2026-10-15.json)。实际205项未过滤Swift与104项Node等通过；目录网页接线/浏览器实测未完成。下文保留实施前计划。
+
 在已有DescriptorLibrary显式合成目录授权上设计/实现受限分页，解决listFiles超过maximumEntries（最多1000）即整体拒绝的问题。只使用新的合成目录，不扫描家庭文件、不枚举或批准真实NAS，不启动服务/监听，不增加第三方依赖。
 
 1. 先读AGENTS、PROJECT_SPEC、ARCHITECTURE、PROGRESS、ADR-006/007、FIXTURE_STORAGE_API及N-018证据；验证开发卷UUID。保留111父需求/97/13/1和只读规划原字节，PostgreSQL 18-only。

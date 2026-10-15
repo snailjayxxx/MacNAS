@@ -119,10 +119,10 @@
     check(typeof transport==="function" && (closeTransport===undefined || typeof closeTransport==="function"),"invalidInput");
     integer(timeoutMs,1,60000,"invalidInput");integer(maximumPending,1,128,"invalidInput");
     check(typeof AbortController!=="undefined","unavailable");
-    const adapter=M.createBridgeAdapter(transport,{requestIdPrefix:"dc-"+uuid()}),pending=new Set(),consumers=new Map(),pages=new Map(),busyPages=new Set();
+    const adapter=M.createBridgeAdapter(transport,{requestIdPrefix:"dc-"+uuid()}),pending=new Set(),consumers=new Map(),pages=new Map(),busyPages=new Set(),directories=new Map(),busyDirectories=new Set();
     let closed=false,binding;
     function close() {
-      if (closed) return;closed=true;binding=undefined;consumers.clear();pages.clear();busyPages.clear();
+      if (closed) return;closed=true;binding=undefined;consumers.clear();pages.clear();busyPages.clear();directories.clear();busyDirectories.clear();
       for (const entry of [...pending]) entry.cancel();
       if (closeTransport) { try { Promise.resolve(closeTransport()).catch(()=>{}); } catch {} }
     }
@@ -242,6 +242,35 @@
         caller();const v=fields(params,["libraryID"],["relativePath","maximumEntries"],"invalidInput");
         const libraryID=text(v.libraryID,128,{code:"invalidInput"}),relativePath=path(Object.hasOwn(v,"relativePath")?v.relativePath:"",true,"invalidInput"),maximumEntries=integer(Object.hasOwn(v,"maximumEntries")?v.maximumEntries:1000,1,1000,"invalidInput");
         return invoke("listFiles",{libraryID,relativePath,maximumEntries},value=>unique(array(value,maximumEntries).map(v=>file(v,relativePath)),v=>v.name.normalize("NFC").toLowerCase()),opts);
+      },
+      async listFilesPage(params,opts) {
+        caller();const p=fields(params,["libraryID"],["relativePath","pageSize","cursor"],"invalidInput");
+        const libraryID=text(p.libraryID,128,{code:"invalidInput"}),relativePath=path(Object.hasOwn(p,"relativePath")?p.relativePath:"",true,"invalidInput");
+        const pageSize=integer(Object.hasOwn(p,"pageSize")?p.pageSize:50,1,100,"invalidInput"),cursor=Object.hasOwn(p,"cursor")?cursorToken(p.cursor,"invalidInput"):undefined;
+        const previous=cursor===undefined?undefined:directories.get(cursor);
+        if(cursor!==undefined) { check(previous && previous.libraryID===libraryID && previous.relativePath===relativePath && previous.pageSize===pageSize,"denied");check(!busyDirectories.has(cursor),"busy"); }
+        else check(directories.size<64,"budgetExceeded");
+        if(cursor!==undefined)busyDirectories.add(cursor);
+        try {return await invoke("listFilesPage",cursor===undefined?{libraryID,relativePath,pageSize}:{libraryID,relativePath,pageSize,cursor},value=>{
+          const v=fields(value,["pageVersion","order","consistency","libraryID","relativePath","pageSize","items","nextCursor"]);
+          check(v.pageVersion===1 && v.order==="name-utf8" && v.consistency==="directory-stamped-live-metadata" && v.libraryID===libraryID && v.relativePath===relativePath && v.pageSize===pageSize);
+          const items=unique(array(v.items,pageSize).map(item=>file(item,relativePath)),item=>item.name.normalize("NFC").toLowerCase());
+          let after=previous?.after;
+          for(const item of items) { if(after!==undefined)check(byteOrder(after,item.name)<0);after=item.name; }
+          if(v.nextCursor!==null) {
+            cursorToken(v.nextCursor);check(items.length===pageSize && v.nextCursor!==cursor && !directories.has(v.nextCursor));
+            check(directories.size-(cursor===undefined?0:1)<64);
+          }
+          if(cursor!==undefined)directories.delete(cursor);
+          if(v.nextCursor!==null)directories.set(v.nextCursor,{libraryID,relativePath,pageSize,after});
+          return value;
+        },opts);}catch(error){
+          if(cursor!==undefined && ["expired","denied","replay","staleState","missingVolume"].includes(error.code))directories.delete(cursor);
+          throw error;
+        }finally{if(cursor!==undefined)busyDirectories.delete(cursor);}
+      },
+      discardFilePage(cursor) {
+        caller();cursorToken(cursor,"invalidInput");check(!busyDirectories.has(cursor),"busy");return directories.delete(cursor);
       },
       async previewFile(params,opts) {
         caller();const v=fields(params,["libraryID","relativePath"],["maximumBytes"],"invalidInput");

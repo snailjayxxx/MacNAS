@@ -60,3 +60,5 @@ N-016加入[有界任务页及统计](docs/decisions/ADR-010-bounded-job-pages.m
 N-017加入[当前页任务展示](docs/decisions/ADR-011-task-page-presentation.md)：每页3条、下一页/重新读取、本页搜索范围、独立统计及关闭后的迟到结果丢弃。真实客户端展示适配只通过Node/管道验证，静态页仍是fixture；[W01–W10与T01–T08](web/tests/BROWSER_ACCEPTANCE.md)全部等待回家实测。
 
 N-018加入[有界通知展示](docs/decisions/ADR-012-bounded-notification-view.md)：最多100条已加载待确认通知，满额停止读取，确认成功后清理本批；失败保留原批/原位置供显式重试，断连不伪装确认或自动重连。名称仅查当前页/预览，静态页仍不连接数据库。回家清单新增N01–N06，窗口/任务/通知及实际DOM均待测；后续计划为[有界目录查询](docs/plans/N-019-BOUNDED-DIRECTORY-PAGES.md)。
+
+N-019加入[有界目录页原型](docs/decisions/ADR-013-bounded-directory-pages.md)：每页最多100，单次8192项/1MiB名称/5秒扫描预算；目录变化要求重读，继续链绑定目录批准/会话并限64条、60秒。已有1000项数组仍超限拒绝，元数据按读取时返回，没有文件系统快照或生产规模承诺。静态文件窗口尚未接入；后续为[目录当前页展示](docs/plans/N-020-DIRECTORY-PAGE-PRESENTATION.md)，实际网页验收仍等回家。

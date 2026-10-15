@@ -809,6 +809,16 @@
             "docs/plans/N-012-013-ACCEPTANCE.md",
             "docs/contracts/FIXTURE_STORAGE_API.md"
           ]
+        },
+        {
+          "id": "STO-02.directory_stamp_and_approval_bound_cursors",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "Directory stamp/path identity, permission/inventory/content-reader bound 64-capability 60-second chains; mutation requires restart; no filesystem snapshot",
+          "evidence": [
+            "docs/evidence/n019-2026-10-15.json",
+            "docs/plans/N-019-ACCEPTANCE.md",
+            "docs/decisions/ADR-013-bounded-directory-pages.md"
+          ]
         }
       ]
     },
@@ -1760,6 +1770,36 @@
             "docs/evidence/n015-2026-10-15.json",
             "docs/plans/N-015-ACCEPTANCE.md",
             "docs/decisions/ADR-009-typed-desktop-client.md"
+          ]
+        },
+        {
+          "id": "FIL-01.bounded_directory_scan_and_byte_pages",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "Approved synthetic APFS directory pages beyond legacy 1000; at most 101 candidate DTOs with 8192-entry/1MiB-name/5-second scan budgets; no production scale claim",
+          "evidence": [
+            "docs/evidence/n019-2026-10-15.json",
+            "docs/plans/N-019-ACCEPTANCE.md",
+            "docs/decisions/ADR-013-bounded-directory-pages.md"
+          ]
+        },
+        {
+          "id": "FIL-01.typed_directory_page_validation",
+          "status": "MOCK_PASS",
+          "scope": "Synthetic typed DTO/cursor/client lifecycle checks; real successful file-page pipe scenario separately recorded; no browser integration",
+          "evidence": [
+            "docs/evidence/n019-2026-10-15.json",
+            "docs/plans/N-019-ACCEPTANCE.md",
+            "docs/decisions/ADR-013-bounded-directory-pages.md"
+          ]
+        },
+        {
+          "id": "FIL-01.directory_page_web_integration",
+          "status": "NOT_STARTED",
+          "scope": "New directory pages are not wired into static memory-fixture DOM; W/T/N and full home browser checklist remain deferred",
+          "evidence": [
+            "docs/evidence/n019-2026-10-15.json",
+            "docs/plans/N-019-ACCEPTANCE.md",
+            "docs/decisions/ADR-013-bounded-directory-pages.md"
           ]
         }
       ]
@@ -4623,6 +4663,16 @@
             "docs/plans/N-018-ACCEPTANCE.md",
             "docs/decisions/ADR-012-bounded-notification-view.md",
             "web/tests/BROWSER_ACCEPTANCE.md"
+          ]
+        },
+        {
+          "id": "APP-09.directory_page_message_and_actual_pipe",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "12th fixed message method; actual Node child pipes to approved Swift fixture host and PostgreSQL, including interpage mutation and explicit restart",
+          "evidence": [
+            "docs/evidence/n019-2026-10-15.json",
+            "docs/plans/N-019-ACCEPTANCE.md",
+            "docs/decisions/ADR-013-bounded-directory-pages.md"
           ]
         }
       ]
