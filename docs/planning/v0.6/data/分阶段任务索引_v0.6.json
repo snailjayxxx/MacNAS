@@ -1,0 +1,297 @@
+{
+  "schema": "mac-nas-execution-task-index/v5",
+  "version": "0.6",
+  "phase_tasks": [
+    {
+      "id": "P00",
+      "name": "需求/工具/仓库安全初始化",
+      "dependencies": [
+        "无"
+      ],
+      "primary_requirement_ids": [
+        "APP-12",
+        "MIG-03",
+        "MIG-04",
+        "MIG-05"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "P01",
+      "name": "macOS 15只读能力探测与兼容矩阵",
+      "dependencies": [
+        "P00"
+      ],
+      "primary_requirement_ids": [
+        "MIG-03",
+        "STO-01",
+        "SYS-02",
+        "SYS-03"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "P02",
+      "name": "身份/存储抽象/后台基础架构",
+      "dependencies": [
+        "P00",
+        "P01"
+      ],
+      "primary_requirement_ids": [
+        "APP-09",
+        "SEC-06",
+        "SEC-08",
+        "SYS-03",
+        "SYS-04",
+        "SYS-06",
+        "MIG-05"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "P03",
+      "name": "DSM式网页桌面与多语言",
+      "dependencies": [
+        "P02"
+      ],
+      "primary_requirement_ids": [
+        "SEC-01",
+        "SEC-05",
+        "SYS-01",
+        "SYS-05",
+        "SYS-07"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "P04",
+      "name": "卷/外置硬盘/多个硬盘柜管理",
+      "dependencies": [
+        "P01",
+        "P02"
+      ],
+      "primary_requirement_ids": [
+        "STO-01",
+        "STO-02",
+        "STO-03",
+        "STO-04",
+        "STO-05",
+        "STO-07",
+        "STO-08",
+        "MIG-05"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "P05",
+      "name": "苹果原生共享、账户映射及Time Machine",
+      "dependencies": [
+        "P02",
+        "P04"
+      ],
+      "primary_requirement_ids": [
+        "SHR-01",
+        "SHR-02",
+        "SHR-03",
+        "SHR-04",
+        "SHR-05",
+        "SHR-06",
+        "SHR-07",
+        "SHR-08",
+        "SHR-09",
+        "SHR-10",
+        "MIG-05"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "P06",
+      "name": "固定布局冗余存储池独立研发",
+      "dependencies": [
+        "P00",
+        "P01",
+        "P04"
+      ],
+      "primary_requirement_ids": [
+        "STO-10",
+        "MIG-05"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "P07",
+      "name": "插件中心、签名准入与扩展SDK",
+      "dependencies": [
+        "P02",
+        "P03",
+        "P04"
+      ],
+      "primary_requirement_ids": [
+        "APP-01",
+        "APP-02",
+        "APP-03",
+        "APP-04",
+        "APP-05",
+        "APP-06",
+        "APP-07",
+        "APP-08",
+        "APP-09",
+        "APP-10",
+        "APP-11",
+        "APP-12",
+        "MIG-05"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "P08",
+      "name": "网页文件管理与检索",
+      "dependencies": [
+        "P02",
+        "P03",
+        "P04",
+        "P05"
+      ],
+      "primary_requirement_ids": [
+        "FIL-01",
+        "FIL-02",
+        "FIL-03",
+        "FIL-04",
+        "FIL-05",
+        "FIL-06"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "P09",
+      "name": "独立备份及真实恢复",
+      "dependencies": [
+        "P04",
+        "P07",
+        "P08"
+      ],
+      "primary_requirement_ids": [
+        "BAK-01",
+        "BAK-02",
+        "BAK-03",
+        "BAK-04",
+        "BAK-06",
+        "BAK-07",
+        "BAK-08",
+        "BAK-09",
+        "BAK-10",
+        "BAK-11",
+        "BAK-12",
+        "MIG-05"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "P10",
+      "name": "Mac/Windows同步与iPhone备份",
+      "dependencies": [
+        "P02",
+        "P08",
+        "P09"
+      ],
+      "primary_requirement_ids": [
+        "SYN-01",
+        "SYN-02",
+        "SYN-04",
+        "SYN-05",
+        "SYN-06",
+        "SYN-07"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "P11",
+      "name": "照片与苹果本机智能能力",
+      "dependencies": [
+        "P03",
+        "P07",
+        "P08",
+        "P10"
+      ],
+      "primary_requirement_ids": [
+        "PHO-01",
+        "PHO-02",
+        "PHO-03",
+        "PHO-04",
+        "PHO-05",
+        "PHO-06",
+        "PHO-07",
+        "PHO-08",
+        "PHO-09",
+        "PHO-10",
+        "PHO-11",
+        "PHO-12"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "P12",
+      "name": "媒体/下载/NVR/家庭自动化套件",
+      "dependencies": [
+        "P07",
+        "P08",
+        "P09"
+      ],
+      "primary_requirement_ids": [
+        "MED-02",
+        "MED-03",
+        "MED-06",
+        "OPS-03"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "P13",
+      "name": "远程访问、安全中心、分享入口",
+      "dependencies": [
+        "P02",
+        "P03",
+        "P05",
+        "P07",
+        "P11"
+      ],
+      "primary_requirement_ids": [
+        "SEC-02",
+        "SEC-03",
+        "SEC-04",
+        "SEC-05",
+        "SEC-06",
+        "SEC-07",
+        "SEC-08",
+        "SEC-09",
+        "SEC-10"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "P14",
+      "name": "运维/性能/迁移/发布验收",
+      "dependencies": [
+        "P00–P13"
+      ],
+      "primary_requirement_ids": [
+        "MIG-01",
+        "MIG-02",
+        "MIG-03",
+        "MIG-04",
+        "OPS-01",
+        "OPS-02",
+        "OPS-03",
+        "OPS-04",
+        "OPS-05",
+        "OPS-07",
+        "OPS-08",
+        "MIG-05"
+      ],
+      "status": "not_started"
+    }
+  ],
+  "new_requirement_ids_v06": [
+    "MIG-05"
+  ]
+}

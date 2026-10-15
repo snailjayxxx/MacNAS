@@ -1,0 +1,19 @@
+# N-003 最小特权与系统操作协议
+
+`OperationRequest={operation,scope,preview,expectedState,requestID}`；commit另带一次性token。token绑定请求全文、用户和session，30秒有效；失败消费、拒绝重放、状态变化重新预览。只接受fixture逻辑scope和simulateShareChange。
+
+```mermaid
+flowchart LR
+    Test[模拟身份/会话/Origin/CSRF] --> Gate[MockOperationGate]
+    Gate --> Preview[结构化预览与一次性grant]
+    Preview --> Commit[核对调用方/请求/时限/状态]
+    Commit --> Memory[仅内存授权结果]
+    Gate -.无生产连接.-> XPC[未来签名XPC适配]
+    XPC -.需正式安装授权.-> Helper[受保护宿主Helper]
+```
+
+已编码的负测：未验证调用方、非管理员、跨用户、跨Origin、缺CSRF、错session、路径scope、真实系统动作、过期、预览变化、状态变化、重放/未知token。全部使用合成身份。
+
+`verifiedMockCaller` 只由测试输入，不能作为生产信任证明。未来XPC必须验证真实审计令牌和签名需求，Web必须实现真正的会话/CSRF/MFA/授权。当前没有Web认证系统或root服务；没有shell命令执行接口。
+
+真实动作未来必须dry-run→明确所有者批准→受保护安装的Helper执行白名单结构动作→审计/可恢复回退；便携外置目录的代码不得以root启动。没有批准时拒绝正式共享/系统账户/ACL/阵列/服务变更。

@@ -1,0 +1,5778 @@
+{
+  "schema": "macnas-requirement-work-index/v1",
+  "baseline": "v0.6",
+  "counts": {
+    "first": 97,
+    "later": 13,
+    "not_needed": 1
+  },
+  "parents": [
+    {
+      "id": "SYS-01",
+      "name": "统一网页控制台",
+      "priority": "首版需要",
+      "phases": [
+        "P03"
+      ],
+      "status": "IN_PROGRESS",
+      "children": [
+        {
+          "id": "SYS-01.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYS-01.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYS-01.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYS-01.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYS-01.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYS-01.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYS-01.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYS-01.desktop_shell_implementation",
+          "status": "IN_PROGRESS",
+          "scope": "Static shell implemented; browser interaction and visual QA not executed",
+          "evidence": [
+            "docs/evidence/n011-2026-10-15.json",
+            "docs/plans/N-011-ACCEPTANCE.md",
+            "web/tests/BROWSER_ACCEPTANCE.md"
+          ]
+        },
+        {
+          "id": "SYS-01.desktop_window_visual_interaction_qa",
+          "status": "BLOCKED",
+          "scope": "Saved browser permission blocks preview; built-in iab is unavailable",
+          "evidence": [
+            "docs/evidence/n011-2026-10-15.json",
+            "docs/plans/N-011-ACCEPTANCE.md",
+            "web/tests/BROWSER_ACCEPTANCE.md"
+          ]
+        },
+        {
+          "id": "SYS-01.session_bound_message_dispatcher",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "No-listener Swift dispatcher with host-owned fixture session and Schema 3; not production browser login",
+          "evidence": [
+            "docs/evidence/n014-2026-10-15.json",
+            "docs/plans/N-014-ACCEPTANCE.md",
+            "docs/decisions/ADR-008-desktop-message-bridge.md"
+          ]
+        },
+        {
+          "id": "SYS-01.bounded_javascript_bridge_envelopes",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "Generic JavaScript request/envelope guards only; DOM and full DTO validation remain incomplete",
+          "evidence": [
+            "docs/evidence/n014-2026-10-15.json",
+            "docs/plans/N-014-ACCEPTANCE.md",
+            "docs/decisions/ADR-008-desktop-message-bridge.md"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SYS-02",
+      "name": "引导安装与授权诊断",
+      "priority": "首版需要",
+      "phases": [
+        "P01"
+      ],
+      "status": "IN_PROGRESS",
+      "children": [
+        {
+          "id": "SYS-02.design",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "SYS-02.implementation",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "SYS-02.automated_tests",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "SYS-02.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYS-02.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYS-02.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYS-02.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "SYS-03",
+      "name": "原生常驻服务",
+      "priority": "首版需要",
+      "phases": [
+        "P01",
+        "P02"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "SYS-03.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYS-03.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYS-03.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYS-03.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYS-03.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYS-03.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYS-03.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "SYS-04",
+      "name": "服务健康与依赖",
+      "priority": "首版需要",
+      "phases": [
+        "P02"
+      ],
+      "status": "IN_PROGRESS",
+      "children": [
+        {
+          "id": "SYS-04.design",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "SYS-04.implementation",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "SYS-04.automated_tests",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "SYS-04.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYS-04.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYS-04.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYS-04.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "SYS-05",
+      "name": "系统资源面板",
+      "priority": "首版需要",
+      "phases": [
+        "P03"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "SYS-05.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYS-05.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYS-05.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYS-05.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYS-05.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYS-05.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYS-05.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "SYS-06",
+      "name": "持久化任务中心",
+      "priority": "首版需要",
+      "phases": [
+        "P02"
+      ],
+      "status": "IN_PROGRESS",
+      "children": [
+        {
+          "id": "SYS-06.design",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "SYS-06.implementation",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "SYS-06.automated_tests",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "SYS-06.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYS-06.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYS-06.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYS-06.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYS-06.coordinated_write_barrier",
+          "status": "LOCAL_MAC_PASS",
+          "evidence": [
+            "docs/evidence/n009-2026-10-15.json"
+          ],
+          "scope": "Synthetic prototype on current Mac; production/OS authorization unverified"
+        },
+        {
+          "id": "SYS-06.durable_job_leases_and_steps",
+          "status": "LOCAL_MAC_PASS",
+          "evidence": [
+            "docs/evidence/n010-2026-10-15.json",
+            "docs/plans/N-010-ACCEPTANCE.md",
+            "docs/decisions/ADR-004-durable-jobs-outbox.md"
+          ],
+          "scope": "Synthetic fixture on current Mac only; parent acceptance remains incomplete"
+        },
+        {
+          "id": "SYS-06.job_cancellation_and_crash_recovery",
+          "status": "LOCAL_MAC_PASS",
+          "evidence": [
+            "docs/evidence/n010-2026-10-15.json",
+            "docs/plans/N-010-ACCEPTANCE.md",
+            "docs/decisions/ADR-004-durable-jobs-outbox.md"
+          ],
+          "scope": "Synthetic fixture on current Mac only; parent acceptance remains incomplete"
+        },
+        {
+          "id": "SYS-06.desktop_task_view_and_cancel_model",
+          "status": "MOCK_PASS",
+          "scope": "Memory fixture task scope, submission and cancellation model only; no live Swift bridge",
+          "evidence": [
+            "docs/evidence/n011-2026-10-15.json",
+            "docs/plans/N-011-ACCEPTANCE.md",
+            "web/tests/BROWSER_ACCEPTANCE.md"
+          ]
+        },
+        {
+          "id": "SYS-06.pipe_bridge_persistent_jobs",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "JavaScript to independent Swift process to isolated PostgreSQL job submission/cancel/idempotency and restart",
+          "evidence": [
+            "docs/evidence/n014-2026-10-15.json",
+            "docs/plans/N-014-ACCEPTANCE.md",
+            "docs/decisions/ADR-008-desktop-message-bridge.md"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SYS-07",
+      "name": "个性化与可访问性",
+      "priority": "首版需要",
+      "phases": [
+        "P03"
+      ],
+      "status": "IN_PROGRESS",
+      "children": [
+        {
+          "id": "SYS-07.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYS-07.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYS-07.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYS-07.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYS-07.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYS-07.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYS-07.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYS-07.zh_ja_dictionary_parity",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "210 translation keys and interpolation parity tested using existing Node; no translation quality or browser layout claim",
+          "evidence": [
+            "docs/evidence/n011-2026-10-15.json",
+            "docs/plans/N-011-ACCEPTANCE.md",
+            "web/tests/BROWSER_ACCEPTANCE.md"
+          ]
+        },
+        {
+          "id": "SYS-07.responsive_keyboard_accessibility_qa",
+          "status": "BLOCKED",
+          "scope": "Browser QA not executed; geometry and CSS checks do not prove accessibility",
+          "evidence": [
+            "docs/evidence/n011-2026-10-15.json",
+            "docs/plans/N-011-ACCEPTANCE.md",
+            "web/tests/BROWSER_ACCEPTANCE.md"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SYS-08",
+      "name": "管理员与家庭首页分离",
+      "priority": "后续需要",
+      "phases": [
+        "FUTURE"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "SYS-08.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYS-08.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYS-08.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYS-08.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYS-08.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYS-08.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYS-08.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "STO-01",
+      "name": "卷与外置硬盘清单",
+      "priority": "首版需要",
+      "phases": [
+        "P01",
+        "P04"
+      ],
+      "status": "IN_PROGRESS",
+      "children": [
+        {
+          "id": "STO-01.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-01.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-01.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-01.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-01.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-01.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-01.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-01.fixture_volume_inventory_identity",
+          "status": "MOCK_PASS",
+          "scope": "Injected UUID/media/mount inventory only; no physical disk enumeration",
+          "evidence": [
+            "docs/evidence/n012-n013-2026-10-15.json",
+            "docs/plans/N-012-013-ACCEPTANCE.md",
+            "docs/contracts/FIXTURE_STORAGE_API.md"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "STO-02",
+      "name": "稳定目录绑定",
+      "priority": "首版需要",
+      "phases": [
+        "P04"
+      ],
+      "status": "IN_PROGRESS",
+      "children": [
+        {
+          "id": "STO-02.design",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "STO-02.implementation",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "STO-02.automated_tests",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "STO-02.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-02.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-02.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-02.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-02.fixture_preview_bound_mount_grants",
+          "status": "MOCK_PASS",
+          "scope": "Session-bound one-use preview, TTL, revision and remount model; no system authorization",
+          "evidence": [
+            "docs/evidence/n012-n013-2026-10-15.json",
+            "docs/plans/N-012-013-ACCEPTANCE.md",
+            "docs/contracts/FIXTURE_STORAGE_API.md"
+          ]
+        },
+        {
+          "id": "STO-02.pinned_fixture_directory_identity",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "Current Mac synthetic directory inode pinned across reads; no actual volume mounting",
+          "evidence": [
+            "docs/evidence/n012-n013-2026-10-15.json",
+            "docs/plans/N-012-013-ACCEPTANCE.md",
+            "docs/contracts/FIXTURE_STORAGE_API.md"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "STO-03",
+      "name": "掉盘写入保护",
+      "priority": "首版需要",
+      "phases": [
+        "P04"
+      ],
+      "status": "IN_PROGRESS",
+      "children": [
+        {
+          "id": "STO-03.design",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "STO-03.implementation",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "STO-03.automated_tests",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "STO-03.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-03.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-03.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-03.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-03.fixture_disconnect_and_cabinet_guard",
+          "status": "MOCK_PASS",
+          "scope": "Injected disconnect and cabinet member loss revoke access; no physical unplug",
+          "evidence": [
+            "docs/evidence/n012-n013-2026-10-15.json",
+            "docs/plans/N-012-013-ACCEPTANCE.md",
+            "docs/contracts/FIXTURE_STORAGE_API.md"
+          ]
+        },
+        {
+          "id": "STO-03.fixture_placeholder_refusal",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "Missing or replaced synthetic directories refuse access without creating fallback paths",
+          "evidence": [
+            "docs/evidence/n012-n013-2026-10-15.json",
+            "docs/plans/N-012-013-ACCEPTANCE.md",
+            "docs/contracts/FIXTURE_STORAGE_API.md"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "STO-04",
+      "name": "安全卸载联动",
+      "priority": "首版需要",
+      "phases": [
+        "P04"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "STO-04.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-04.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-04.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-04.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-04.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-04.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-04.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "STO-05",
+      "name": "空间水位与缓存预算",
+      "priority": "首版需要",
+      "phases": [
+        "P04"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "STO-05.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-05.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-05.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-05.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-05.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-05.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-05.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "STO-06",
+      "name": "目录用量与配额视图",
+      "priority": "后续需要",
+      "phases": [
+        "FUTURE"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "STO-06.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-06.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-06.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-06.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-06.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-06.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-06.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "STO-07",
+      "name": "磁盘健康可用性检测",
+      "priority": "首版需要",
+      "phases": [
+        "P04"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "STO-07.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-07.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-07.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-07.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-07.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-07.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-07.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "STO-08",
+      "name": "远端存储统一入口",
+      "priority": "首版需要",
+      "phases": [
+        "P04"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "STO-08.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-08.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-08.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-08.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-08.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-08.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-08.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "STO-09",
+      "name": "APFS快照适配研究",
+      "priority": "后续需要",
+      "phases": [
+        "FUTURE"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "STO-09.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-09.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-09.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-09.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-09.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-09.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-09.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "STO-10",
+      "name": "多盘容量与冗余策略",
+      "priority": "首版需要",
+      "phases": [
+        "P06"
+      ],
+      "status": "IN_PROGRESS",
+      "children": [
+        {
+          "id": "STO-10.design",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "STO-10.implementation",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "STO-10.automated_tests",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "STO-10.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-10.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-10.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "STO-10.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "SHR-01",
+      "name": "读取既有SMB共享",
+      "priority": "首版需要",
+      "phases": [
+        "P05"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "SHR-01.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-01.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-01.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-01.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-01.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-01.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-01.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "SHR-02",
+      "name": "网页创建原生共享",
+      "priority": "首版需要",
+      "phases": [
+        "P05"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "SHR-02.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-02.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-02.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-02.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-02.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-02.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-02.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "SHR-03",
+      "name": "共享变更预览与撤销",
+      "priority": "首版需要",
+      "phases": [
+        "P05"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "SHR-03.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-03.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-03.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-03.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-03.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-03.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-03.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "SHR-04",
+      "name": "目录级读写权限",
+      "priority": "首版需要",
+      "phases": [
+        "P05"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "SHR-04.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-04.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-04.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-04.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-04.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-04.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-04.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "SHR-05",
+      "name": "平台用户与系统用户映射",
+      "priority": "首版需要",
+      "phases": [
+        "P05"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "SHR-05.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-05.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-05.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-05.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-05.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-05.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-05.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "SHR-06",
+      "name": "权限解释与有效访问检查",
+      "priority": "首版需要",
+      "phases": [
+        "P05"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "SHR-06.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-06.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-06.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-06.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-06.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-06.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-06.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "SHR-07",
+      "name": "Time Machine共享目标",
+      "priority": "首版需要",
+      "phases": [
+        "P05"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "SHR-07.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-07.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-07.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-07.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-07.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-07.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-07.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "SHR-08",
+      "name": "共享安全策略",
+      "priority": "首版需要",
+      "phases": [
+        "P05"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "SHR-08.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-08.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-08.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-08.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-08.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-08.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-08.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "SHR-09",
+      "name": "连接会话与安全维护",
+      "priority": "首版需要",
+      "phases": [
+        "P05"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "SHR-09.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-09.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-09.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-09.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-09.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-09.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-09.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "SHR-10",
+      "name": "WebDAV与SFTP扩展",
+      "priority": "首版需要",
+      "phases": [
+        "P05"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "SHR-10.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-10.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-10.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-10.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-10.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-10.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SHR-10.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "FIL-01",
+      "name": "网页文件管理器",
+      "priority": "首版需要",
+      "phases": [
+        "P08"
+      ],
+      "status": "IN_PROGRESS",
+      "children": [
+        {
+          "id": "FIL-01.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-01.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-01.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-01.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-01.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-01.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-01.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-01.authorized_descriptor_directory_listing",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "Bounded read-only backend fixture API only; no web bridge or full file manager",
+          "evidence": [
+            "docs/evidence/n012-n013-2026-10-15.json",
+            "docs/plans/N-012-013-ACCEPTANCE.md",
+            "docs/contracts/FIXTURE_STORAGE_API.md"
+          ]
+        },
+        {
+          "id": "FIL-01.fixture_symlink_race_refusal",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "Real synthetic filesystem link/FIFO and replacement tests on current Mac only",
+          "evidence": [
+            "docs/evidence/n012-n013-2026-10-15.json",
+            "docs/plans/N-012-013-ACCEPTANCE.md",
+            "docs/contracts/FIXTURE_STORAGE_API.md"
+          ]
+        },
+        {
+          "id": "FIL-01.bridge_scoped_library_discovery",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "Authorized logical library metadata and existing bounded fixture listing; no disk enumeration or implicit content approval",
+          "evidence": [
+            "docs/evidence/n014-2026-10-15.json",
+            "docs/plans/N-014-ACCEPTANCE.md",
+            "docs/decisions/ADR-008-desktop-message-bridge.md"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "FIL-02",
+      "name": "大文件可靠上传",
+      "priority": "首版需要",
+      "phases": [
+        "P08"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "FIL-02.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-02.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-02.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-02.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-02.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-02.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-02.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "FIL-03",
+      "name": "跨卷移动任务",
+      "priority": "首版需要",
+      "phases": [
+        "P08"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "FIL-03.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-03.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-03.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-03.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-03.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-03.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-03.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "FIL-04",
+      "name": "回收站和保留期",
+      "priority": "首版需要",
+      "phases": [
+        "P08"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "FIL-04.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-04.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-04.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-04.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-04.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-04.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-04.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "FIL-05",
+      "name": "文件预览",
+      "priority": "首版需要",
+      "phases": [
+        "P08"
+      ],
+      "status": "IN_PROGRESS",
+      "children": [
+        {
+          "id": "FIL-05.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-05.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-05.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-05.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-05.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-05.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-05.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-05.bounded_utf8_text_preview",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "64 KiB UTF-8 fixture text only; no media/HTML execution",
+          "evidence": [
+            "docs/evidence/n012-n013-2026-10-15.json",
+            "docs/plans/N-012-013-ACCEPTANCE.md",
+            "docs/contracts/FIXTURE_STORAGE_API.md"
+          ]
+        },
+        {
+          "id": "FIL-05.bridge_scoped_plain_text_preview",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "Existing descriptor-based synthetic UTF-8 preview behind host-bound messages; no browser rendering",
+          "evidence": [
+            "docs/evidence/n014-2026-10-15.json",
+            "docs/plans/N-014-ACCEPTANCE.md",
+            "docs/decisions/ADR-008-desktop-message-bridge.md"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "FIL-06",
+      "name": "全局文件搜索",
+      "priority": "首版需要",
+      "phases": [
+        "P08"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "FIL-06.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-06.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-06.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-06.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-06.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-06.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-06.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "FIL-07",
+      "name": "内容全文搜索",
+      "priority": "后续需要",
+      "phases": [
+        "FUTURE"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "FIL-07.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-07.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-07.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-07.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-07.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-07.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-07.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "FIL-08",
+      "name": "受控分享链接",
+      "priority": "后续需要",
+      "phases": [
+        "FUTURE"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "FIL-08.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-08.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-08.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-08.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-08.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-08.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-08.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "FIL-09",
+      "name": "只上传文件请求",
+      "priority": "后续需要",
+      "phases": [
+        "FUTURE"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "FIL-09.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-09.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-09.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-09.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-09.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-09.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-09.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "FIL-10",
+      "name": "批量整理预演",
+      "priority": "后续需要",
+      "phases": [
+        "FUTURE"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "FIL-10.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-10.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-10.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-10.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-10.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-10.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "FIL-10.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "SYN-01",
+      "name": "文件夹单向备份",
+      "priority": "首版需要",
+      "phases": [
+        "P10"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "SYN-01.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYN-01.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYN-01.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYN-01.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYN-01.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYN-01.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYN-01.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "SYN-02",
+      "name": "双向文件同步",
+      "priority": "首版需要",
+      "phases": [
+        "P10"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "SYN-02.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYN-02.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYN-02.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYN-02.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYN-02.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYN-02.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYN-02.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "SYN-03",
+      "name": "按需文件占位",
+      "priority": "后续需要",
+      "phases": [
+        "FUTURE"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "SYN-03.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYN-03.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYN-03.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYN-03.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYN-03.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYN-03.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYN-03.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "SYN-04",
+      "name": "选择性同步",
+      "priority": "首版需要",
+      "phases": [
+        "P10"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "SYN-04.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYN-04.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYN-04.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYN-04.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYN-04.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYN-04.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYN-04.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "SYN-05",
+      "name": "同步冲突与版本",
+      "priority": "首版需要",
+      "phases": [
+        "P10"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "SYN-05.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYN-05.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYN-05.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYN-05.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYN-05.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYN-05.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYN-05.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "SYN-06",
+      "name": "iPhone照片备份客户端",
+      "priority": "首版需要",
+      "phases": [
+        "P10"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "SYN-06.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYN-06.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYN-06.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYN-06.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYN-06.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYN-06.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYN-06.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "SYN-07",
+      "name": "通用移动端访问",
+      "priority": "首版需要",
+      "phases": [
+        "P10"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "SYN-07.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYN-07.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYN-07.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYN-07.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYN-07.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYN-07.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYN-07.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "SYN-08",
+      "name": "同步健康报告",
+      "priority": "后续需要",
+      "phases": [
+        "FUTURE"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "SYN-08.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYN-08.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYN-08.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYN-08.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYN-08.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYN-08.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SYN-08.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "BAK-01",
+      "name": "备份策略向导",
+      "priority": "首版需要",
+      "phases": [
+        "P09"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "BAK-01.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-01.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-01.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-01.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-01.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-01.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-01.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "BAK-02",
+      "name": "版本保留策略",
+      "priority": "首版需要",
+      "phases": [
+        "P09"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "BAK-02.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-02.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-02.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-02.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-02.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-02.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-02.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "BAK-03",
+      "name": "独立设备备份",
+      "priority": "首版需要",
+      "phases": [
+        "P09"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "BAK-03.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-03.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-03.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-03.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-03.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-03.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-03.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "BAK-04",
+      "name": "云端与异地备份",
+      "priority": "首版需要",
+      "phases": [
+        "P09"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "BAK-04.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-04.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-04.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-04.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-04.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-04.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-04.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "BAK-05",
+      "name": "可移除冷备盘目录",
+      "priority": "后续需要",
+      "phases": [
+        "FUTURE"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "BAK-05.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-05.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-05.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-05.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-05.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-05.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-05.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "BAK-06",
+      "name": "备份完整性校验",
+      "priority": "首版需要",
+      "phases": [
+        "P09"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "BAK-06.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-06.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-06.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-06.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-06.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-06.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-06.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "BAK-07",
+      "name": "恢复到替代目录",
+      "priority": "首版需要",
+      "phases": [
+        "P09"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "BAK-07.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-07.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-07.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-07.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-07.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-07.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-07.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "BAK-08",
+      "name": "恢复演练",
+      "priority": "首版需要",
+      "phases": [
+        "P09"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "BAK-08.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-08.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-08.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-08.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-08.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-08.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-08.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "BAK-09",
+      "name": "平台与应用配置备份",
+      "priority": "首版需要",
+      "phases": [
+        "P09"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "BAK-09.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-09.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-09.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-09.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-09.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-09.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-09.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "BAK-10",
+      "name": "数据库一致性备份",
+      "priority": "首版需要",
+      "phases": [
+        "P09"
+      ],
+      "status": "IN_PROGRESS",
+      "children": [
+        {
+          "id": "BAK-10.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-10.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-10.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-10.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-10.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-10.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-10.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-10.schema3_snapshot_barrier_and_digest",
+          "status": "LOCAL_MAC_PASS",
+          "evidence": [
+            "docs/evidence/n010-2026-10-15.json",
+            "docs/plans/N-010-ACCEPTANCE.md",
+            "docs/decisions/ADR-004-durable-jobs-outbox.md"
+          ],
+          "scope": "Synthetic fixture on current Mac only; parent acceptance remains incomplete"
+        }
+      ]
+    },
+    {
+      "id": "BAK-11",
+      "name": "同步误删隔离",
+      "priority": "首版需要",
+      "phases": [
+        "P09"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "BAK-11.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-11.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-11.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-11.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-11.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-11.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-11.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "BAK-12",
+      "name": "不可变目的地研究",
+      "priority": "首版需要",
+      "phases": [
+        "P09"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "BAK-12.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-12.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-12.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-12.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-12.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-12.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "BAK-12.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "PHO-01",
+      "name": "现有目录只读索引",
+      "priority": "首版需要",
+      "phases": [
+        "P11"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "PHO-01.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-01.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-01.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-01.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-01.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-01.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-01.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "PHO-02",
+      "name": "时间轴和文件夹双视图",
+      "priority": "首版需要",
+      "phases": [
+        "P11"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "PHO-02.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-02.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-02.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-02.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-02.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-02.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-02.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "PHO-03",
+      "name": "真实路径与原件定位",
+      "priority": "首版需要",
+      "phases": [
+        "P11"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "PHO-03.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-03.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-03.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-03.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-03.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-03.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-03.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "PHO-04",
+      "name": "RAW与JPEG关联",
+      "priority": "首版需要",
+      "phases": [
+        "P11"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "PHO-04.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-04.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-04.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-04.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-04.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-04.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-04.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "PHO-05",
+      "name": "EXIF与器材统计",
+      "priority": "首版需要",
+      "phases": [
+        "P11"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "PHO-05.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-05.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-05.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-05.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-05.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-05.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-05.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "PHO-06",
+      "name": "人工标签与规则相册",
+      "priority": "首版需要",
+      "phases": [
+        "P11"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "PHO-06.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-06.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-06.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-06.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-06.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-06.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-06.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "PHO-07",
+      "name": "Live Photos与HEIC整理",
+      "priority": "首版需要",
+      "phases": [
+        "P11"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "PHO-07.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-07.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-07.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-07.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-07.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-07.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-07.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "PHO-08",
+      "name": "家庭相册与分享",
+      "priority": "首版需要",
+      "phases": [
+        "P11"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "PHO-08.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-08.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-08.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-08.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-08.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-08.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-08.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "PHO-09",
+      "name": "精确重复照片检测",
+      "priority": "首版需要",
+      "phases": [
+        "P11"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "PHO-09.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-09.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-09.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-09.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-09.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-09.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-09.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "PHO-10",
+      "name": "智能检索与相似分组研究",
+      "priority": "首版需要",
+      "phases": [
+        "P11"
+      ],
+      "status": "IN_PROGRESS",
+      "children": [
+        {
+          "id": "PHO-10.design",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "PHO-10.implementation",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "PHO-10.automated_tests",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "PHO-10.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-10.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-10.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-10.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-10.visual_similarity",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "docs/plans/PHOTO_CAPABILITIES.md"
+          ]
+        },
+        {
+          "id": "PHO-10.same_person_grouping",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-10.OCR",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "docs/plans/PHOTO_CAPABILITIES.md"
+          ]
+        },
+        {
+          "id": "PHO-10.natural_language_image_retrieval",
+          "status": "BLOCKED",
+          "evidence": [
+            "docs/plans/PHOTO_CAPABILITIES.md"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "PHO-11",
+      "name": "侧车与元数据导出",
+      "priority": "首版需要",
+      "phases": [
+        "P11"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "PHO-11.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-11.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-11.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-11.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-11.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-11.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-11.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "PHO-12",
+      "name": "摄影工具联动",
+      "priority": "首版需要",
+      "phases": [
+        "P11"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "PHO-12.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-12.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-12.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-12.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-12.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-12.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "PHO-12.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "MED-01",
+      "name": "媒体库与海报墙",
+      "priority": "后续需要",
+      "phases": [
+        "FUTURE"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "MED-01.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MED-01.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MED-01.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MED-01.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MED-01.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MED-01.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MED-01.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "MED-02",
+      "name": "浏览器播放与直放优先",
+      "priority": "首版需要",
+      "phases": [
+        "P12"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "MED-02.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MED-02.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MED-02.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MED-02.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MED-02.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MED-02.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MED-02.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "MED-03",
+      "name": "受控转码与字幕",
+      "priority": "首版需要",
+      "phases": [
+        "P12"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "MED-03.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MED-03.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MED-03.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MED-03.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MED-03.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MED-03.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MED-03.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "MED-04",
+      "name": "音乐与电子书入口",
+      "priority": "后续需要",
+      "phases": [
+        "FUTURE"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "MED-04.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MED-04.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MED-04.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MED-04.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MED-04.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MED-04.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MED-04.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "MED-05",
+      "name": "TCRec接入",
+      "priority": "后续需要",
+      "phases": [
+        "FUTURE"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "MED-05.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MED-05.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MED-05.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MED-05.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MED-05.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MED-05.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MED-05.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "MED-06",
+      "name": "家庭工具与摄像头预留",
+      "priority": "首版需要",
+      "phases": [
+        "P12"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "MED-06.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MED-06.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MED-06.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MED-06.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MED-06.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MED-06.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MED-06.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MED-06.download_application",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MED-06.camera_recording_playback",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MED-06.home_and_file_automation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "APP-01",
+      "name": "版本化套件清单",
+      "priority": "首版需要",
+      "phases": [
+        "P07"
+      ],
+      "status": "IN_PROGRESS",
+      "children": [
+        {
+          "id": "APP-01.design",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "APP-01.implementation",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "APP-01.automated_tests",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "APP-01.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "APP-01.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "APP-01.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "APP-01.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "APP-02",
+      "name": "离线安装包",
+      "priority": "首版需要",
+      "phases": [
+        "P07"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "APP-02.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "APP-02.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "APP-02.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "APP-02.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "APP-02.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "APP-02.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "APP-02.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "APP-03",
+      "name": "应用目录与私有源",
+      "priority": "首版需要",
+      "phases": [
+        "P07"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "APP-03.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "APP-03.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "APP-03.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "APP-03.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "APP-03.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "APP-03.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "APP-03.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "APP-04",
+      "name": "最小权限授权",
+      "priority": "首版需要",
+      "phases": [
+        "P07"
+      ],
+      "status": "IN_PROGRESS",
+      "children": [
+        {
+          "id": "APP-04.design",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "APP-04.implementation",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "APP-04.automated_tests",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "APP-04.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "APP-04.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "APP-04.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "APP-04.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "APP-04.per_instance_database_roles",
+          "status": "LOCAL_MAC_PASS",
+          "evidence": [
+            "docs/evidence/n009-2026-10-15.json"
+          ],
+          "scope": "Synthetic prototype on current Mac; production/OS authorization unverified"
+        },
+        {
+          "id": "APP-04.job_and_notification_audience_isolation",
+          "status": "LOCAL_MAC_PASS",
+          "evidence": [
+            "docs/evidence/n010-2026-10-15.json",
+            "docs/plans/N-010-ACCEPTANCE.md",
+            "docs/decisions/ADR-004-durable-jobs-outbox.md"
+          ],
+          "scope": "Synthetic fixture on current Mac only; parent acceptance remains incomplete"
+        },
+        {
+          "id": "APP-04.desktop_fixture_scope_guards",
+          "status": "MOCK_PASS",
+          "scope": "Fixture session, role, user and file scope only; not production authentication",
+          "evidence": [
+            "docs/evidence/n011-2026-10-15.json",
+            "docs/plans/N-011-ACCEPTANCE.md",
+            "web/tests/BROWSER_ACCEPTANCE.md"
+          ]
+        },
+        {
+          "id": "APP-04.fixture_library_reader_revocation",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "Synthetic sessions, per-library readers, revocation and session/user refusal; no production login",
+          "evidence": [
+            "docs/evidence/n012-n013-2026-10-15.json",
+            "docs/plans/N-012-013-ACCEPTANCE.md",
+            "docs/contracts/FIXTURE_STORAGE_API.md"
+          ]
+        },
+        {
+          "id": "APP-04.strict_message_input_and_replay_guards",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "Bounded JSON, duplicate/unknown fields, host audience and ended-session refusal on current Mac synthetic fixtures",
+          "evidence": [
+            "docs/evidence/n014-2026-10-15.json",
+            "docs/plans/N-014-ACCEPTANCE.md",
+            "docs/decisions/ADR-008-desktop-message-bridge.md"
+          ]
+        },
+        {
+          "id": "APP-04.bridge_recovery_mutation_refusal",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "Read-only recovery refuses job mutations and event cursor changes via the message dispatcher",
+          "evidence": [
+            "docs/evidence/n014-2026-10-15.json",
+            "docs/plans/N-014-ACCEPTANCE.md",
+            "docs/decisions/ADR-008-desktop-message-bridge.md"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "APP-05",
+      "name": "原生运行时隔离",
+      "priority": "首版需要",
+      "phases": [
+        "P07"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "APP-05.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "APP-05.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "APP-05.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "APP-05.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "APP-05.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "APP-05.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "APP-05.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "APP-06",
+      "name": "生命周期与健康检查",
+      "priority": "首版需要",
+      "phases": [
+        "P07"
+      ],
+      "status": "IN_PROGRESS",
+      "children": [
+        {
+          "id": "APP-06.design",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "APP-06.implementation",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "APP-06.automated_tests",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "APP-06.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "APP-06.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "APP-06.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "APP-06.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "APP-06.revocable_supervised_samples",
+          "status": "LOCAL_MAC_PASS",
+          "evidence": [
+            "docs/evidence/n009-2026-10-15.json"
+          ],
+          "scope": "Synthetic prototype on current Mac; production/OS authorization unverified"
+        }
+      ]
+    },
+    {
+      "id": "APP-07",
+      "name": "应用数据保留规则",
+      "priority": "首版需要",
+      "phases": [
+        "P07"
+      ],
+      "status": "IN_PROGRESS",
+      "children": [
+        {
+          "id": "APP-07.design",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "APP-07.implementation",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "APP-07.automated_tests",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "APP-07.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "APP-07.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "APP-07.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "APP-07.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "APP-08",
+      "name": "升级与数据迁移",
+      "priority": "首版需要",
+      "phases": [
+        "P07"
+      ],
+      "status": "IN_PROGRESS",
+      "children": [
+        {
+          "id": "APP-08.design",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "APP-08.implementation",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "APP-08.automated_tests",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "APP-08.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "APP-08.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "APP-08.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "APP-08.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "APP-08.isolated_schema_1_to_2_upgrade",
+          "status": "LOCAL_MAC_PASS",
+          "evidence": [
+            "docs/evidence/n009-2026-10-15.json"
+          ],
+          "scope": "Synthetic prototype on current Mac; production/OS authorization unverified"
+        },
+        {
+          "id": "APP-08.preserved_source_rollback",
+          "status": "LOCAL_MAC_PASS",
+          "evidence": [
+            "docs/evidence/n009-2026-10-15.json"
+          ],
+          "scope": "Synthetic prototype on current Mac; production/OS authorization unverified"
+        },
+        {
+          "id": "APP-08.isolated_schema_2_to_3_upgrade",
+          "status": "LOCAL_MAC_PASS",
+          "evidence": [
+            "docs/evidence/n010-2026-10-15.json",
+            "docs/plans/N-010-ACCEPTANCE.md",
+            "docs/decisions/ADR-004-durable-jobs-outbox.md"
+          ],
+          "scope": "Synthetic fixture on current Mac only; parent acceptance remains incomplete"
+        }
+      ]
+    },
+    {
+      "id": "APP-09",
+      "name": "统一API与事件",
+      "priority": "首版需要",
+      "phases": [
+        "P02",
+        "P07"
+      ],
+      "status": "IN_PROGRESS",
+      "children": [
+        {
+          "id": "APP-09.design",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "APP-09.implementation",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "APP-09.automated_tests",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "APP-09.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "APP-09.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "APP-09.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "APP-09.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "APP-09.typed_prototype_api",
+          "status": "LOCAL_MAC_PASS",
+          "evidence": [
+            "docs/evidence/n009-2026-10-15.json"
+          ],
+          "scope": "Synthetic prototype on current Mac; production/OS authorization unverified"
+        }
+      ]
+    },
+    {
+      "id": "APP-10",
+      "name": "界面和登录接入",
+      "priority": "首版需要",
+      "phases": [
+        "P07"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "APP-10.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "APP-10.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "APP-10.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "APP-10.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "APP-10.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "APP-10.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "APP-10.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "APP-11",
+      "name": "开发者模板与测试工具",
+      "priority": "首版需要",
+      "phases": [
+        "P07"
+      ],
+      "status": "IN_PROGRESS",
+      "children": [
+        {
+          "id": "APP-11.design",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "APP-11.implementation",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "APP-11.automated_tests",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "APP-11.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "APP-11.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "APP-11.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "APP-11.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "APP-12",
+      "name": "来源验证与兼容目录",
+      "priority": "首版需要",
+      "phases": [
+        "P00",
+        "P07"
+      ],
+      "status": "IN_PROGRESS",
+      "children": [
+        {
+          "id": "APP-12.design",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "APP-12.implementation",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "APP-12.automated_tests",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "APP-12.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "APP-12.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "APP-12.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "APP-12.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "SEC-01",
+      "name": "内网发现与入口",
+      "priority": "首版需要",
+      "phases": [
+        "P03"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "SEC-01.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-01.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-01.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-01.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-01.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-01.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-01.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "SEC-02",
+      "name": "管理面与分享面隔离",
+      "priority": "首版需要",
+      "phases": [
+        "P13"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "SEC-02.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-02.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-02.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-02.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-02.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-02.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-02.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "SEC-03",
+      "name": "域名与反向代理管理",
+      "priority": "首版需要",
+      "phases": [
+        "P13"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "SEC-03.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-03.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-03.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-03.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-03.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-03.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-03.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "SEC-04",
+      "name": "TLS证书管理",
+      "priority": "首版需要",
+      "phases": [
+        "P13"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "SEC-04.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-04.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-04.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-04.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-04.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-04.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-04.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "SEC-05",
+      "name": "MFA与恢复方式",
+      "priority": "首版需要",
+      "phases": [
+        "P03",
+        "P13"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "SEC-05.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-05.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-05.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-05.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-05.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-05.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-05.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "SEC-06",
+      "name": "家庭用户隔离",
+      "priority": "首版需要",
+      "phases": [
+        "P02",
+        "P13"
+      ],
+      "status": "IN_PROGRESS",
+      "children": [
+        {
+          "id": "SEC-06.design",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "SEC-06.implementation",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "SEC-06.automated_tests",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "SEC-06.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-06.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-06.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-06.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "SEC-07",
+      "name": "安全检查与访问限制",
+      "priority": "首版需要",
+      "phases": [
+        "P13"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "SEC-07.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-07.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-07.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-07.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-07.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-07.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-07.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "SEC-08",
+      "name": "秘密与令牌管理",
+      "priority": "首版需要",
+      "phases": [
+        "P02",
+        "P13"
+      ],
+      "status": "IN_PROGRESS",
+      "children": [
+        {
+          "id": "SEC-08.design",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "SEC-08.implementation",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "SEC-08.automated_tests",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "SEC-08.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-08.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-08.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-08.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-08.sample_environment_sanitization",
+          "status": "LOCAL_MAC_PASS",
+          "evidence": [
+            "docs/evidence/n009-2026-10-15.json"
+          ],
+          "scope": "Synthetic prototype on current Mac; production/OS authorization unverified"
+        }
+      ]
+    },
+    {
+      "id": "SEC-09",
+      "name": "操作审计",
+      "priority": "首版需要",
+      "phases": [
+        "P13"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "SEC-09.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-09.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-09.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-09.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-09.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-09.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-09.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "SEC-10",
+      "name": "私人远程通道接入",
+      "priority": "首版需要",
+      "phases": [
+        "P13"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "SEC-10.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-10.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-10.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-10.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-10.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-10.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "SEC-10.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "OPS-01",
+      "name": "统一日志与诊断包",
+      "priority": "首版需要",
+      "phases": [
+        "P14"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "OPS-01.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "OPS-01.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "OPS-01.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "OPS-01.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "OPS-01.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "OPS-01.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "OPS-01.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "OPS-02",
+      "name": "通知渠道",
+      "priority": "首版需要",
+      "phases": [
+        "P14"
+      ],
+      "status": "IN_PROGRESS",
+      "children": [
+        {
+          "id": "OPS-02.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "OPS-02.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "OPS-02.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "OPS-02.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "OPS-02.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "OPS-02.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "OPS-02.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "OPS-02.transactional_event_outbox",
+          "status": "LOCAL_MAC_PASS",
+          "evidence": [
+            "docs/evidence/n010-2026-10-15.json",
+            "docs/plans/N-010-ACCEPTANCE.md",
+            "docs/decisions/ADR-004-durable-jobs-outbox.md"
+          ],
+          "scope": "Synthetic fixture on current Mac only; parent acceptance remains incomplete"
+        },
+        {
+          "id": "OPS-02.event_cursor_replay_and_receipts",
+          "status": "LOCAL_MAC_PASS",
+          "evidence": [
+            "docs/evidence/n010-2026-10-15.json",
+            "docs/plans/N-010-ACCEPTANCE.md",
+            "docs/decisions/ADR-004-durable-jobs-outbox.md"
+          ],
+          "scope": "Synthetic fixture on current Mac only; parent acceptance remains incomplete"
+        },
+        {
+          "id": "OPS-02.desktop_notification_replay_model",
+          "status": "MOCK_PASS",
+          "scope": "Memory event replay, deduplication and bounded acknowledgement; no production notification channel",
+          "evidence": [
+            "docs/evidence/n011-2026-10-15.json",
+            "docs/plans/N-011-ACCEPTANCE.md",
+            "web/tests/BROWSER_ACCEPTANCE.md"
+          ]
+        },
+        {
+          "id": "OPS-02.pipe_bridge_event_acknowledgement",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "Real synthetic PostgreSQL event replay and delivered-range acknowledgement through stdin/stdout only",
+          "evidence": [
+            "docs/evidence/n014-2026-10-15.json",
+            "docs/plans/N-014-ACCEPTANCE.md",
+            "docs/decisions/ADR-008-desktop-message-bridge.md"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "OPS-03",
+      "name": "计划任务与工作流",
+      "priority": "首版需要",
+      "phases": [
+        "P12",
+        "P14"
+      ],
+      "status": "IN_PROGRESS",
+      "children": [
+        {
+          "id": "OPS-03.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "OPS-03.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "OPS-03.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "OPS-03.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "OPS-03.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "OPS-03.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "OPS-03.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "OPS-03.bounded_retry_and_logical_volume_wait",
+          "status": "LOCAL_MAC_PASS",
+          "evidence": [
+            "docs/evidence/n010-2026-10-15.json",
+            "docs/plans/N-010-ACCEPTANCE.md",
+            "docs/decisions/ADR-004-durable-jobs-outbox.md"
+          ],
+          "scope": "Synthetic fixture on current Mac only; parent acceptance remains incomplete"
+        }
+      ]
+    },
+    {
+      "id": "OPS-04",
+      "name": "插盘备份工作流",
+      "priority": "首版需要",
+      "phases": [
+        "P14"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "OPS-04.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "OPS-04.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "OPS-04.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "OPS-04.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "OPS-04.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "OPS-04.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "OPS-04.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "OPS-05",
+      "name": "轻量模式与任务预算",
+      "priority": "首版需要",
+      "phases": [
+        "P14"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "OPS-05.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "OPS-05.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "OPS-05.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "OPS-05.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "OPS-05.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "OPS-05.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "OPS-05.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "OPS-06",
+      "name": "UPS与电源策略",
+      "priority": "暂不需要",
+      "phases": [
+        "EXCLUDED"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "OPS-06.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "OPS-06.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "OPS-06.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "OPS-06.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "OPS-06.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "OPS-06.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "OPS-06.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "OPS-07",
+      "name": "状态监测与故障降级",
+      "priority": "首版需要",
+      "phases": [
+        "P14"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "OPS-07.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "OPS-07.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "OPS-07.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "OPS-07.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "OPS-07.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "OPS-07.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "OPS-07.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "OPS-08",
+      "name": "备份与容量趋势报告",
+      "priority": "首版需要",
+      "phases": [
+        "P14"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "OPS-08.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "OPS-08.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "OPS-08.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "OPS-08.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "OPS-08.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "OPS-08.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "OPS-08.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "MIG-01",
+      "name": "群晖迁移预演",
+      "priority": "首版需要",
+      "phases": [
+        "P14"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "MIG-01.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MIG-01.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MIG-01.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MIG-01.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MIG-01.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MIG-01.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MIG-01.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "MIG-02",
+      "name": "换Mac恢复向导",
+      "priority": "首版需要",
+      "phases": [
+        "P14"
+      ],
+      "status": "NOT_STARTED",
+      "children": [
+        {
+          "id": "MIG-02.design",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MIG-02.implementation",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MIG-02.automated_tests",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MIG-02.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MIG-02.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MIG-02.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MIG-02.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "MIG-03",
+      "name": "本机测试与故障验收",
+      "priority": "首版需要",
+      "phases": [
+        "P00",
+        "P01",
+        "P14"
+      ],
+      "status": "IN_PROGRESS",
+      "children": [
+        {
+          "id": "MIG-03.design",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "MIG-03.implementation",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "MIG-03.automated_tests",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "MIG-03.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MIG-03.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MIG-03.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MIG-03.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "MIG-04",
+      "name": "可接续的Codex任务包",
+      "priority": "首版需要",
+      "phases": [
+        "P00",
+        "P14"
+      ],
+      "status": "IN_PROGRESS",
+      "children": [
+        {
+          "id": "MIG-04.design",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "MIG-04.implementation",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "MIG-04.automated_tests",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "MIG-04.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MIG-04.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MIG-04.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MIG-04.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "MIG-05",
+      "name": "可携式单目录跨 Mac 迁移",
+      "priority": "首版需要",
+      "phases": [
+        "P00",
+        "P02",
+        "P04",
+        "P05",
+        "P06",
+        "P07",
+        "P09",
+        "P14"
+      ],
+      "status": "IN_PROGRESS",
+      "children": [
+        {
+          "id": "MIG-05.design",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "MIG-05.implementation",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "MIG-05.automated_tests",
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "PROGRESS.md",
+            "docs/evidence/bootstrap-2026-10-15.json"
+          ]
+        },
+        {
+          "id": "MIG-05.macOS15",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MIG-05.current_macOS",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MIG-05.future_hardware",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MIG-05.owner_acceptance",
+          "status": "NOT_STARTED",
+          "evidence": []
+        },
+        {
+          "id": "MIG-05.recoverable_migration_journal",
+          "status": "LOCAL_MAC_PASS",
+          "evidence": [
+            "docs/evidence/n009-2026-10-15.json"
+          ],
+          "scope": "Synthetic prototype on current Mac; production/OS authorization unverified"
+        },
+        {
+          "id": "MIG-05.process_crash_checkpoint_resume",
+          "status": "LOCAL_MAC_PASS",
+          "evidence": [
+            "docs/evidence/n009-2026-10-15.json"
+          ],
+          "scope": "Synthetic prototype on current Mac; production/OS authorization unverified"
+        },
+        {
+          "id": "MIG-05.schema3_readonly_portable_restore",
+          "status": "LOCAL_MAC_PASS",
+          "evidence": [
+            "docs/evidence/n010-2026-10-15.json",
+            "docs/plans/N-010-ACCEPTANCE.md",
+            "docs/decisions/ADR-004-durable-jobs-outbox.md"
+          ],
+          "scope": "Synthetic fixture on current Mac only; parent acceptance remains incomplete"
+        },
+        {
+          "id": "MIG-05.desktop_readonly_recovery_model",
+          "status": "MOCK_PASS",
+          "scope": "Fixture reads and refusal of task mutations and event cursor writes only",
+          "evidence": [
+            "docs/evidence/n011-2026-10-15.json",
+            "docs/plans/N-011-ACCEPTANCE.md",
+            "web/tests/BROWSER_ACCEPTANCE.md"
+          ]
+        },
+        {
+          "id": "MIG-05.fixture_volume_and_content_reauthorization",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "Signed export/restore excludes host content and approvals; same Mac only",
+          "evidence": [
+            "docs/evidence/n012-n013-2026-10-15.json",
+            "docs/plans/N-012-013-ACCEPTANCE.md",
+            "docs/contracts/FIXTURE_STORAGE_API.md"
+          ]
+        }
+      ]
+    }
+  ]
+}

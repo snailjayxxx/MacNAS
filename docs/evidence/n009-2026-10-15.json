@@ -1,0 +1,928 @@
+{
+  "schema": "macnas-development-evidence/v2",
+  "task_id": "N-009",
+  "date": "2026-10-15",
+  "timezone": "Asia/Tokyo",
+  "status": "LOCAL_MAC_PROTOTYPE_PASS",
+  "requirement_ids": [
+    "APP-04",
+    "APP-06",
+    "APP-08",
+    "APP-09",
+    "MIG-05",
+    "SEC-08",
+    "SYS-06",
+    "BAK-09",
+    "BAK-10",
+    "MIG-03",
+    "MIG-04"
+  ],
+  "git_branch": "dev/bootstrap",
+  "base_head": "e05b3d7e3acbeb447f10c2f5f27a64be332be6f5",
+  "commit": "NOT_COMMITTED",
+  "commit_language_preference": "Chinese titles and body",
+  "remote_push": "NOT_PERFORMED",
+  "build_command": "swift build (scratch/cache flags in run summaries)",
+  "test_command": "/usr/bin/python3 scripts/dev.py",
+  "test_results": {
+    "full_swift_tests": 95,
+    "full_swift_failures": 0,
+    "requirement_negative_tests": 5,
+    "requirement_negative_failures": 0,
+    "refined_cancellation_targeted_tests": 1,
+    "refined_cancellation_failures": 0,
+    "product_source_receipt_unchanged": true,
+    "note": "One cancellation test was strengthened after the full suite and rerun explicitly; the product Swift sources are byte-identical across the two passing runs."
+  },
+  "runs": [
+    {
+      "run_id": "20261015T125744-e75e2bc6",
+      "status": "PASS",
+      "os": "26.5.2",
+      "architecture": "arm64",
+      "database": "PostgreSQL 18.6",
+      "database_transport": "private Unix socket only; TCP disabled",
+      "synthetic_data": true,
+      "cross_mac": "NOT_EXECUTED",
+      "physical_pool": "BLOCKED_NO_DESTROYABLE_TEST_DISKS",
+      "macOS15_runtime": "NOT_EXECUTED",
+      "source_base": "e05b3d7e3acbeb447f10c2f5f27a64be332be6f5",
+      "commit": "uncommitted development work",
+      "test_filter": null,
+      "results": [
+        {
+          "name": "requirements",
+          "command": [
+            "/usr/bin/python3",
+            "scripts/verify_requirements.py"
+          ],
+          "exit_code": 0,
+          "expected_exit": 0,
+          "log": "Evidence/runs/20261015T125744-e75e2bc6/requirements.log"
+        },
+        {
+          "name": "requirements-negative-tests",
+          "command": [
+            "/usr/bin/python3",
+            "scripts/test_requirements.py"
+          ],
+          "exit_code": 0,
+          "expected_exit": 0,
+          "log": "Evidence/runs/20261015T125744-e75e2bc6/requirements-negative-tests.log"
+        },
+        {
+          "name": "swift-build",
+          "command": [
+            "/usr/bin/swift",
+            "build",
+            "--scratch-path",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/swift",
+            "--cache-path",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/swift-cache",
+            "--config-path",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/swift-config",
+            "--security-path",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/swift-security"
+          ],
+          "exit_code": 0,
+          "expected_exit": 0,
+          "log": "Evidence/runs/20261015T125744-e75e2bc6/swift-build.log"
+        },
+        {
+          "name": "postgres-initdb",
+          "command": [
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/postgresql/install-18.6-macos15/bin/initdb",
+            "-D",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/TestLab/20261015T125744-e75e2bc6/postgresql",
+            "--username=macnas_test_admin",
+            "--encoding=UTF8",
+            "--locale=C",
+            "--auth-local=trust",
+            "--auth-host=reject"
+          ],
+          "exit_code": 0,
+          "expected_exit": 0,
+          "log": "Evidence/runs/20261015T125744-e75e2bc6/postgres-initdb.log"
+        },
+        {
+          "name": "postgres-start",
+          "command": [
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/postgresql/install-18.6-macos15/bin/pg_ctl",
+            "-D",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/TestLab/20261015T125744-e75e2bc6/postgresql",
+            "--wait",
+            "--timeout=20",
+            "-l",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Evidence/runs/20261015T125744-e75e2bc6/postgres-server.log",
+            "-o",
+            "-k /private/tmp/macnas-pg-kj5gaoz7 -p 55432 -c listen_addresses='' -c max_connections=20 -c shared_buffers=32MB -c unix_socket_permissions=0700",
+            "start"
+          ],
+          "exit_code": 0,
+          "expected_exit": 0,
+          "log": "Evidence/runs/20261015T125744-e75e2bc6/postgres-start.log"
+        },
+        {
+          "name": "postgres-test-role",
+          "command": [
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/postgresql/install-18.6-macos15/bin/psql",
+            "-X",
+            "--host",
+            "/private/tmp/macnas-pg-kj5gaoz7",
+            "--port",
+            "55432",
+            "--username",
+            "macnas_test_admin",
+            "--dbname",
+            "postgres",
+            "--set",
+            "ON_ERROR_STOP=1"
+          ],
+          "exit_code": 0,
+          "expected_exit": 0,
+          "log": "Evidence/runs/20261015T125744-e75e2bc6/postgres-test-role.log"
+        },
+        {
+          "name": "postgres-runtime",
+          "command": [
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/postgresql/install-18.6-macos15/bin/psql",
+            "-X",
+            "--host",
+            "/private/tmp/macnas-pg-kj5gaoz7",
+            "--port",
+            "55432",
+            "--username",
+            "macnas_test_admin",
+            "--dbname",
+            "postgres",
+            "--set",
+            "ON_ERROR_STOP=1"
+          ],
+          "exit_code": 0,
+          "expected_exit": 0,
+          "log": "Evidence/runs/20261015T125744-e75e2bc6/postgres-runtime.log"
+        },
+        {
+          "name": "swift-tests",
+          "command": [
+            "/usr/bin/swift",
+            "test",
+            "--scratch-path",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/swift",
+            "--cache-path",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/swift-cache",
+            "--config-path",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/swift-config",
+            "--security-path",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/swift-security"
+          ],
+          "exit_code": 0,
+          "expected_exit": 0,
+          "log": "Evidence/runs/20261015T125744-e75e2bc6/swift-tests.log"
+        },
+        {
+          "name": "capabilities",
+          "command": [
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/swift/arm64-apple-macosx/debug/macnas",
+            "capabilities"
+          ],
+          "exit_code": 0,
+          "expected_exit": 0,
+          "log": "Evidence/runs/20261015T125744-e75e2bc6/capabilities.log"
+        },
+        {
+          "name": "demo-create",
+          "command": [
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/swift/arm64-apple-macosx/debug/macnas",
+            "fixture",
+            "create",
+            "--dest",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/DeploySandbox/20261015T125744-e75e2bc6/源实例"
+          ],
+          "exit_code": 0,
+          "expected_exit": 0,
+          "log": "Evidence/runs/20261015T125744-e75e2bc6/demo-create.log"
+        },
+        {
+          "name": "demo-preview",
+          "command": [
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/swift/arm64-apple-macosx/debug/macnas",
+            "migrate",
+            "preview",
+            "--source",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/DeploySandbox/20261015T125744-e75e2bc6/源实例"
+          ],
+          "exit_code": 0,
+          "expected_exit": 0,
+          "log": "Evidence/runs/20261015T125744-e75e2bc6/demo-preview.log"
+        },
+        {
+          "name": "demo-export",
+          "command": [
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/swift/arm64-apple-macosx/debug/macnas",
+            "migrate",
+            "export",
+            "--source",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/DeploySandbox/20261015T125744-e75e2bc6/源实例",
+            "--dest",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/DeploySandbox/20261015T125744-e75e2bc6/portable-export"
+          ],
+          "exit_code": 0,
+          "expected_exit": 0,
+          "log": "Evidence/runs/20261015T125744-e75e2bc6/demo-export.log"
+        },
+        {
+          "name": "demo-doctor",
+          "command": [
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/swift/arm64-apple-macosx/debug/macnas",
+            "doctor",
+            "--portable",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/DeploySandbox/20261015T125744-e75e2bc6/portable-export"
+          ],
+          "exit_code": 0,
+          "expected_exit": 0,
+          "log": "Evidence/runs/20261015T125744-e75e2bc6/demo-doctor.log"
+        },
+        {
+          "name": "demo-restore-preview",
+          "command": [
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/swift/arm64-apple-macosx/debug/macnas",
+            "migrate",
+            "restore",
+            "--source",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/DeploySandbox/20261015T125744-e75e2bc6/portable-export",
+            "--dest",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/DeploySandbox/20261015T125744-e75e2bc6/移動後の实例"
+          ],
+          "exit_code": 0,
+          "expected_exit": 0,
+          "log": "Evidence/runs/20261015T125744-e75e2bc6/demo-restore-preview.log"
+        },
+        {
+          "name": "demo-restore",
+          "command": [
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/swift/arm64-apple-macosx/debug/macnas",
+            "migrate",
+            "restore",
+            "--source",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/DeploySandbox/20261015T125744-e75e2bc6/portable-export",
+            "--dest",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/DeploySandbox/20261015T125744-e75e2bc6/移動後の实例",
+            "--confirm-create",
+            "--host-id",
+            "mock-new-mac"
+          ],
+          "exit_code": 0,
+          "expected_exit": 0,
+          "log": "Evidence/runs/20261015T125744-e75e2bc6/demo-restore.log"
+        },
+        {
+          "name": "demo-idempotent-retry",
+          "command": [
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/swift/arm64-apple-macosx/debug/macnas",
+            "migrate",
+            "restore",
+            "--source",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/DeploySandbox/20261015T125744-e75e2bc6/portable-export",
+            "--dest",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/DeploySandbox/20261015T125744-e75e2bc6/移動後の实例",
+            "--confirm-create",
+            "--host-id",
+            "mock-new-mac"
+          ],
+          "exit_code": 0,
+          "expected_exit": 0,
+          "log": "Evidence/runs/20261015T125744-e75e2bc6/demo-idempotent-retry.log"
+        },
+        {
+          "name": "demo-journal-status",
+          "command": [
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/swift/arm64-apple-macosx/debug/macnas",
+            "migrate",
+            "status",
+            "--dest",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/DeploySandbox/20261015T125744-e75e2bc6/移動後の实例"
+          ],
+          "exit_code": 0,
+          "expected_exit": 0,
+          "log": "Evidence/runs/20261015T125744-e75e2bc6/demo-journal-status.log"
+        },
+        {
+          "name": "demo-upgrade-preview",
+          "command": [
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/swift/arm64-apple-macosx/debug/macnas",
+            "migrate",
+            "upgrade",
+            "--source",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/DeploySandbox/20261015T125744-e75e2bc6/源实例",
+            "--dest",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/DeploySandbox/20261015T125744-e75e2bc6/Schema2-只读实例"
+          ],
+          "exit_code": 0,
+          "expected_exit": 0,
+          "log": "Evidence/runs/20261015T125744-e75e2bc6/demo-upgrade-preview.log"
+        },
+        {
+          "name": "demo-upgrade",
+          "command": [
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/swift/arm64-apple-macosx/debug/macnas",
+            "migrate",
+            "upgrade",
+            "--source",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/DeploySandbox/20261015T125744-e75e2bc6/源实例",
+            "--dest",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/DeploySandbox/20261015T125744-e75e2bc6/Schema2-只读实例",
+            "--confirm-create",
+            "--host-id",
+            "mock-upgrade-mac"
+          ],
+          "exit_code": 0,
+          "expected_exit": 0,
+          "log": "Evidence/runs/20261015T125744-e75e2bc6/demo-upgrade.log"
+        },
+        {
+          "name": "demo-upgrade-doctor",
+          "command": [
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/swift/arm64-apple-macosx/debug/macnas",
+            "doctor",
+            "--portable",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/DeploySandbox/20261015T125744-e75e2bc6/Schema2-只读实例"
+          ],
+          "exit_code": 0,
+          "expected_exit": 0,
+          "log": "Evidence/runs/20261015T125744-e75e2bc6/demo-upgrade-doctor.log"
+        },
+        {
+          "name": "demo-upgrade-retry",
+          "command": [
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/swift/arm64-apple-macosx/debug/macnas",
+            "migrate",
+            "upgrade",
+            "--source",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/DeploySandbox/20261015T125744-e75e2bc6/源实例",
+            "--dest",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/DeploySandbox/20261015T125744-e75e2bc6/Schema2-只读实例",
+            "--confirm-create",
+            "--host-id",
+            "mock-upgrade-mac"
+          ],
+          "exit_code": 0,
+          "expected_exit": 0,
+          "log": "Evidence/runs/20261015T125744-e75e2bc6/demo-upgrade-retry.log"
+        },
+        {
+          "name": "demo-rollback-preview",
+          "command": [
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/swift/arm64-apple-macosx/debug/macnas",
+            "migrate",
+            "rollback",
+            "--dest",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/DeploySandbox/20261015T125744-e75e2bc6/Schema2-只读实例"
+          ],
+          "exit_code": 0,
+          "expected_exit": 0,
+          "log": "Evidence/runs/20261015T125744-e75e2bc6/demo-rollback-preview.log"
+        },
+        {
+          "name": "demo-rollback",
+          "command": [
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/swift/arm64-apple-macosx/debug/macnas",
+            "migrate",
+            "rollback",
+            "--dest",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/DeploySandbox/20261015T125744-e75e2bc6/Schema2-只读实例",
+            "--confirm"
+          ],
+          "exit_code": 0,
+          "expected_exit": 0,
+          "log": "Evidence/runs/20261015T125744-e75e2bc6/demo-rollback.log"
+        },
+        {
+          "name": "photo-synthetic-smoke",
+          "command": [
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/swift/arm64-apple-macosx/debug/macnas",
+            "photo-smoke",
+            "--dest",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/DeploySandbox/20261015T125744-e75e2bc6/synthetic-photo-smoke"
+          ],
+          "exit_code": 0,
+          "expected_exit": 0,
+          "log": "Evidence/runs/20261015T125744-e75e2bc6/photo-synthetic-smoke.log"
+        },
+        {
+          "name": "cutover-refusal",
+          "command": [
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/swift/arm64-apple-macosx/debug/macnas",
+            "migrate",
+            "cutover"
+          ],
+          "exit_code": 1,
+          "expected_exit": 1,
+          "log": "Evidence/runs/20261015T125744-e75e2bc6/cutover-refusal.log"
+        },
+        {
+          "name": "postgres-stop",
+          "command": [
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/postgresql/install-18.6-macos15/bin/pg_ctl",
+            "-D",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/TestLab/20261015T125744-e75e2bc6/postgresql",
+            "--wait",
+            "--timeout=20",
+            "--mode=fast",
+            "stop"
+          ],
+          "exit_code": 0,
+          "expected_exit": 0,
+          "log": "Evidence/runs/20261015T125744-e75e2bc6/postgres-stop.log"
+        }
+      ]
+    },
+    {
+      "run_id": "20261015T130512-1dc95207",
+      "status": "PASS",
+      "os": "26.5.2",
+      "architecture": "arm64",
+      "database": "PostgreSQL 18.6",
+      "database_transport": "private Unix socket only; TCP disabled",
+      "synthetic_data": true,
+      "cross_mac": "NOT_EXECUTED",
+      "physical_pool": "BLOCKED_NO_DESTROYABLE_TEST_DISKS",
+      "macOS15_runtime": "NOT_EXECUTED",
+      "source_base": "e05b3d7e3acbeb447f10c2f5f27a64be332be6f5",
+      "commit": "uncommitted development work",
+      "test_filter": "SnapshotBarrierTests.testCancellationWhileDrainingWriterCancelsOnlyItsOwnDatabaseBarrierSession",
+      "results": [
+        {
+          "name": "requirements",
+          "command": [
+            "/usr/bin/python3",
+            "scripts/verify_requirements.py"
+          ],
+          "exit_code": 0,
+          "expected_exit": 0,
+          "log": "Evidence/runs/20261015T130512-1dc95207/requirements.log"
+        },
+        {
+          "name": "requirements-negative-tests",
+          "command": [
+            "/usr/bin/python3",
+            "scripts/test_requirements.py"
+          ],
+          "exit_code": 0,
+          "expected_exit": 0,
+          "log": "Evidence/runs/20261015T130512-1dc95207/requirements-negative-tests.log"
+        },
+        {
+          "name": "swift-build",
+          "command": [
+            "/usr/bin/swift",
+            "build",
+            "--scratch-path",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/swift",
+            "--cache-path",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/swift-cache",
+            "--config-path",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/swift-config",
+            "--security-path",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/swift-security"
+          ],
+          "exit_code": 0,
+          "expected_exit": 0,
+          "log": "Evidence/runs/20261015T130512-1dc95207/swift-build.log"
+        },
+        {
+          "name": "postgres-initdb",
+          "command": [
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/postgresql/install-18.6-macos15/bin/initdb",
+            "-D",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/TestLab/20261015T130512-1dc95207/postgresql",
+            "--username=macnas_test_admin",
+            "--encoding=UTF8",
+            "--locale=C",
+            "--auth-local=trust",
+            "--auth-host=reject"
+          ],
+          "exit_code": 0,
+          "expected_exit": 0,
+          "log": "Evidence/runs/20261015T130512-1dc95207/postgres-initdb.log"
+        },
+        {
+          "name": "postgres-start",
+          "command": [
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/postgresql/install-18.6-macos15/bin/pg_ctl",
+            "-D",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/TestLab/20261015T130512-1dc95207/postgresql",
+            "--wait",
+            "--timeout=20",
+            "-l",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Evidence/runs/20261015T130512-1dc95207/postgres-server.log",
+            "-o",
+            "-k /private/tmp/macnas-pg-3c7he262 -p 55432 -c listen_addresses='' -c max_connections=20 -c shared_buffers=32MB -c unix_socket_permissions=0700",
+            "start"
+          ],
+          "exit_code": 0,
+          "expected_exit": 0,
+          "log": "Evidence/runs/20261015T130512-1dc95207/postgres-start.log"
+        },
+        {
+          "name": "postgres-test-role",
+          "command": [
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/postgresql/install-18.6-macos15/bin/psql",
+            "-X",
+            "--host",
+            "/private/tmp/macnas-pg-3c7he262",
+            "--port",
+            "55432",
+            "--username",
+            "macnas_test_admin",
+            "--dbname",
+            "postgres",
+            "--set",
+            "ON_ERROR_STOP=1"
+          ],
+          "exit_code": 0,
+          "expected_exit": 0,
+          "log": "Evidence/runs/20261015T130512-1dc95207/postgres-test-role.log"
+        },
+        {
+          "name": "postgres-runtime",
+          "command": [
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/postgresql/install-18.6-macos15/bin/psql",
+            "-X",
+            "--host",
+            "/private/tmp/macnas-pg-3c7he262",
+            "--port",
+            "55432",
+            "--username",
+            "macnas_test_admin",
+            "--dbname",
+            "postgres",
+            "--set",
+            "ON_ERROR_STOP=1"
+          ],
+          "exit_code": 0,
+          "expected_exit": 0,
+          "log": "Evidence/runs/20261015T130512-1dc95207/postgres-runtime.log"
+        },
+        {
+          "name": "swift-tests",
+          "command": [
+            "/usr/bin/swift",
+            "test",
+            "--scratch-path",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/swift",
+            "--cache-path",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/swift-cache",
+            "--config-path",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/swift-config",
+            "--security-path",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/swift-security",
+            "--filter",
+            "SnapshotBarrierTests.testCancellationWhileDrainingWriterCancelsOnlyItsOwnDatabaseBarrierSession"
+          ],
+          "exit_code": 0,
+          "expected_exit": 0,
+          "log": "Evidence/runs/20261015T130512-1dc95207/swift-tests.log"
+        },
+        {
+          "name": "capabilities",
+          "command": [
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/swift/arm64-apple-macosx/debug/macnas",
+            "capabilities"
+          ],
+          "exit_code": 0,
+          "expected_exit": 0,
+          "log": "Evidence/runs/20261015T130512-1dc95207/capabilities.log"
+        },
+        {
+          "name": "demo-create",
+          "command": [
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/swift/arm64-apple-macosx/debug/macnas",
+            "fixture",
+            "create",
+            "--dest",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/DeploySandbox/20261015T130512-1dc95207/源实例"
+          ],
+          "exit_code": 0,
+          "expected_exit": 0,
+          "log": "Evidence/runs/20261015T130512-1dc95207/demo-create.log"
+        },
+        {
+          "name": "demo-preview",
+          "command": [
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/swift/arm64-apple-macosx/debug/macnas",
+            "migrate",
+            "preview",
+            "--source",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/DeploySandbox/20261015T130512-1dc95207/源实例"
+          ],
+          "exit_code": 0,
+          "expected_exit": 0,
+          "log": "Evidence/runs/20261015T130512-1dc95207/demo-preview.log"
+        },
+        {
+          "name": "demo-export",
+          "command": [
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/swift/arm64-apple-macosx/debug/macnas",
+            "migrate",
+            "export",
+            "--source",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/DeploySandbox/20261015T130512-1dc95207/源实例",
+            "--dest",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/DeploySandbox/20261015T130512-1dc95207/portable-export"
+          ],
+          "exit_code": 0,
+          "expected_exit": 0,
+          "log": "Evidence/runs/20261015T130512-1dc95207/demo-export.log"
+        },
+        {
+          "name": "demo-doctor",
+          "command": [
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/swift/arm64-apple-macosx/debug/macnas",
+            "doctor",
+            "--portable",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/DeploySandbox/20261015T130512-1dc95207/portable-export"
+          ],
+          "exit_code": 0,
+          "expected_exit": 0,
+          "log": "Evidence/runs/20261015T130512-1dc95207/demo-doctor.log"
+        },
+        {
+          "name": "demo-restore-preview",
+          "command": [
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/swift/arm64-apple-macosx/debug/macnas",
+            "migrate",
+            "restore",
+            "--source",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/DeploySandbox/20261015T130512-1dc95207/portable-export",
+            "--dest",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/DeploySandbox/20261015T130512-1dc95207/移動後の实例"
+          ],
+          "exit_code": 0,
+          "expected_exit": 0,
+          "log": "Evidence/runs/20261015T130512-1dc95207/demo-restore-preview.log"
+        },
+        {
+          "name": "demo-restore",
+          "command": [
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/swift/arm64-apple-macosx/debug/macnas",
+            "migrate",
+            "restore",
+            "--source",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/DeploySandbox/20261015T130512-1dc95207/portable-export",
+            "--dest",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/DeploySandbox/20261015T130512-1dc95207/移動後の实例",
+            "--confirm-create",
+            "--host-id",
+            "mock-new-mac"
+          ],
+          "exit_code": 0,
+          "expected_exit": 0,
+          "log": "Evidence/runs/20261015T130512-1dc95207/demo-restore.log"
+        },
+        {
+          "name": "demo-idempotent-retry",
+          "command": [
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/swift/arm64-apple-macosx/debug/macnas",
+            "migrate",
+            "restore",
+            "--source",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/DeploySandbox/20261015T130512-1dc95207/portable-export",
+            "--dest",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/DeploySandbox/20261015T130512-1dc95207/移動後の实例",
+            "--confirm-create",
+            "--host-id",
+            "mock-new-mac"
+          ],
+          "exit_code": 0,
+          "expected_exit": 0,
+          "log": "Evidence/runs/20261015T130512-1dc95207/demo-idempotent-retry.log"
+        },
+        {
+          "name": "demo-journal-status",
+          "command": [
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/swift/arm64-apple-macosx/debug/macnas",
+            "migrate",
+            "status",
+            "--dest",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/DeploySandbox/20261015T130512-1dc95207/移動後の实例"
+          ],
+          "exit_code": 0,
+          "expected_exit": 0,
+          "log": "Evidence/runs/20261015T130512-1dc95207/demo-journal-status.log"
+        },
+        {
+          "name": "demo-upgrade-preview",
+          "command": [
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/swift/arm64-apple-macosx/debug/macnas",
+            "migrate",
+            "upgrade",
+            "--source",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/DeploySandbox/20261015T130512-1dc95207/源实例",
+            "--dest",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/DeploySandbox/20261015T130512-1dc95207/Schema2-只读实例"
+          ],
+          "exit_code": 0,
+          "expected_exit": 0,
+          "log": "Evidence/runs/20261015T130512-1dc95207/demo-upgrade-preview.log"
+        },
+        {
+          "name": "demo-upgrade",
+          "command": [
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/swift/arm64-apple-macosx/debug/macnas",
+            "migrate",
+            "upgrade",
+            "--source",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/DeploySandbox/20261015T130512-1dc95207/源实例",
+            "--dest",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/DeploySandbox/20261015T130512-1dc95207/Schema2-只读实例",
+            "--confirm-create",
+            "--host-id",
+            "mock-upgrade-mac"
+          ],
+          "exit_code": 0,
+          "expected_exit": 0,
+          "log": "Evidence/runs/20261015T130512-1dc95207/demo-upgrade.log"
+        },
+        {
+          "name": "demo-upgrade-doctor",
+          "command": [
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/swift/arm64-apple-macosx/debug/macnas",
+            "doctor",
+            "--portable",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/DeploySandbox/20261015T130512-1dc95207/Schema2-只读实例"
+          ],
+          "exit_code": 0,
+          "expected_exit": 0,
+          "log": "Evidence/runs/20261015T130512-1dc95207/demo-upgrade-doctor.log"
+        },
+        {
+          "name": "demo-upgrade-retry",
+          "command": [
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/swift/arm64-apple-macosx/debug/macnas",
+            "migrate",
+            "upgrade",
+            "--source",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/DeploySandbox/20261015T130512-1dc95207/源实例",
+            "--dest",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/DeploySandbox/20261015T130512-1dc95207/Schema2-只读实例",
+            "--confirm-create",
+            "--host-id",
+            "mock-upgrade-mac"
+          ],
+          "exit_code": 0,
+          "expected_exit": 0,
+          "log": "Evidence/runs/20261015T130512-1dc95207/demo-upgrade-retry.log"
+        },
+        {
+          "name": "demo-rollback-preview",
+          "command": [
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/swift/arm64-apple-macosx/debug/macnas",
+            "migrate",
+            "rollback",
+            "--dest",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/DeploySandbox/20261015T130512-1dc95207/Schema2-只读实例"
+          ],
+          "exit_code": 0,
+          "expected_exit": 0,
+          "log": "Evidence/runs/20261015T130512-1dc95207/demo-rollback-preview.log"
+        },
+        {
+          "name": "demo-rollback",
+          "command": [
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/swift/arm64-apple-macosx/debug/macnas",
+            "migrate",
+            "rollback",
+            "--dest",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/DeploySandbox/20261015T130512-1dc95207/Schema2-只读实例",
+            "--confirm"
+          ],
+          "exit_code": 0,
+          "expected_exit": 0,
+          "log": "Evidence/runs/20261015T130512-1dc95207/demo-rollback.log"
+        },
+        {
+          "name": "photo-synthetic-smoke",
+          "command": [
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/swift/arm64-apple-macosx/debug/macnas",
+            "photo-smoke",
+            "--dest",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/DeploySandbox/20261015T130512-1dc95207/synthetic-photo-smoke"
+          ],
+          "exit_code": 0,
+          "expected_exit": 0,
+          "log": "Evidence/runs/20261015T130512-1dc95207/photo-synthetic-smoke.log"
+        },
+        {
+          "name": "cutover-refusal",
+          "command": [
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/swift/arm64-apple-macosx/debug/macnas",
+            "migrate",
+            "cutover"
+          ],
+          "exit_code": 1,
+          "expected_exit": 1,
+          "log": "Evidence/runs/20261015T130512-1dc95207/cutover-refusal.log"
+        },
+        {
+          "name": "postgres-stop",
+          "command": [
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/Build/postgresql/install-18.6-macos15/bin/pg_ctl",
+            "-D",
+            "/Volumes/MacNAS-Dev/MacNAS-Workspace/TestLab/20261015T130512-1dc95207/postgresql",
+            "--wait",
+            "--timeout=20",
+            "--mode=fast",
+            "stop"
+          ],
+          "exit_code": 0,
+          "expected_exit": 0,
+          "log": "Evidence/runs/20261015T130512-1dc95207/postgres-stop.log"
+        }
+      ]
+    }
+  ],
+  "raw_evidence_directories": [
+    "/Volumes/MacNAS-Dev/MacNAS-Workspace/Evidence/runs/20261015T125744-e75e2bc6",
+    "/Volumes/MacNAS-Dev/MacNAS-Workspace/Evidence/runs/20261015T130512-1dc95207"
+  ],
+  "actual_macos_version": "26.5.2",
+  "real_hardware": "Mac14,3 arm64, current host only",
+  "test_environment": "Private Unix socket PostgreSQL 18.6; TCP disabled; synthetic data; both clusters stopped",
+  "macOS15_runtime": "NOT_EXECUTED",
+  "cross_mac": "NOT_EXECUTED",
+  "physical_pool": "BLOCKED_NO_AUTHORIZED_DISPOSABLE_DISKS",
+  "dependencies_added": [],
+  "dependency_approvals": [
+    "Existing Apple SDK/toolchain",
+    "Previously user-approved PostgreSQL 18"
+  ],
+  "system_operation_grants": [
+    "Verified development SSD only",
+    "Self-created fixtures, database roles and test subprocesses; no system account/service changes"
+  ],
+  "rollback": "Preserve old source/database, signed backup, candidate database and directory. Candidate remains read-only and is marked rolledBack. No production cutover performed.",
+  "known_risks": [
+    "Fixture sessions are simulated authentication",
+    "Socket trust authentication and GRANT tests do not establish OS identity/sandboxing",
+    "Only known tables and managed file writers participate in the barrier",
+    "No distributed fencing, real Keychain/helper/SMB authorization, macOS15 runtime or cross-Mac test",
+    "No power-loss proof or byte-range resume",
+    "Unattested empty candidates are retained, not deleted; at most eight reallocations",
+    "No CPU/memory hard limits; output limit has a polling interval",
+    "Test signing context must be supplied across restarted CLI processes"
+  ],
+  "owner_decision_needed": "None for next non-destructive coding; future system/public/disk actions require specific approval",
+  "next_task": "N-010 durable jobs and transactional event outbox; NEXT_TASK.md",
+  "source_sha256": {
+    "Package.swift": "09023b72b39b31dc54575ca6925cc2513aa09a4d6f70588851be384bdc267ea5",
+    "Sources/HelloDiagnostics/main.swift": "b04a06781130b60863f86dbb24e968de3284e0f427def19da7799586d6893aa5",
+    "Sources/MacNASCLI/main.swift": "0dac9f0ecbde31f0d4b03e748ef701c1d23ea1fc6dca29376045aa17764419e4",
+    "Sources/MacNASCore/CapabilityProbe.swift": "7deb935038d37631251e0dc6307d0ae27f02f66186ba4d6707c5671ab3ec885a",
+    "Sources/MacNASCore/MigrationCoordinator.swift": "f851be81e5628b4376c4b58eaa758db6a168b5f8a346d384b12bc0ebbf816e9c",
+    "Sources/MacNASCore/Models.swift": "1da69f6e6e84f2d0bc0007df8da7df0dcc4591a6be5313d9799c305a43910fef",
+    "Sources/MacNASCore/PhotoSmoke.swift": "3354d7f6a7486d35cfca548821d76e95dfa41970fb6cea686b283c43b0dbd084",
+    "Sources/MacNASCore/Plugins.swift": "1432b97b897e66a0f6aa0f0a2c8e39a3321c5dac3d280343edac67f84cd7ded1",
+    "Sources/MacNASCore/PoolSimulation.swift": "3636d4a4e253ab360d4ddf02d8086539d9ba759b415c989e638db59b9c5e3c99",
+    "Sources/MacNASCore/PortableInstance.swift": "bb73f04a14dc77e6161d9837d86720bdb96049552ecc430db641e04bfddb2fad",
+    "Sources/MacNASCore/PrototypePlatformAPI.swift": "f05d1f5bf43a6254f8f15795e3bfd5c36dd66eccde97fb0912752d812bd83752",
+    "Sources/MacNASCore/SafeFS.swift": "75d9f829af31e0ecb949b81f19cc8bd00661b009605ae91ff8f59de9cfe32577",
+    "Sources/MacNASCore/SecurityGate.swift": "97b3490f8405886fb4014198bbb43e61717860115a44d4628c5bbe666c3df49f",
+    "Sources/MacNASCore/StateStore.swift": "545d0890c3de7a24509c94bebe7fa6eed9bd27f00d24be52f56d0b9f70b69922",
+    "Sources/MacNASCore/WriteBarrier.swift": "8689672f0ffb0459a41947d89dc0601d203c2556af77edf958cf8a4119b69b2f",
+    "Sources/SampleFileIndex/main.swift": "4f57a1bc123eaf62baff11b6867ea8a413bbc314247cd0399f93b7874f1442ce",
+    "Tests/MacNASCoreTests/CoreTests.swift": "cbe1b6e1a92435761d43ffcdb6b8b3e9c0b629c48782270947de10574254a4d9",
+    "Tests/MacNASCoreTests/MigrationRecoveryTests.swift": "a01084c7ae0de34fd02e92e370b920825fabebf8055d5f4a2859682ca9e6e766",
+    "Tests/MacNASCoreTests/PrototypeAPITests.swift": "0e349d6c8707eba3b5ae4775c963aa808c2caf447f84555ed86355865e69b8e9",
+    "Tests/MacNASCoreTests/SmokeTests.swift": "9f808a70612068f05bfbdcd3cbb11f432467e1adc65795b2241c9898ec2a07dd",
+    "database/migrations/0001_initial.sql": "f609f4b3417afeb86aeb6bb37905da97cb58b681316ac7875e6d8184fa12628f",
+    "database/migrations/0002_app_state_revision.sql": "d77b2576f62543b30d529e1e2858bd51d49b2df3768adee5a74a461549cf23ed",
+    "scripts/build_postgresql.py": "e7f17fed45e2ab393e4dc3ca99304fc0f3ae6ee2a6c0316f504f26911f35f311",
+    "scripts/dev.py": "dcd6bcdf0aec761f3f23619c474a0963e575438fe74186b119091d53b7321f28",
+    "scripts/test_requirements.py": "d85b26070a7d8d57e992a66e1b1c87c1f9c7588ce9ed1867412959d8d89989e0",
+    "scripts/verify_requirements.py": "ed7776aab51eaa9cc89ca10587034386a47fadfd67a7e261231e0292e85a74d1"
+  },
+  "source_start_backup": [
+    "Evidence/n009-before-20261015T123044.tar.gz"
+  ],
+  "resolved_failures": [
+    {
+      "run": "20261015T124033-707c771e",
+      "issue": "Test throwing syntax",
+      "resolution": "Fixed missing try markers"
+    },
+    {
+      "run": "20261015T124108-e500757b",
+      "issue": "Attestation used non-shared object comments",
+      "resolution": "Use shobj_description and check transaction identity/owner; collision negatives pass"
+    }
+  ],
+  "first_round_evidence_preserved": "docs/evidence/bootstrap-2026-10-15.json",
+  "requirement_counts": {
+    "total": 111,
+    "first": 97,
+    "later": 13,
+    "not_needed": 1
+  },
+  "child_workflow_records": 793
+}

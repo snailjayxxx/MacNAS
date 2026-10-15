@@ -1,0 +1,152 @@
+{
+  "version": "0.6",
+  "created": "2026-10-15",
+  "file_count_excluding_manifest": 29,
+  "files": [
+    {
+      "path": "01_用户决策与部署基线.md",
+      "sha256": "c5d021d9f6e45d844ecade297892044364116cbcf95c9868ce9785b90b3079b3",
+      "size_bytes": 4972
+    },
+    {
+      "path": "02_总体架构与接口契约.md",
+      "sha256": "fc08b5fa02ab9975cadb931a2468402c2ddf48d8adb3642895aebb8f23385849",
+      "size_bytes": 9607
+    },
+    {
+      "path": "03_分阶段执行计划.md",
+      "sha256": "529e7aaed9bc033c7d04d6be6539344d1f692ef4e4acccfe89988c6edbaa3a71",
+      "size_bytes": 12996
+    },
+    {
+      "path": "04_首批Codex任务卡.md",
+      "sha256": "18a2024c19852d03baaf9e933adf73cac14478968e9734ad56d8448aa26763f5",
+      "size_bytes": 6587
+    },
+    {
+      "path": "05_需求追踪表.md",
+      "sha256": "761924f6ef42a1acf14c3b0ea91cd18ee294ccd996cb3ee102adf7c9f77cc0fa",
+      "size_bytes": 9391
+    },
+    {
+      "path": "06_安全门槛与验收.md",
+      "sha256": "b4a2dcb6961cb2b1a34ad54ad005a148fbcbfe671abc072fd504f12779cf89d5",
+      "size_bytes": 4997
+    },
+    {
+      "path": "07_技术阻塞与替代方案.md",
+      "sha256": "c111d805ae6abea9ef7c18d5cffe3ecef4e9e0d38bdb03adec64585a1a01a9e5",
+      "size_bytes": 4782
+    },
+    {
+      "path": "08_外部研究与来源.md",
+      "sha256": "d643fc653e92ecafb392f6af8907d13d6f2c5347f97c4d2ac0af2727fd3df701",
+      "size_bytes": 4200
+    },
+    {
+      "path": "09_可携式目录与跨Mac迁移规范.md",
+      "sha256": "2f0343cb74a0f03f86633126035e8285d804b2b225f9efbf58b4fe20933e4d6c",
+      "size_bytes": 8469
+    },
+    {
+      "path": "10_Macmini本地Codex首启与开发盘交接.md",
+      "sha256": "fe9337fad55fc639122a1375953abf73ef72c1498c95b1ae36aa74765a808e8a",
+      "size_bytes": 4654
+    },
+    {
+      "path": "11_迁移恢复与故障注入验收.md",
+      "sha256": "546825a1a31cfa2c28b8838e954722f4b46d79714c885f20a940d3091f19b2fd",
+      "size_bytes": 3724
+    },
+    {
+      "path": "12_v0.6更新记录与给所有者的说明.md",
+      "sha256": "93cd45ba8a5a11fe0672876a3fc11fc5747b951c57dcd7dd6a3a687264635108",
+      "size_bytes": 1733
+    },
+    {
+      "path": "CODEX_START_HERE.md",
+      "sha256": "bb98faf609ec3fbad154e75c447c918f4fa2d4b772db749b82a796f9cc8fedcb",
+      "size_bytes": 4299
+    },
+    {
+      "path": "README.md",
+      "sha256": "34d4351aab3925a5a9515eefc5661b380c9dfc72eca70e0691e4513297ba11be",
+      "size_bytes": 2194
+    },
+    {
+      "path": "data/分阶段任务索引_v0.6.json",
+      "sha256": "91ea2ba6e8cfe14c3d8dff5722f74658d639cabc408e561541a2984a6cd8ef6b",
+      "size_bytes": 5654
+    },
+    {
+      "path": "data/构建校验_v0.6.json",
+      "sha256": "d6db9ded2c1f9c418b9047c243cd6fca51f853241ecd60073b85f81ff5e5118e",
+      "size_bytes": 351
+    },
+    {
+      "path": "data/需求总账_v0.6.json",
+      "sha256": "353b355478c73b92333df0924a7451a22936073dd6d7931fafc9f7841a465a4c",
+      "size_bytes": 119414
+    },
+    {
+      "path": "data/需求追踪_v0.6.csv",
+      "sha256": "665c113d43e85b35fd71a147a39b50c99f65d96637f5adf442c77a462e815dea",
+      "size_bytes": 24702
+    },
+    {
+      "path": "references/历史_Codex开发计划_工作稿_v0.4.md",
+      "sha256": "252e3f6f334e5abf5fd111f39098337016f06185c0af7bc914021265cc0daba9",
+      "size_bytes": 27949
+    },
+    {
+      "path": "references/历史_功能基线_v0.4.json",
+      "sha256": "e53bd45ed1d331aabf2f3183fde65d4754e855fdf4ce4f60f519ac0f03591b42",
+      "size_bytes": 131036
+    },
+    {
+      "path": "references/历史_官方技术核查_v0.4.md",
+      "sha256": "f8d1530e27ebfecdb58cc91e78ea0bd4154948270b65bae8231339331a67b1f5",
+      "size_bytes": 4681
+    },
+    {
+      "path": "references/历史_执行门槛与验收_v0.4.md",
+      "sha256": "0b1a6209d1de26e0cfd07dee97bab603e8149c99cf08d281d2448dff58b33d48",
+      "size_bytes": 2977
+    },
+    {
+      "path": "references/历史_验收用例_v0.3.md",
+      "sha256": "8a5d56d635e2f5b7a06ce5f44ecdb67f288f508d3447ac7b30bc02c28a53c0be",
+      "size_bytes": 11385
+    },
+    {
+      "path": "sources/originals/2026-10-15_用户新增开发与跨Mac迁移需求.md",
+      "sha256": "a8ca52c48d02fd2e0dc425c4159081a62812307d08cd70c0818ed4f5147eb81f",
+      "size_bytes": 1685
+    },
+    {
+      "path": "sources/originals/Mac_NAS_关键决策回答_v0.3.json",
+      "sha256": "aa14a17f8e1dca6b458412703a2c4842a6405ec8e89808b280adb54c02bc93a4",
+      "size_bytes": 36649
+    },
+    {
+      "path": "sources/originals/Mac_NAS_补充回答_v0.2.json",
+      "sha256": "35b83cec6521dec773e663beed0d01cde247d414909e41a1d15163cef41f3c3f",
+      "size_bytes": 26447
+    },
+    {
+      "path": "sources/originals/Mac_NAS_部署信息回答_v0.4.json",
+      "sha256": "df093d8148a72d5ee86f1a4de37fe2e18cd1788b3f903f441efd01e51f23f390",
+      "size_bytes": 8262
+    },
+    {
+      "path": "sources/originals/Mac_NAS_需求回答_v0.1.json",
+      "sha256": "89429bb490f990bfda4444f8f0da816077afe87ad2cddeee5041dffe9b157150",
+      "size_bytes": 3821
+    },
+    {
+      "path": "给所有者的说明.md",
+      "sha256": "891763cb3d61c920d5ff6f97546289b5e061c39e194813a60385542f0e173826",
+      "size_bytes": 1520
+    }
+  ]
+}

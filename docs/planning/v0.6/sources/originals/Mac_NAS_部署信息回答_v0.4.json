@@ -1,0 +1,424 @@
+{
+  "schema": "mac-nas-deployment-answers/v4",
+  "version": "0.4",
+  "exported_at": "2026-10-15T01:42:26.115Z",
+  "notice": "仅需求与部署计划补充；不是系统/磁盘操作授权。空值保持未定。",
+  "baseline_sha256": "89429bb490f990bfda4444f8f0da816077afe87ad2cddeee5041dffe9b157150",
+  "user_scope": {
+    "first": 96,
+    "later": 13,
+    "not_needed": 1
+  },
+  "answers": {
+    "E01.machine": "both",
+    "E01.os": "sequoia",
+    "E02.disks": "five",
+    "E02.enclosure": "unknown",
+    "E02.destroyable": "no",
+    "E03.size": "over",
+    "E03.users": "u6",
+    "E03.backup": "multiple",
+    "E04.remote": "unknown",
+    "E04.domain": "have",
+    "E05.cameras": "few",
+    "E05.camera_protocol": "vendor",
+    "E05.downloads": "other",
+    "E05.automation": "both",
+    "E06.ui": "desktop",
+    "E06.languages": "zhja",
+    "E06.release": "opensource"
+  },
+  "note": "未来可能会有多个硬盘柜",
+  "questions": {
+    "E01.machine": {
+      "group": "E01",
+      "label": "主要运行设备",
+      "options": [
+        [
+          "m2",
+          "先在现有M2 Mac mini测试，未来换机"
+        ],
+        [
+          "newer",
+          "新Apple Silicon Mac为正式部署目标"
+        ],
+        [
+          "both",
+          "当前与未来两代Mac都要支持"
+        ],
+        [
+          "unknown",
+          "尚不确定"
+        ]
+      ]
+    },
+    "E01.os": {
+      "group": "E01",
+      "label": "最低系统范围",
+      "options": [
+        [
+          "current",
+          "先以实际开发机系统版本为准"
+        ],
+        [
+          "sequoia",
+          "希望兼容macOS 15及以后"
+        ],
+        [
+          "tahoe",
+          "希望兼容macOS 26及以后"
+        ],
+        [
+          "unknown",
+          "还不确定"
+        ]
+      ]
+    },
+    "E02.disks": {
+      "group": "E02",
+      "label": "计划的存储池成员盘数量",
+      "options": [
+        [
+          "two",
+          "2盘"
+        ],
+        [
+          "three",
+          "3盘"
+        ],
+        [
+          "four",
+          "4盘"
+        ],
+        [
+          "five",
+          "5盘或更多"
+        ],
+        [
+          "unknown",
+          "未确定"
+        ]
+      ]
+    },
+    "E02.enclosure": {
+      "group": "E02",
+      "label": "外置硬盘形式",
+      "options": [
+        [
+          "separate",
+          "每块盘能单独被Mac识别"
+        ],
+        [
+          "hardware",
+          "硬盘柜自己呈现一个RAID卷"
+        ],
+        [
+          "both",
+          "两种都可能"
+        ],
+        [
+          "unknown",
+          "未确定"
+        ]
+      ]
+    },
+    "E02.destroyable": {
+      "group": "E02",
+      "label": "有明确允许擦除的测试盘吗？",
+      "options": [
+        [
+          "yes",
+          "有，正式测试前再单独授权"
+        ],
+        [
+          "no",
+          "没有，先做模拟与只读研究"
+        ],
+        [
+          "soon",
+          "今后准备购买"
+        ],
+        [
+          "unknown",
+          "未确定"
+        ]
+      ]
+    },
+    "E03.size": {
+      "group": "E03",
+      "label": "当前+未来3年预计总数据量",
+      "options": [
+        [
+          "s2",
+          "不到2TB"
+        ],
+        [
+          "s10",
+          "2–10TB"
+        ],
+        [
+          "s30",
+          "10–30TB"
+        ],
+        [
+          "over",
+          "30TB以上"
+        ],
+        [
+          "unknown",
+          "未确定"
+        ]
+      ]
+    },
+    "E03.users": {
+      "group": "E03",
+      "label": "预计同时使用的家庭成员数",
+      "options": [
+        [
+          "u2",
+          "1–2人"
+        ],
+        [
+          "u5",
+          "3–5人"
+        ],
+        [
+          "u6",
+          "6人以上"
+        ],
+        [
+          "unknown",
+          "未确定"
+        ]
+      ]
+    },
+    "E03.backup": {
+      "group": "E03",
+      "label": "期望的独立备份目的地",
+      "options": [
+        [
+          "external",
+          "第二块/第二组外置盘"
+        ],
+        [
+          "synology",
+          "旧群晖过渡或长期承担备份"
+        ],
+        [
+          "remote",
+          "异地或云端"
+        ],
+        [
+          "multiple",
+          "多种组合"
+        ],
+        [
+          "unknown",
+          "还未决定"
+        ]
+      ]
+    },
+    "E04.remote": {
+      "group": "E04",
+      "label": "远程管理与亲友相册分享",
+      "options": [
+        [
+          "private_public",
+          "本人走私人安全通道，亲友走隔离的受控网页分享"
+        ],
+        [
+          "vpn_all",
+          "所有远程用户都需私人通道/VPN"
+        ],
+        [
+          "lan_first",
+          "先只做局域网，公网功能保留在首版验收前"
+        ],
+        [
+          "unknown",
+          "具体网络方式未确定"
+        ]
+      ]
+    },
+    "E04.domain": {
+      "group": "E04",
+      "label": "可用的域名/公网入口",
+      "options": [
+        [
+          "have",
+          "已有域名或反向代理"
+        ],
+        [
+          "plan",
+          "计划申请/迁移"
+        ],
+        [
+          "none",
+          "暂时没有"
+        ],
+        [
+          "unknown",
+          "未确定"
+        ]
+      ]
+    },
+    "E05.cameras": {
+      "group": "E05",
+      "label": "预期摄像头数量",
+      "options": [
+        [
+          "zero",
+          "目前无，先用模拟设备开发"
+        ],
+        [
+          "one",
+          "1–2路"
+        ],
+        [
+          "few",
+          "3–8路"
+        ],
+        [
+          "many",
+          "8路以上"
+        ],
+        [
+          "unknown",
+          "未确定"
+        ]
+      ]
+    },
+    "E05.camera_protocol": {
+      "group": "E05",
+      "label": "摄像头类型",
+      "options": [
+        [
+          "rtsp",
+          "支持RTSP或ONVIF"
+        ],
+        [
+          "vendor",
+          "品牌私有协议/专有APP"
+        ],
+        [
+          "none",
+          "尚未购买"
+        ],
+        [
+          "unknown",
+          "不确定"
+        ]
+      ]
+    },
+    "E05.downloads": {
+      "group": "E05",
+      "label": "首版下载管理优先协议",
+      "options": [
+        [
+          "http",
+          "先HTTP/HTTPS"
+        ],
+        [
+          "bt",
+          "优先BitTorrent"
+        ],
+        [
+          "both",
+          "HTTP/HTTPS和BitTorrent"
+        ],
+        [
+          "other",
+          "其他/未定"
+        ]
+      ]
+    },
+    "E05.automation": {
+      "group": "E05",
+      "label": "家庭自动化的起点",
+      "options": [
+        [
+          "files",
+          "文件/插盘/媒体任务自动化"
+        ],
+        [
+          "devices",
+          "智能家居设备联动"
+        ],
+        [
+          "both",
+          "两者都要"
+        ],
+        [
+          "unknown",
+          "未确定"
+        ]
+      ]
+    },
+    "E06.ui": {
+      "group": "E06",
+      "label": "整体网页交互偏好",
+      "options": [
+        [
+          "desktop",
+          "DSM式桌面与多窗口"
+        ],
+        [
+          "sidebar",
+          "传统左侧导航后台"
+        ],
+        [
+          "hybrid",
+          "后台+应用桌面组合"
+        ],
+        [
+          "unknown",
+          "先做交互原型比较"
+        ]
+      ]
+    },
+    "E06.languages": {
+      "group": "E06",
+      "label": "首版语言",
+      "options": [
+        [
+          "zh",
+          "中文"
+        ],
+        [
+          "zhja",
+          "中文+日语"
+        ],
+        [
+          "all",
+          "中文+日语+英语"
+        ],
+        [
+          "unknown",
+          "未定"
+        ]
+      ]
+    },
+    "E06.release": {
+      "group": "E06",
+      "label": "产品分发目标",
+      "options": [
+        [
+          "personal",
+          "暂时只供自己/家庭"
+        ],
+        [
+          "opensource",
+          "准备未来开源给其他Mac用户"
+        ],
+        [
+          "commercial",
+          "可能商业化"
+        ],
+        [
+          "unknown",
+          "还未决定"
+        ]
+      ]
+    }
+  }
+}

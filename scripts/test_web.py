@@ -1,0 +1,62 @@
+#!/usr/bin/env python3
+"""Static asset and HTTP handler tests. No browser or TCP listener is started."""
+import io,runpy,unittest,re
+from pathlib import Path
+from html.parser import HTMLParser
+ROOT=Path(__file__).resolve().parents[1]
+preview=runpy.run_path(str(ROOT/'scripts/preview_web.py'))
+class MemoryRequest:
+    def __init__(self,data):self.input=io.BytesIO(data);self.output=bytearray()
+    def makefile(self,mode,*args):assert mode=='rb';return self.input
+    def sendall(self,data):self.output.extend(data)
+class QuietHandler(preview['Handler']):
+    def log_message(self,*args):pass
+def exchange(path='/',method='GET',host='127.0.0.1:8766'):
+    request=MemoryRequest((method+' '+path+' HTTP/1.0\r\nHost: '+host+'\r\n\r\n').encode('ascii'))
+    QuietHandler(request,('127.0.0.1',12345),None)
+    head,body=bytes(request.output).split(b'\r\n\r\n',1)
+    lines=head.decode('ascii').split('\r\n')
+    return int(lines[0].split()[1]),{k.lower():v.strip() for k,v in (line.split(':',1) for line in lines[1:])},body
+class AssetParser(HTMLParser):
+    def __init__(self):super().__init__();self.assets=[];self.inline=[];self.policies=[];self.events=[]
+    def handle_starttag(self,tag,attributes):
+        a=dict(attributes)
+        if tag=='script':self.assets.append(a.get('src'));self.inline.append('src' not in a)
+        if tag=='link':self.assets.append(a.get('href'))
+        if tag=='meta' and a.get('http-equiv')=='Content-Security-Policy':self.policies.append(a['content'])
+        self.events.extend(k for k in a if k.startswith('on'))
+class WebStaticTests(unittest.TestCase):
+    def test_html_loads_only_allowlisted_local_assets_and_blocks_connections(self):
+        parser=AssetParser();parser.feed((ROOT/'web/dist/index.html').read_text())
+        self.assertFalse(any(parser.inline));self.assertEqual(parser.events,[])
+        self.assertTrue(parser.policies);self.assertIn("connect-src 'none'",parser.policies[0])
+        for name in parser.assets:
+            self.assertIsNotNone(name);self.assertNotIn(':',name);self.assertNotIn('..',name)
+            self.assertIn('/'+name,preview['ALLOWED']);self.assertTrue((ROOT/'web/dist'/name).is_file())
+    def test_every_asset_is_read_only_and_uses_explicit_content_type(self):
+        for path in preview['ALLOWED']:
+            with self.subTest(path=path):
+                status,headers,body=exchange(path)
+                self.assertEqual(status,200);self.assertEqual(headers['cache-control'],'no-store')
+                self.assertEqual(headers['x-content-type-options'],'nosniff');self.assertTrue(body)
+                self.assertIn('charset=utf-8',headers['content-type'])
+                self.assertEqual(int(headers['content-length']),len(body))
+    def test_head_returns_no_body_and_mutations_are_rejected(self):
+        status,headers,body=exchange(method='HEAD')
+        self.assertEqual(status,200);self.assertEqual(body,b'');self.assertGreater(int(headers['content-length']),0)
+        for method in ['POST','PUT','DELETE']:
+            with self.subTest(method=method):self.assertEqual(exchange(method=method)[0],405)
+    def test_directory_traversal_unknown_assets_and_repository_sources_are_not_served(self):
+        for path in ['/../AGENTS.md','/%2e%2e/AGENTS.md','/Sources/MacNASCore/StateStore.swift','/.git/config','/model.js/../index.html','/web/tests/model.test.cjs','/missing','//etc/passwd']:
+            with self.subTest(path=path):self.assertEqual(exchange(path)[0],404)
+    def test_other_hosts_are_denied_even_with_an_allowlisted_path(self):
+        for host in ['evil.example','127.0.0.1:8767','192.168.2.1:8766','127.0.0.1.evil.example:8766']:
+            with self.subTest(host=host):self.assertEqual(exchange(host=host)[0],403)
+    def test_dynamic_content_uses_text_nodes_and_reduced_motion_is_defined(self):
+        js=(ROOT/'web/dist/desktop.js').read_text()
+        for sink in ['innerHTML','outerHTML','insertAdjacentHTML','eval(','new Function(']:self.assertNotIn(sink,js)
+        css=(ROOT/'web/dist/desktop.css').read_text()
+        self.assertIn('prefers-reduced-motion:reduce',css);self.assertIn(':focus-visible',css)
+        self.assertEqual(css.count('{'),css.count('}'))
+        self.assertEqual(css.count('('),css.count(')'))
+if __name__=='__main__':unittest.main()

@@ -1,0 +1,764 @@
+{
+  "schema": "mac-nas-discovery-followup/v2",
+  "research_version": "0.2",
+  "exported_at": "2026-10-14T14:19:11.416Z",
+  "notice": "用户补充选择；不是系统授权，不代表实现或验证。原始功能选择原样保留，归并时需明确记录后续决定。",
+  "baseline_sha256": "89429bb490f990bfda4444f8f0da816077afe87ad2cddeee5041dffe9b157150",
+  "original_submission": {
+    "schema": "mac-nas-discovery-answers/v1",
+    "research_version": "0.1",
+    "created_at": "2026-10-14T13:56:07.716Z",
+    "notice": "用户填写的需求回答与候选功能选择；不是系统授权，也不表示任何功能已实现。",
+    "answers": {
+      "Q01": "",
+      "Q02": "",
+      "Q03": "",
+      "Q04": "",
+      "Q05": "",
+      "Q06": "",
+      "Q07": "",
+      "Q08": "",
+      "Q09": "",
+      "Q10": "",
+      "Q11": "",
+      "Q12": "",
+      "Q13": "",
+      "Q14": "",
+      "Q15": "",
+      "Q16": ""
+    },
+    "choices": {
+      "SYS-01": "首版需要",
+      "SYS-02": "首版需要",
+      "SYS-03": "首版需要",
+      "SYS-04": "首版需要",
+      "SYS-05": "首版需要",
+      "SYS-06": "首版需要",
+      "SYS-07": "首版需要",
+      "SYS-08": "后续需要",
+      "STO-01": "首版需要",
+      "STO-02": "首版需要",
+      "STO-03": "首版需要",
+      "STO-04": "首版需要",
+      "STO-05": "首版需要",
+      "STO-06": "后续需要",
+      "STO-07": "首版需要",
+      "STO-08": "首版需要",
+      "STO-09": "需要讨论",
+      "STO-10": "首版需要",
+      "SHR-01": "首版需要",
+      "SHR-02": "首版需要",
+      "SHR-03": "首版需要",
+      "SHR-04": "首版需要",
+      "SHR-05": "首版需要",
+      "SHR-06": "首版需要",
+      "SHR-07": "首版需要",
+      "SHR-08": "首版需要",
+      "SHR-09": "首版需要",
+      "SHR-10": "首版需要",
+      "FIL-01": "首版需要",
+      "FIL-02": "首版需要",
+      "FIL-03": "首版需要",
+      "FIL-04": "首版需要",
+      "FIL-05": "首版需要",
+      "FIL-06": "首版需要",
+      "FIL-07": "后续需要",
+      "FIL-08": "后续需要",
+      "FIL-09": "后续需要",
+      "FIL-10": "后续需要",
+      "SYN-01": "首版需要",
+      "SYN-02": "首版需要",
+      "SYN-03": "后续需要",
+      "SYN-04": "首版需要",
+      "SYN-05": "首版需要",
+      "SYN-06": "首版需要",
+      "SYN-07": "首版需要",
+      "SYN-08": "后续需要",
+      "BAK-01": "首版需要",
+      "BAK-02": "首版需要",
+      "BAK-03": "首版需要",
+      "BAK-04": "首版需要",
+      "BAK-05": "后续需要",
+      "BAK-06": "首版需要",
+      "BAK-07": "首版需要",
+      "BAK-08": "首版需要",
+      "BAK-09": "首版需要",
+      "BAK-10": "首版需要",
+      "BAK-11": "首版需要",
+      "BAK-12": "首版需要",
+      "PHO-01": "首版需要",
+      "PHO-02": "首版需要",
+      "PHO-03": "首版需要",
+      "PHO-04": "首版需要",
+      "PHO-05": "首版需要",
+      "PHO-06": "首版需要",
+      "PHO-07": "首版需要",
+      "PHO-08": "首版需要",
+      "PHO-09": "首版需要",
+      "PHO-10": "需要讨论",
+      "PHO-11": "首版需要",
+      "PHO-12": "首版需要",
+      "MED-01": "后续需要",
+      "MED-02": "首版需要",
+      "MED-03": "首版需要",
+      "MED-04": "后续需要",
+      "MED-05": "后续需要",
+      "MED-06": "需要讨论",
+      "APP-01": "首版需要",
+      "APP-02": "首版需要",
+      "APP-03": "首版需要",
+      "APP-04": "首版需要",
+      "APP-05": "首版需要",
+      "APP-06": "首版需要",
+      "APP-07": "首版需要",
+      "APP-08": "首版需要",
+      "APP-09": "首版需要",
+      "APP-10": "首版需要",
+      "APP-11": "首版需要",
+      "APP-12": "首版需要",
+      "SEC-01": "首版需要",
+      "SEC-02": "首版需要",
+      "SEC-03": "首版需要",
+      "SEC-04": "首版需要",
+      "SEC-05": "首版需要",
+      "SEC-06": "首版需要",
+      "SEC-07": "首版需要",
+      "SEC-08": "首版需要",
+      "SEC-09": "首版需要",
+      "SEC-10": "首版需要",
+      "OPS-01": "首版需要",
+      "OPS-02": "首版需要",
+      "OPS-03": "首版需要",
+      "OPS-04": "首版需要",
+      "OPS-05": "首版需要",
+      "OPS-06": "需要讨论",
+      "OPS-07": "首版需要",
+      "OPS-08": "首版需要",
+      "MIG-01": "首版需要",
+      "MIG-02": "首版需要",
+      "MIG-03": "首版需要",
+      "MIG-04": "首版需要"
+    }
+  },
+  "original_choice_counts": {
+    "首版需要": 94,
+    "后续需要": 12,
+    "需要讨论": 4
+  },
+  "followup_answers": {
+    "D01.scope": "research_first",
+    "D01.stage": "",
+    "D02.features": [
+      "visual_similarity",
+      "faces",
+      "natural_language",
+      "ocr"
+    ],
+    "D02.compute": "undecided",
+    "D02.stage": "first",
+    "D03.features": [
+      "downloads",
+      "camera_recording",
+      "home_tools"
+    ],
+    "D03.stage": "first",
+    "D04.hardware": "unknown",
+    "D04.scope": "diagnostics",
+    "D04.stage": "not_needed",
+    "B01.scope": "pooling_redundancy",
+    "B02.scope": "guest_view",
+    "B03.policy": "own_and_apple",
+    "D01.note": "",
+    "D02.note": "",
+    "D03.note": "",
+    "D04.note": "",
+    "B01.note": "",
+    "B02.note": "",
+    "B03.note": "",
+    "general.note": ""
+  },
+  "followup_question_definitions": [
+    {
+      "id": "D01",
+      "group": "你标记的 4 项待讨论",
+      "title": "APFS 快照：希望做到什么程度？",
+      "related": [
+        "STO-09"
+      ],
+      "source_context": "原条目是“APFS快照适配研究”，目标为探索允许的数据卷时间点恢复与空间展示；不是已经承诺完整快照功能。",
+      "explanation": "这里确认你要的恢复体验。所选目标仍需后续 macOS 真机验证；本页不执行快照操作，也不把快照算作独立备份。",
+      "suggestion": "建议先验证安全的数据卷读取与恢复到替代目录，再决定是否加入自动创建和保留策略；建议未代选。",
+      "fields": [
+        {
+          "id": "D01.scope",
+          "label": "功能深度",
+          "kind": "single",
+          "options": [
+            {
+              "value": "research_first",
+              "label": "先研究并验证",
+              "detail": "形成兼容范围、可用接口和恢复验证结果，再决定产品实现。"
+            },
+            {
+              "value": "basic_restore",
+              "label": "希望能查看已有快照，并恢复选中文件到新目录",
+              "detail": "先不要求定时创建；没有安全可用接口时应报告阻塞。"
+            },
+            {
+              "value": "managed_snapshots",
+              "label": "希望包含定时创建、保留和恢复",
+              "detail": "作为完整目标评估，不用只有界面或研究报告冒充完成。"
+            },
+            {
+              "value": "undecided",
+              "label": "先保留讨论",
+              "detail": "说明可行性、风险和替代方案后再决定。"
+            }
+          ],
+          "exclusive_values": []
+        },
+        {
+          "id": "D01.stage",
+          "label": "这项研究或功能的期望阶段",
+          "kind": "single",
+          "options": [
+            {
+              "value": "first",
+              "label": "首版需要",
+              "detail": ""
+            },
+            {
+              "value": "later",
+              "label": "后续需要",
+              "detail": ""
+            },
+            {
+              "value": "not_needed",
+              "label": "暂不需要",
+              "detail": ""
+            },
+            {
+              "value": "undecided",
+              "label": "仍需讨论",
+              "detail": ""
+            }
+          ],
+          "exclusive_values": []
+        }
+      ]
+    },
+    {
+      "id": "D02",
+      "group": "你标记的 4 项待讨论",
+      "title": "智能照片功能：做哪些，允许怎样运行？",
+      "related": [
+        "PHO-10"
+      ],
+      "source_context": "原条目把视觉相似、人脸分组、照片文字识别和自然语言搜图合并在研究项中；这些不等同于已选首版的精确重复照片检测。",
+      "explanation": "功能愿望与是否允许模型分开选择。没有回答前，不推断你允许云端上传照片，也不把以前的其他项目偏好当成本项目决定。",
+      "suggestion": "先确定是否允许本地模型或云服务，再比较不同方案；不会因为功能名称叫“智能”就默认采用模型。",
+      "fields": [
+        {
+          "id": "D02.features",
+          "label": "希望研究的功能（可多选）",
+          "kind": "multi",
+          "options": [
+            {
+              "value": "visual_similarity",
+              "label": "视觉相似照片分组",
+              "detail": ""
+            },
+            {
+              "value": "faces",
+              "label": "人脸分组",
+              "detail": ""
+            },
+            {
+              "value": "ocr",
+              "label": "照片中的文字识别",
+              "detail": ""
+            },
+            {
+              "value": "natural_language",
+              "label": "用自然语言搜索照片",
+              "detail": ""
+            },
+            {
+              "value": "undecided",
+              "label": "暂不决定",
+              "detail": ""
+            }
+          ],
+          "exclusive_values": [
+            "undecided"
+          ]
+        },
+        {
+          "id": "D02.compute",
+          "label": "允许的运行方式",
+          "kind": "single",
+          "options": [
+            {
+              "value": "no_models",
+              "label": "不使用模型",
+              "detail": "只研究传统算法；无法达到的功能应说明限制。"
+            },
+            {
+              "value": "local_models",
+              "label": "允许可选本地模型，但不允许外传照片",
+              "detail": "需要单独说明内存、处理时间、下载依赖和关闭方式。"
+            },
+            {
+              "value": "cloud_opt_in",
+              "label": "允许可选云服务，但必须逐项授权",
+              "detail": "费用、上传范围和隐私条款另行确认；本页不是上传授权。"
+            },
+            {
+              "value": "undecided",
+              "label": "先比较方案，再决定",
+              "detail": ""
+            }
+          ],
+          "exclusive_values": []
+        },
+        {
+          "id": "D02.stage",
+          "label": "这项功能的期望阶段",
+          "kind": "single",
+          "options": [
+            {
+              "value": "first",
+              "label": "首版需要",
+              "detail": ""
+            },
+            {
+              "value": "later",
+              "label": "后续需要",
+              "detail": ""
+            },
+            {
+              "value": "not_needed",
+              "label": "暂不需要",
+              "detail": ""
+            },
+            {
+              "value": "undecided",
+              "label": "仍需讨论",
+              "detail": ""
+            }
+          ],
+          "exclusive_values": []
+        }
+      ]
+    },
+    {
+      "id": "D03",
+      "group": "你标记的 4 项待讨论",
+      "title": "家庭扩展：只是预留接口，还是也开发应用？",
+      "related": [
+        "MED-06"
+      ],
+      "source_context": "原条目是“家庭工具与摄像头预留”，涵盖下载、家庭工具与合法摄像头录像的扩展方向，不是已选择完整家庭自动化或录像系统。",
+      "explanation": "这是一个打包过大的候选项，需分开确认。具体下载协议、摄像头协议与设备兼容性不在本轮假定。",
+      "suggestion": "应用与核心分离。无论选哪些应用，都不能让它们默认取得整机管理员权限。",
+      "fields": [
+        {
+          "id": "D03.features",
+          "label": "希望覆盖的内容（可多选）",
+          "kind": "multi",
+          "options": [
+            {
+              "value": "downloads",
+              "label": "下载管理应用",
+              "detail": ""
+            },
+            {
+              "value": "home_tools",
+              "label": "家庭工具／自动化联动",
+              "detail": ""
+            },
+            {
+              "value": "camera_recording",
+              "label": "摄像头录像与回放",
+              "detail": ""
+            },
+            {
+              "value": "interfaces_only",
+              "label": "仅预留插件接口，暂不开发上述应用",
+              "detail": ""
+            },
+            {
+              "value": "undecided",
+              "label": "暂不决定",
+              "detail": ""
+            }
+          ],
+          "exclusive_values": [
+            "interfaces_only",
+            "undecided"
+          ]
+        },
+        {
+          "id": "D03.stage",
+          "label": "所选内容的期望阶段",
+          "kind": "single",
+          "options": [
+            {
+              "value": "first",
+              "label": "首版需要",
+              "detail": ""
+            },
+            {
+              "value": "later",
+              "label": "后续需要",
+              "detail": ""
+            },
+            {
+              "value": "not_needed",
+              "label": "暂不需要",
+              "detail": ""
+            },
+            {
+              "value": "undecided",
+              "label": "仍需讨论",
+              "detail": ""
+            }
+          ],
+          "exclusive_values": []
+        }
+      ]
+    },
+    {
+      "id": "D04",
+      "group": "你标记的 4 项待讨论",
+      "title": "UPS 与电源：需要哪些行为？",
+      "related": [
+        "OPS-06"
+      ],
+      "source_context": "原条目要求研究断电告警、优雅停任务与安全关机，兼容性、磁盘柜供电和恢复行为都需真机测试。",
+      "explanation": "不要求现在购买设备或提交型号。没有实机时，计划可以设计接口和模拟测试，但必须把真机验收标为未完成。",
+      "suggestion": "自动关机、睡眠与重启策略应独立授权，不因勾选本功能就修改现有 Mac 的电源设置。",
+      "fields": [
+        {
+          "id": "D04.hardware",
+          "label": "目前的 UPS 情况",
+          "kind": "single",
+          "options": [
+            {
+              "value": "have",
+              "label": "已有 UPS",
+              "detail": ""
+            },
+            {
+              "value": "planned",
+              "label": "还没有，未来计划使用",
+              "detail": ""
+            },
+            {
+              "value": "none",
+              "label": "目前不计划使用",
+              "detail": ""
+            },
+            {
+              "value": "unknown",
+              "label": "不清楚／暂不说明",
+              "detail": ""
+            }
+          ],
+          "exclusive_values": []
+        },
+        {
+          "id": "D04.scope",
+          "label": "希望做到的程度",
+          "kind": "single",
+          "options": [
+            {
+              "value": "diagnostics",
+              "label": "先做检测、告警与接口",
+              "detail": ""
+            },
+            {
+              "value": "shutdown",
+              "label": "包含停任务与安全关机的完整流程",
+              "detail": ""
+            },
+            {
+              "value": "research",
+              "label": "先比较方案，暂不确定行为",
+              "detail": ""
+            }
+          ],
+          "exclusive_values": []
+        },
+        {
+          "id": "D04.stage",
+          "label": "期望阶段",
+          "kind": "single",
+          "options": [
+            {
+              "value": "first",
+              "label": "首版需要",
+              "detail": ""
+            },
+            {
+              "value": "later",
+              "label": "后续需要",
+              "detail": ""
+            },
+            {
+              "value": "not_needed",
+              "label": "暂不需要",
+              "detail": ""
+            },
+            {
+              "value": "undecided",
+              "label": "仍需讨论",
+              "detail": ""
+            }
+          ],
+          "exclusive_values": []
+        }
+      ]
+    },
+    {
+      "id": "B01",
+      "group": "仅补充 3 个影响设计的边界",
+      "title": "多盘管理：管理独立盘，还是自己组合存储池？",
+      "related": [
+        "STO-10"
+      ],
+      "source_context": "你将“多盘容量与冗余策略”选为首版；原目标是比较独立盘、硬件 RAID 和后续聚合需求。选中此研究项不等于已要求自研 RAID。",
+      "explanation": "以下是期望目标，不是对 macOS 可实现性的承诺。不会为了验证而格式化你的旧盘或拆旧群晖阵列。",
+      "suggestion": "先完成原条目的方案比较；若要求软件聚合或容错重建，应增加独立技术验证与数据恢复验收，不默默扩大现有条目。",
+      "fields": [
+        {
+          "id": "B01.scope",
+          "label": "你想要的存储体验",
+          "kind": "single",
+          "options": [
+            {
+              "value": "separate_volumes",
+              "label": "先管理独立卷或硬盘柜提供的卷",
+              "detail": "不要求平台首版自己组合和重建多盘。"
+            },
+            {
+              "value": "pooling",
+              "label": "希望首版可以软件聚合多盘空间",
+              "detail": "容量聚合与容错分别验证。"
+            },
+            {
+              "value": "pooling_redundancy",
+              "label": "希望首版包含软件聚合、容错与坏盘重建",
+              "detail": "需要新增更深入的可行性与破坏性测试计划；不授权用正式数据测试。"
+            },
+            {
+              "value": "research",
+              "label": "先完成策略比较，再确定",
+              "detail": "保留 STO-10 首版研究目标，不擅自提升为完整存储池实现。"
+            }
+          ],
+          "exclusive_values": []
+        }
+      ]
+    },
+    {
+      "id": "B02",
+      "group": "仅补充 3 个影响设计的边界",
+      "title": "相册分享：家人登录，还是亲友点链接就能看？",
+      "related": [
+        "PHO-08",
+        "FIL-08",
+        "FIL-09",
+        "SEC-02"
+      ],
+      "source_context": "你的选择是：家庭相册与分享首版需要；通用受控分享链接、只上传文件请求后续需要。这不必然冲突，但需区分登录成员共享和访客链接。",
+      "explanation": "若首版相册需要免登录链接，就需要明确相册专用的最小安全分享能力；不能把整个通用文件分享模块自动改成首版。",
+      "suggestion": "保留通用文件分享的后续优先级，按你选择明确首版相册边界。",
+      "fields": [
+        {
+          "id": "B02.scope",
+          "label": "首版相册的分享对象",
+          "kind": "single",
+          "options": [
+            {
+              "value": "signed_in",
+              "label": "只分享给已有平台账户、需要登录的家人",
+              "detail": ""
+            },
+            {
+              "value": "guest_view",
+              "label": "亲友不登录也能通过受控链接查看",
+              "detail": "需要明确密码、到期、撤销、下载权限等最小安全范围。"
+            },
+            {
+              "value": "guest_upload",
+              "label": "还希望亲友通过链接上传照片",
+              "detail": "除查看外，还需要独立上传权限、限制与隔离；这是额外范围请求。"
+            },
+            {
+              "value": "undecided",
+              "label": "先保持未定",
+              "detail": "不自动增加公开链接或访客上传。"
+            }
+          ],
+          "exclusive_values": []
+        }
+      ]
+    },
+    {
+      "id": "B03",
+      "group": "仅补充 3 个影响设计的边界",
+      "title": "第三方原生组件：怎样准入？",
+      "related": [
+        "APP-03",
+        "APP-05",
+        "APP-12"
+      ],
+      "source_context": "你已选择原生运行时隔离、私有应用源和来源验证。本题不重复问要不要插件，只补充第三方组件的采用规则。",
+      "explanation": "允许组件进入计划，不等于允许未经确认从网络下载执行。具体组件、版本、许可证与 macOS 兼容性仍需单独登记和核查。",
+      "suggestion": "可采用通过评审的原生组件并锁定依赖；保持核心不依赖 Linux 虚拟机或 Docker。建议未代选。",
+      "fields": [
+        {
+          "id": "B03.policy",
+          "label": "组件的采用规则",
+          "kind": "single",
+          "options": [
+            {
+              "value": "reviewed",
+              "label": "允许经过审查的 macOS 原生组件",
+              "detail": "记录来源、版本、校验和许可证；隔离依赖，不污染全局环境。"
+            },
+            {
+              "value": "approve_each",
+              "label": "每个组件都先提交清单，由我确认",
+              "detail": ""
+            },
+            {
+              "value": "own_and_apple",
+              "label": "先仅采用自研程序和苹果提供的能力",
+              "detail": "遇到必须引入第三方的功能，列出缺口后再决定。"
+            },
+            {
+              "value": "undecided",
+              "label": "暂不决定，先提供候选比较",
+              "detail": ""
+            }
+          ],
+          "exclusive_values": []
+        }
+      ]
+    }
+  ],
+  "original_feature_labels": {
+    "SYS-01": "统一网页控制台",
+    "SYS-02": "引导安装与授权诊断",
+    "SYS-03": "原生常驻服务",
+    "SYS-04": "服务健康与依赖",
+    "SYS-05": "系统资源面板",
+    "SYS-06": "持久化任务中心",
+    "SYS-07": "个性化与可访问性",
+    "SYS-08": "管理员与家庭首页分离",
+    "STO-01": "卷与外置硬盘清单",
+    "STO-02": "稳定目录绑定",
+    "STO-03": "掉盘写入保护",
+    "STO-04": "安全卸载联动",
+    "STO-05": "空间水位与缓存预算",
+    "STO-06": "目录用量与配额视图",
+    "STO-07": "磁盘健康可用性检测",
+    "STO-08": "远端存储统一入口",
+    "STO-09": "APFS快照适配研究",
+    "STO-10": "多盘容量与冗余策略",
+    "SHR-01": "读取既有SMB共享",
+    "SHR-02": "网页创建原生共享",
+    "SHR-03": "共享变更预览与撤销",
+    "SHR-04": "目录级读写权限",
+    "SHR-05": "平台用户与系统用户映射",
+    "SHR-06": "权限解释与有效访问检查",
+    "SHR-07": "Time Machine共享目标",
+    "SHR-08": "共享安全策略",
+    "SHR-09": "连接会话与安全维护",
+    "SHR-10": "WebDAV与SFTP扩展",
+    "FIL-01": "网页文件管理器",
+    "FIL-02": "大文件可靠上传",
+    "FIL-03": "跨卷移动任务",
+    "FIL-04": "回收站和保留期",
+    "FIL-05": "文件预览",
+    "FIL-06": "全局文件搜索",
+    "FIL-07": "内容全文搜索",
+    "FIL-08": "受控分享链接",
+    "FIL-09": "只上传文件请求",
+    "FIL-10": "批量整理预演",
+    "SYN-01": "文件夹单向备份",
+    "SYN-02": "双向文件同步",
+    "SYN-03": "按需文件占位",
+    "SYN-04": "选择性同步",
+    "SYN-05": "同步冲突与版本",
+    "SYN-06": "iPhone照片备份客户端",
+    "SYN-07": "通用移动端访问",
+    "SYN-08": "同步健康报告",
+    "BAK-01": "备份策略向导",
+    "BAK-02": "版本保留策略",
+    "BAK-03": "独立设备备份",
+    "BAK-04": "云端与异地备份",
+    "BAK-05": "可移除冷备盘目录",
+    "BAK-06": "备份完整性校验",
+    "BAK-07": "恢复到替代目录",
+    "BAK-08": "恢复演练",
+    "BAK-09": "平台与应用配置备份",
+    "BAK-10": "数据库一致性备份",
+    "BAK-11": "同步误删隔离",
+    "BAK-12": "不可变目的地研究",
+    "PHO-01": "现有目录只读索引",
+    "PHO-02": "时间轴和文件夹双视图",
+    "PHO-03": "真实路径与原件定位",
+    "PHO-04": "RAW与JPEG关联",
+    "PHO-05": "EXIF与器材统计",
+    "PHO-06": "人工标签与规则相册",
+    "PHO-07": "Live Photos与HEIC整理",
+    "PHO-08": "家庭相册与分享",
+    "PHO-09": "精确重复照片检测",
+    "PHO-10": "智能检索与相似分组研究",
+    "PHO-11": "侧车与元数据导出",
+    "PHO-12": "摄影工具联动",
+    "MED-01": "媒体库与海报墙",
+    "MED-02": "浏览器播放与直放优先",
+    "MED-03": "受控转码与字幕",
+    "MED-04": "音乐与电子书入口",
+    "MED-05": "TCRec接入",
+    "MED-06": "家庭工具与摄像头预留",
+    "APP-01": "版本化套件清单",
+    "APP-02": "离线安装包",
+    "APP-03": "应用目录与私有源",
+    "APP-04": "最小权限授权",
+    "APP-05": "原生运行时隔离",
+    "APP-06": "生命周期与健康检查",
+    "APP-07": "应用数据保留规则",
+    "APP-08": "升级与数据迁移",
+    "APP-09": "统一API与事件",
+    "APP-10": "界面和登录接入",
+    "APP-11": "开发者模板与测试工具",
+    "APP-12": "来源验证与兼容目录",
+    "SEC-01": "内网发现与入口",
+    "SEC-02": "管理面与分享面隔离",
+    "SEC-03": "域名与反向代理管理",
+    "SEC-04": "TLS证书管理",
+    "SEC-05": "MFA与恢复方式",
+    "SEC-06": "家庭用户隔离",
+    "SEC-07": "安全检查与访问限制",
+    "SEC-08": "秘密与令牌管理",
+    "SEC-09": "操作审计",
+    "SEC-10": "私人远程通道接入",
+    "OPS-01": "统一日志与诊断包",
+    "OPS-02": "通知渠道",
+    "OPS-03": "计划任务与工作流",
+    "OPS-04": "插盘备份工作流",
+    "OPS-05": "轻量模式与任务预算",
+    "OPS-06": "UPS与电源策略",
+    "OPS-07": "状态监测与故障降级",
+    "OPS-08": "备份与容量趋势报告",
+    "MIG-01": "群晖迁移预演",
+    "MIG-02": "换Mac恢复向导",
+    "MIG-03": "本机测试与故障验收",
+    "MIG-04": "可接续的Codex任务包"
+  }
+}

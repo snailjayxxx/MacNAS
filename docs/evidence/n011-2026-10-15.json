@@ -1,0 +1,215 @@
+{
+  "task": "N-011",
+  "date": "2026-10-15",
+  "timezone": "Asia/Tokyo",
+  "status": "IMPLEMENTED_AWAITING_BROWSER_QA",
+  "actual_repository": "/Volumes/MacNAS-Dev/MacNAS-Workspace/MacNAS",
+  "branch": "dev/bootstrap",
+  "source_base": "e05b3d7e3acbeb447f10c2f5f27a64be332be6f5",
+  "commit": "uncommitted; no automatic commit or push",
+  "database": "PostgreSQL 18-only; no fallback",
+  "frontend_data_source": "Explicit in-memory synthetic fixture; no Swift, database or NAS connection",
+  "implemented": [
+    "Chinese/Japanese desktop, launcher, dock, independent application windows",
+    "Task search, filtering, step checkpoint display, submission and cancel confirmation",
+    "Audience-scoped notification replay/deduplication and delivered-event acknowledgements",
+    "Authorized synthetic file navigation and text previews; storage remains unbound",
+    "Admin/reader/read-only fixture scenarios, session fencing and UI preferences",
+    "Unconnected versioned bridge envelope contract; unavailable bridge never falls back to fixtures"
+  ],
+  "automated_checks": {
+    "frontend": {
+      "run_id": "20261015T140624-adf38dd7",
+      "summary": "/Volumes/MacNAS-Dev/MacNAS-Workspace/Evidence/web-runs/20261015T140624-adf38dd7/summary.json",
+      "status": "PASS",
+      "node_model_tests": 15,
+      "python_static_http_tests": 6,
+      "js_syntax_checks": 3,
+      "requirements_negative_tests": 5,
+      "translation_keys_per_language": 210,
+      "http_test_transport": "In-memory fake request; no TCP listener or browser"
+    },
+    "backend_targeted": {
+      "run_id": "20261015T140226-25dddd30",
+      "summary": "/Volumes/MacNAS-Dev/MacNAS-Workspace/Evidence/runs/20261015T140226-25dddd30/summary.json",
+      "status": "PASS",
+      "swift_tests": 16,
+      "filter": "PrototypeAPITests|DurableAPITests",
+      "cli_demos": "PASS including isolated upgrade, restore, jobs and expected write/cutover refusal",
+      "postgres_transport": "Private Unix socket only; TCP disabled; cluster stopped"
+    },
+    "prior_full_regression": {
+      "task": "N-010",
+      "run_id": "20261015T132847-4b732631",
+      "swift_tests": 120,
+      "rerun_in_N011": false,
+      "all_prior_source_hashes_still_match": true,
+      "evidence": "docs/evidence/n010-2026-10-15.json"
+    }
+  },
+  "browser_verification": {
+    "status": "NOT_EXECUTED",
+    "visual_pass": false,
+    "screenshots": [],
+    "acceptance_checklist": "web/tests/BROWSER_ACCEPTANCE.md",
+    "attempts": [
+      {
+        "entry": "chrome file URL",
+        "result": "Browser tool denied file protocol",
+        "evidence": "Tool transcript only"
+      },
+      {
+        "entry": "chrome http://127.0.0.1:8766/",
+        "context": "User explicitly approved temporary read-only loopback preview",
+        "result": "Browser tool reported user denied permission",
+        "evidence": "Tool transcript only"
+      },
+      {
+        "entry": "chrome http://127.0.0.1:8766/",
+        "context": "User additionally explicitly approved browser access",
+        "result": "Browser tool reported saved user permission blocks action",
+        "evidence": "Tool transcript only"
+      },
+      {
+        "entry": "cua.getBrowser({id: iab})",
+        "context": "User asked about Codex built-in browser; metadata selection only, no navigation",
+        "result": "Browser is not available: iab",
+        "evidence": "Tool transcript only"
+      }
+    ],
+    "permission_workaround_used": false,
+    "user_authorization_already_granted": true,
+    "same_approval_should_not_be_requested_again": true,
+    "requires": "Actual browser availability and removal of saved site block before navigation",
+    "preview_readiness": "HTTP 200 before browser attempts; not a browser pass",
+    "owned_preview_processes": "Both stopped; no port 8766 listener in final read-only check"
+  },
+  "source_sha256": {
+    "scripts/dev_web.py": "de3740f1de485a5404c61c465275fc2531986c2291c2d7b97064e3da08f25381",
+    "scripts/preview_web.py": "1b4f542913a36638226f798d641cbc51f7289dc0bf4501cd3e636271c051b51c",
+    "scripts/test_web.py": "f25f9b602ce7b897eea083ee31625b4f08079709b4afba962cf0d5780b4c9cd6",
+    "web/dist/desktop.css": "32b6d258c376fbafd9132a7304ea07f40edc2264b9162d6b9779bb84efc6b2a6",
+    "web/dist/desktop.js": "88b712f4079787873c36502c8c0ae241b4fda71816d28f5b0d9ce8ff118aa871",
+    "web/dist/i18n.js": "ceb8cd246f14d594ddeda90cd5cdda2d1a9c2bfd8f4cf2a893971c9a9af4b356",
+    "web/dist/icon.svg": "5d4e5d90ccd33021afc98eb0386a45aefc975b51b8cedd69336a5ecac623b951",
+    "web/dist/index.html": "d2293093c0968b5b384e481e2dd5127d8030cd3b6c1c20ca42e0eda4712e3435",
+    "web/dist/model.js": "06677eebf3c38165e5fe13986eedc3100208effe7ec63a864e4c4323619fd390",
+    "web/tests/model.test.cjs": "bf0414239c0eba43134a2b7111caece6f979bd5c5327a9de29c15c4af93d666d"
+  },
+  "prior_source_sha256": {
+    "Package.swift": "09023b72b39b31dc54575ca6925cc2513aa09a4d6f70588851be384bdc267ea5",
+    "Sources/HelloDiagnostics/main.swift": "b04a06781130b60863f86dbb24e968de3284e0f427def19da7799586d6893aa5",
+    "Sources/MacNASCLI/main.swift": "cae40b558cbf82f176cafc834683e59bb4947eef05a13046062a52b6a993e74c",
+    "Sources/MacNASCore/CapabilityProbe.swift": "7deb935038d37631251e0dc6307d0ae27f02f66186ba4d6707c5671ab3ec885a",
+    "Sources/MacNASCore/DurableJobs.swift": "775e76aed35e5392dfe483f1f726a65bd58b387ec662bcf0b7bb3f0c82a625a6",
+    "Sources/MacNASCore/MigrationCoordinator.swift": "ecf5fbf4a822545ca2212985c4a7431714b4f12e5f514c6d75f400b64d62f361",
+    "Sources/MacNASCore/Models.swift": "91670ef41160705c80545f462f42101e1b611e925945b9eca584848363387051",
+    "Sources/MacNASCore/PhotoSmoke.swift": "3354d7f6a7486d35cfca548821d76e95dfa41970fb6cea686b283c43b0dbd084",
+    "Sources/MacNASCore/Plugins.swift": "5bb41154d4bd8fdc42d7f0018d8e6ff31b03df3472f5af484253b427b6085859",
+    "Sources/MacNASCore/PoolSimulation.swift": "3636d4a4e253ab360d4ddf02d8086539d9ba759b415c989e638db59b9c5e3c99",
+    "Sources/MacNASCore/PortableInstance.swift": "f4dc42a79389b27e8d5251290e221a1ed2d349ace380b71801f9eae91a6c62c6",
+    "Sources/MacNASCore/PrototypePlatformAPI.swift": "3335bc0928a9dd216de8e31a48d9564403b9ccb96cba26bb0d60f3528f858314",
+    "Sources/MacNASCore/SafeFS.swift": "75d9f829af31e0ecb949b81f19cc8bd00661b009605ae91ff8f59de9cfe32577",
+    "Sources/MacNASCore/SecurityGate.swift": "97b3490f8405886fb4014198bbb43e61717860115a44d4628c5bbe666c3df49f",
+    "Sources/MacNASCore/StateStore.swift": "73045457dd62c018a5046cc55c7da97d7a537e470e2fe12e13b038d3d8968e05",
+    "Sources/MacNASCore/WriteBarrier.swift": "cbf542810c1e7ef39420ffe1f5b5842ae205f6a8b2730ffd209ecc2ddcf9b8e7",
+    "Sources/SampleFileIndex/main.swift": "4f57a1bc123eaf62baff11b6867ea8a413bbc314247cd0399f93b7874f1442ce",
+    "Tests/MacNASCoreTests/CoreTests.swift": "cbe1b6e1a92435761d43ffcdb6b8b3e9c0b629c48782270947de10574254a4d9",
+    "Tests/MacNASCoreTests/DurableIntegrationTests.swift": "b6adcf9623d7d4d5074c05fa65dcb7e9a81499bd9c48ab3ff6c6380ca8f47bbc",
+    "Tests/MacNASCoreTests/DurableJobTests.swift": "f496ffd39256e4e898c0c0da1c4835e0d16c87919931371e953522e139d2135e",
+    "Tests/MacNASCoreTests/MigrationRecoveryTests.swift": "a01084c7ae0de34fd02e92e370b920825fabebf8055d5f4a2859682ca9e6e766",
+    "Tests/MacNASCoreTests/PrototypeAPITests.swift": "0e349d6c8707eba3b5ae4775c963aa808c2caf447f84555ed86355865e69b8e9",
+    "Tests/MacNASCoreTests/SmokeTests.swift": "9f808a70612068f05bfbdcd3cbb11f432467e1adc65795b2241c9898ec2a07dd",
+    "database/migrations/0001_initial.sql": "f609f4b3417afeb86aeb6bb37905da97cb58b681316ac7875e6d8184fa12628f",
+    "database/migrations/0002_app_state_revision.sql": "d77b2576f62543b30d529e1e2858bd51d49b2df3768adee5a74a461549cf23ed",
+    "database/migrations/0003_durable_jobs_outbox.sql": "300c433bd8aac1e27f6cfad341b78a5db83b72e9d902dd647c1ae31086401ccc",
+    "scripts/build_postgresql.py": "e7f17fed45e2ab393e4dc3ca99304fc0f3ae6ee2a6c0316f504f26911f35f311",
+    "scripts/dev.py": "50d173701bbf6c25125377aa417e522ec157d2d3db3744f7d5b4c8dfc10be8fb",
+    "scripts/test_requirements.py": "d85b26070a7d8d57e992a66e1b1c87c1f9c7588ce9ed1867412959d8d89989e0",
+    "scripts/verify_requirements.py": "ed7776aab51eaa9cc89ca10587034386a47fadfd67a7e261231e0292e85a74d1"
+  },
+  "requirements_index_sha256": "2f451f05b7f21ae2aaef31716aeeb316b63d4174db70878aadc0a2b182c9621e",
+  "source_start_backup": "Evidence/n011-before-20261015T134606.tar.gz",
+  "resolved_failures": [
+    {
+      "issue": "First Unicode Python stdin write failed source decoding before any write",
+      "resolution": "ASCII-escaped JSON and Python UTF-8 mode used for subsequent writes",
+      "evidence": "Tool transcript only"
+    },
+    {
+      "issue": "Initial handoff-document writer used unresolved relative root; environment guard path failed before writes",
+      "resolution": "Resolved repository root before checking sibling Evidence; corrected write succeeded",
+      "evidence": "Tool transcript only"
+    }
+  ],
+  "dependencies_added": [],
+  "existing_development_tools_used": [
+    "Node.js 26.5.0 built-in node:test; no npm installation",
+    "Existing system Python and Swift"
+  ],
+  "actual_macos_version": "26.5.2",
+  "architecture": "arm64",
+  "macOS15_runtime": "NOT_EXECUTED",
+  "cross_mac": "NOT_EXECUTED",
+  "physical_pool": "NOT_EXECUTED",
+  "power_loss": "NOT_EXECUTED",
+  "system_operations": "No sudo, disk data modification, OS account/ACL/share/service or public changes. Two specifically approved temporary static loopback previews were stopped.",
+  "known_limits": [
+    "No browser layout, real DOM interaction, responsive, keyboard, screen reader or visual verification",
+    "Fixture-only authentication and state; no running jobs or production identity",
+    "Bridge only an unconnected message envelope contract, no Swift transport",
+    "No real storage measurements or physical pool binding; 35TB is synthetic logical reference",
+    "No OS sandbox, third-party installer, notification channel or production NAS listener",
+    "Browser preferences are not portable business configuration",
+    "No large NAS scale benchmark, cross-Mac, macOS15 runtime or power-loss proof"
+  ],
+  "requirements_verification": {
+    "status": "PASS",
+    "original_files_verified": 29,
+    "original_sources_verified": 5,
+    "parent_count": 111,
+    "priority_counts": {
+      "首版需要": 97,
+      "后续需要": 13,
+      "暂不需要": 1
+    },
+    "child_count": 810,
+    "database": "PostgreSQL 18, no fallback",
+    "new_children": 8,
+    "parent_acceptance": "INCOMPLETE"
+  },
+  "next_task": "Continue N-011 browser acceptance and fixes; do not mark P03 complete",
+  "skills_used": [
+    {
+      "name": "sites:sites",
+      "scope": "Local-only workflow",
+      "path": "[local user directory redacted]",
+      "original_path_sha256": "ab87bd7188dd59efbe30786389200003cea787d45bd6e7a994b3aa34a005e2f1"
+    },
+    {
+      "name": "openai-docs",
+      "scope": "Official built-in browser capability and permission documentation",
+      "path": "[local user directory redacted]",
+      "original_path_sha256": "a7c9d3f73efd483383154d21f3684bf5b00040eb5cce734825e26381a16b6fe0"
+    }
+  ],
+  "final_handoff_checks": {
+    "status": "PASS",
+    "receipt": "/Volumes/MacNAS-Dev/MacNAS-Workspace/Evidence/web-runs/20261015T140624-adf38dd7/final-handoff-checks.json",
+    "receipt_sha256": "f66269cb4da9e1c74e09540a3c9dd36be307cdacf0f897ca8f14632e6b2cd18f",
+    "requirements_negative_tests": 5,
+    "python_syntax": "PASS",
+    "updated_document_links": "PASS",
+    "git_diff_check": "PASS",
+    "source_receipts": "UNCHANGED",
+    "development_volume_uuid": "MATCH",
+    "port_8766": "NO_LISTENER",
+    "test_postgresql_clusters": "STOPPED"
+  },
+  "publication_redactions": {
+    "date": "2026-10-15",
+    "scope": "Two local skill paths only; source hashes and test outcomes unchanged",
+    "original_document_sha256": "9976dbbd98fd8431c9bc660159a20a4163ff83c66c86dcbd3d7b841dd869c66d",
+    "original_preserved_locally_outside_repository": true
+  }
+}

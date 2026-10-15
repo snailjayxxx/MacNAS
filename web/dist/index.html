@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="color-scheme" content="light dark"><meta name="description" content="MacNAS 本地网页桌面原型 · 合成数据">
+<title>MacNAS — 本地桌面预览</title>
+<link rel="icon" href="icon.svg" type="image/svg+xml"><link rel="stylesheet" href="desktop.css">
+<script defer src="model.js"></script><script defer src="i18n.js"></script><script defer src="desktop.js"></script>
+</head>
+<body>
+<header class="menubar">
+ <button class="brand-button" id="brand-button" data-icon="nas" aria-label="MacNAS"><strong>MacNAS</strong><span class="brand-divider"></span></button>
+ <span class="environment"><i></i><span id="environment-label"></span></span>
+ <span class="menubar-context" id="top-context"></span>
+ <div class="menubar-right">
+  <button class="top-button" id="search-button" data-icon="search"></button>
+  <button class="language-button" id="language-button">中文</button>
+  <button class="top-button notification-button" id="notification-button" data-icon="bell" aria-expanded="false"><span class="notification-dot" hidden></span></button>
+  <button class="profile-button" id="profile-button" aria-expanded="false"><span class="avatar">M</span><span id="profile-name"></span><span data-icon="chevron"></span></button>
+  <time id="clock"></time>
+ </div>
+</header>
+<main class="desktop" id="desktop">
+ <div class="wallpaper-art" aria-hidden="true"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="orbit orbit-three"></div><div class="horizon"></div></div>
+ <nav class="desktop-shortcuts" id="shortcuts"></nav>
+ <div class="desktop-signature" aria-hidden="true"><span>MacNAS</span><small>YOUR DATA. YOUR SPACE.</small></div>
+ <div id="windows" class="windows"></div>
+</main>
+<footer class="dock" id="dock"></footer>
+<section class="launcher floating-panel" id="launcher" hidden aria-modal="true" role="dialog" aria-labelledby="launcher-title">
+ <header><div><span class="eyebrow">MacNAS</span><h2 id="launcher-title"></h2></div><button class="icon-button" data-close-panel="launcher" data-icon="close"></button></header>
+ <label class="search-field"><span data-icon="search"></span><input id="launcher-search" type="search" autocomplete="off"></label>
+ <div class="launcher-grid" id="launcher-grid"></div><p class="panel-footnote" id="launcher-hint"></p>
+</section>
+<aside class="notification-panel floating-panel" id="notifications" hidden aria-labelledby="notifications-title">
+ <header><div><h2 id="notifications-title"></h2><p id="unread-count"></p></div><button class="icon-button" data-close-panel="notifications" data-icon="close"></button></header>
+ <div class="notification-tools"><button id="read-all" class="text-button"></button><button class="icon-button" id="refresh-events" data-icon="refresh"></button></div>
+ <p class="readonly-note" id="notification-readonly" hidden></p>
+ <div id="notification-list" class="notification-list"></div><p class="panel-footnote" id="notification-hint"></p>
+</aside>
+<div class="profile-menu floating-panel" id="profile-menu" hidden><div class="profile-info" id="profile-info"></div><button id="open-preferences" data-icon="user"></button><button id="open-about" data-icon="info"></button></div>
+<div id="modal-root"></div><div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+<noscript>请启用 JavaScript 以预览本地桌面。JavaScript を有効にしてください。</noscript>
+</body>
+</html>

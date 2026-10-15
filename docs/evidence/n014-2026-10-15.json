@@ -1,0 +1,240 @@
+{
+  "task": "N-014",
+  "date": "2026-10-15",
+  "timezone": "Asia/Tokyo",
+  "status": "LOCAL_MAC_PROTOTYPE_PASS",
+  "source_base": "e05b3d7e3acbeb447f10c2f5f27a64be332be6f5",
+  "branch": "dev/bootstrap",
+  "commit": "Tests ran on uncommitted development; subsequent milestone publication authorized by the user. Resolve the publication commit from Git history.",
+  "task_scope": "Session-bound no-listener desktop message dispatcher, bounded JavaScript client envelopes and real stdin/stdout Swift/PostgreSQL integration",
+  "database": "PostgreSQL 18.6 only; Schema 3 required, no schema changes or fallback",
+  "new_dependencies": [],
+  "new_listener_started": false,
+  "production_system_settings_changed": false,
+  "source_start_backup": "Evidence/n014-before-20261015T152310.tar.gz",
+  "resolved_failures": [
+    {
+      "run_id": "20261015T153032-8d59aa88",
+      "stage": "Initial test compilation",
+      "issue": "Dictionary error-code lookup returned Any? without a String? cast; Swift failed to produce a useful diagnostic",
+      "resolution": "Explicit optional String cast; targeted and subsequent full regression receipts retained"
+    }
+  ],
+  "coverage": [
+    "Strict JSON syntax, decoded duplicate keys, number lexemes, invalid UTF-8 and surrogate refusal, depth/node/byte limits",
+    "Host-bound Schema 3 session lifetime and revocation; request ID replay protection and fixed method/parameter allowlists",
+    "Audience-scoped real durable jobs, server-derived label target, persistent business idempotency, cancellation and restart",
+    "Real PostgreSQL event replay, delivered-range acknowledgement and reader isolation via JavaScript-to-Swift pipes",
+    "Read-only recovery blocks all four mutation/cursor methods without creating content directories",
+    "Authorized logical library metadata with safe integers, no host roots; explicit fixture file approval, reader grants and revocation through Swift messages",
+    "Request/response budgets, fixed errors, malformed duplicate JSON, split NDJSON/CRLF, oversize and truncated frame refusal",
+    "JavaScript plain-JSON guards, response correlation and exclusive results, transport failure redaction and no fixture fallback"
+  ],
+  "limitations": [
+    "Fixture sessions and CLI-selected logical users are synthetic identities, not production authentication or trusted IPC caller validation",
+    "Static desktop remains explicitly memory-backed; no browser transport, DOM integration or browser visual/interaction acceptance",
+    "Generic request client does not yet implement complete business DTO validation or reliable timeout/reconnect lifecycle",
+    "New CLI host does not grant any volume/content permission; actual file-message tests use explicitly approved synthetic Swift-host directories",
+    "No task/event or large-directory pagination; output limits refuse oversized results rather than proving NAS-scale performance",
+    "Request ID history is process-local and capped at 4096; durable business idempotency is separate",
+    "No real disk enumeration, hardware unplug/power loss, macOS15 runtime, second Mac, system service/ACL/SMB changes or production cutover",
+    "The current client sequence must share its host connection lifetime; recreating a client on the same host may cause replay refusal"
+  ],
+  "actual_macos_version": "26.5.2",
+  "architecture": "arm64",
+  "deployment_target": "macOS 15; actual runtime on macOS15 not tested",
+  "macOS15_runtime": "NOT_EXECUTED",
+  "cross_mac": "NOT_EXECUTED",
+  "physical_pool": "NOT_EXECUTED",
+  "power_loss": "NOT_EXECUTED",
+  "browser_qa": {
+    "status": "DEFERRED_AT_USER_REQUEST",
+    "new_attempts": false,
+    "existing_loopback_authorization_retained": true,
+    "repeat_permission_questions": false
+  },
+  "requirements": {
+    "new_children": 8,
+    "parent_acceptance": "INCOMPLETE",
+    "unchanged_parent_count": 111,
+    "unchanged_priority_counts": {
+      "first": 97,
+      "later": 13,
+      "not_needed": 1
+    },
+    "child_count": 828
+  },
+  "references": [
+    "docs/decisions/ADR-008-desktop-message-bridge.md",
+    "docs/contracts/DESKTOP_API.md",
+    "docs/plans/N-014-ACCEPTANCE.md",
+    "docs/plans/N-014-BRIDGE.md"
+  ],
+  "official_sources": [
+    "https://www.rfc-editor.org/rfc/rfc8259"
+  ],
+  "next_task": "N-015 typed desktop DTO client and bounded transport lifecycle; browser QA remains deferred",
+  "publication_preparation": {
+    "plan": "docs/plans/GIT_MILESTONE_N014.md",
+    "remote_visibility": "PUBLIC",
+    "remote_branch_at_review": "main only, initial commit",
+    "n011_local_skill_paths_redacted": 2,
+    "original_n011_report_preserved_outside_repository": true,
+    "immutable_planning_originals": "UNCHANGED",
+    "authorization": "USER_AUTHORIZED_CURRENT_AND_FUTURE_TESTED_DEVELOPMENT_MILESTONES",
+    "scope": "Chinese commit and normal push to the development branch after independent functionality, passing tests and complete docs/evidence; no main merge, force push or history rewrite"
+  },
+  "test_runs": [
+    {
+      "run_id": "20261015T153032-8d59aa88",
+      "status": "FAILED",
+      "filter": "BridgeJSONTests|DesktopBridgeTests",
+      "swift_tests_executed": 0,
+      "scope": "Test compilation failed before execution; corrected optional String cast",
+      "cluster_stopped": true
+    },
+    {
+      "run_id": "20261015T153632-bd65ab67",
+      "status": "PASS",
+      "filter": "BridgeJSONTests|DesktopBridgeTests",
+      "swift_tests": 18,
+      "node_pipe_integration_tests": 4,
+      "scope": "Targeted bridge tests and all CLI demos before the library metadata integer refinement",
+      "sources_unchanged": true,
+      "cluster_stopped": true
+    },
+    {
+      "run_id": "20261015T154040-a1cfa3ac",
+      "status": "PASS",
+      "filter": null,
+      "swift_tests": 174,
+      "requirements_negative_tests": 5,
+      "node_pipe_integration_tests": 4,
+      "scope": "Unfiltered full Swift regression and all CLI/pipe demos including final library integer validation",
+      "sources_unchanged": true,
+      "cluster_stopped": true
+    }
+  ],
+  "source_sha256": {
+    "Package.swift": "09023b72b39b31dc54575ca6925cc2513aa09a4d6f70588851be384bdc267ea5",
+    "Sources/HelloDiagnostics/main.swift": "b04a06781130b60863f86dbb24e968de3284e0f427def19da7799586d6893aa5",
+    "Sources/MacNASCLI/main.swift": "8d4d5bdea0c9007f173ec286489285893289e79e929fc7a6dbbb00a3bc685f8c",
+    "Sources/MacNASCore/BridgeJSON.swift": "324b39d7d9b259c5cbe00458a6b971d12432fcfa6418d73ef30f5680893ebc33",
+    "Sources/MacNASCore/CapabilityProbe.swift": "7deb935038d37631251e0dc6307d0ae27f02f66186ba4d6707c5671ab3ec885a",
+    "Sources/MacNASCore/DescriptorLibrary.swift": "e219eed6e4829a4acbbbf3d47c9595a3d0f0b72353ee3c9c5a952abc4e88ae1f",
+    "Sources/MacNASCore/DesktopBridge.swift": "2bd364c4c8c8c677d7762a077b78d73c48aeb90f3460f39aca8d59c6f96631e1",
+    "Sources/MacNASCore/DurableJobs.swift": "775e76aed35e5392dfe483f1f726a65bd58b387ec662bcf0b7bb3f0c82a625a6",
+    "Sources/MacNASCore/FixtureFileAPI.swift": "ab0b8e42cdca65febb510fc6c56559b516845397ee6d1aab1b893195f6dce9d5",
+    "Sources/MacNASCore/FixtureStorageAPI.swift": "86034cf2dee983e9b6e03e0249cd3b58882f8bf12d741e06cf7f21c9fbdae3bb",
+    "Sources/MacNASCore/FixtureStorageDemo.swift": "8c88422294cf3e52fec9c8a7d51315f67505684642bd92ca45af206ed7f53b68",
+    "Sources/MacNASCore/FixtureVolumeRegistry.swift": "dabf3e46d9c216cb1b8d1aaa04b27be601a131c12b0b3e522d9a9d843091962c",
+    "Sources/MacNASCore/MigrationCoordinator.swift": "ecf5fbf4a822545ca2212985c4a7431714b4f12e5f514c6d75f400b64d62f361",
+    "Sources/MacNASCore/Models.swift": "91670ef41160705c80545f462f42101e1b611e925945b9eca584848363387051",
+    "Sources/MacNASCore/PhotoSmoke.swift": "3354d7f6a7486d35cfca548821d76e95dfa41970fb6cea686b283c43b0dbd084",
+    "Sources/MacNASCore/Plugins.swift": "5bb41154d4bd8fdc42d7f0018d8e6ff31b03df3472f5af484253b427b6085859",
+    "Sources/MacNASCore/PoolSimulation.swift": "3636d4a4e253ab360d4ddf02d8086539d9ba759b415c989e638db59b9c5e3c99",
+    "Sources/MacNASCore/PortableInstance.swift": "f4dc42a79389b27e8d5251290e221a1ed2d349ace380b71801f9eae91a6c62c6",
+    "Sources/MacNASCore/PrototypePlatformAPI.swift": "c70aada7e9e36b21116060d5f0725046c0317339d3bff45e23336ff8323f835f",
+    "Sources/MacNASCore/SafeFS.swift": "75d9f829af31e0ecb949b81f19cc8bd00661b009605ae91ff8f59de9cfe32577",
+    "Sources/MacNASCore/SecurityGate.swift": "97b3490f8405886fb4014198bbb43e61717860115a44d4628c5bbe666c3df49f",
+    "Sources/MacNASCore/StateStore.swift": "73045457dd62c018a5046cc55c7da97d7a537e470e2fe12e13b038d3d8968e05",
+    "Sources/MacNASCore/WriteBarrier.swift": "cbf542810c1e7ef39420ffe1f5b5842ae205f6a8b2730ffd209ecc2ddcf9b8e7",
+    "Sources/SampleFileIndex/main.swift": "4f57a1bc123eaf62baff11b6867ea8a413bbc314247cd0399f93b7874f1442ce",
+    "Tests/MacNASCoreTests/CoreTests.swift": "cbe1b6e1a92435761d43ffcdb6b8b3e9c0b629c48782270947de10574254a4d9",
+    "Tests/MacNASCoreTests/DesktopBridgeTests.swift": "b3edc4b0a4879b6c94117fe386dc0d67040bb86bea33b7c365d4f5395b76c782",
+    "Tests/MacNASCoreTests/DurableIntegrationTests.swift": "b6adcf9623d7d4d5074c05fa65dcb7e9a81499bd9c48ab3ff6c6380ca8f47bbc",
+    "Tests/MacNASCoreTests/DurableJobTests.swift": "f496ffd39256e4e898c0c0da1c4835e0d16c87919931371e953522e139d2135e",
+    "Tests/MacNASCoreTests/FixtureFileTests.swift": "721318bf1b9f6733f3360c5760c6d2231eaaec50f3660dfe4af67838eb1b5ac2",
+    "Tests/MacNASCoreTests/FixtureStorageTests.swift": "66dfa46e8718e320dca8f59adf5101ccd7d57023419402c4942b46da7df9aa93",
+    "Tests/MacNASCoreTests/MigrationRecoveryTests.swift": "a01084c7ae0de34fd02e92e370b920825fabebf8055d5f4a2859682ca9e6e766",
+    "Tests/MacNASCoreTests/PrototypeAPITests.swift": "0e349d6c8707eba3b5ae4775c963aa808c2caf447f84555ed86355865e69b8e9",
+    "Tests/MacNASCoreTests/SmokeTests.swift": "9f808a70612068f05bfbdcd3cbb11f432467e1adc65795b2241c9898ec2a07dd",
+    "database/migrations/0001_initial.sql": "f609f4b3417afeb86aeb6bb37905da97cb58b681316ac7875e6d8184fa12628f",
+    "database/migrations/0002_app_state_revision.sql": "d77b2576f62543b30d529e1e2858bd51d49b2df3768adee5a74a461549cf23ed",
+    "database/migrations/0003_durable_jobs_outbox.sql": "300c433bd8aac1e27f6cfad341b78a5db83b72e9d902dd647c1ae31086401ccc",
+    "scripts/build_postgresql.py": "e7f17fed45e2ab393e4dc3ca99304fc0f3ae6ee2a6c0316f504f26911f35f311",
+    "scripts/dev.py": "0d99c4ff8f36fb007f46a93f436f2f05f818bd112e8fb25405542a16170a3841",
+    "scripts/dev_web.py": "a86d3f3e75ed76bc31f5b30ab12d871bd4685c1c2d431c8229f5da14a461d710",
+    "scripts/preview_web.py": "1b4f542913a36638226f798d641cbc51f7289dc0bf4501cd3e636271c051b51c",
+    "scripts/test_desktop_bridge.cjs": "0116a203f546957a84f00c4829d9706d1cd0965216c9f23a67740748aedf6f47",
+    "scripts/test_requirements.py": "d85b26070a7d8d57e992a66e1b1c87c1f9c7588ce9ed1867412959d8d89989e0",
+    "scripts/test_web.py": "f25f9b602ce7b897eea083ee31625b4f08079709b4afba962cf0d5780b4c9cd6",
+    "scripts/verify_requirements.py": "ed7776aab51eaa9cc89ca10587034386a47fadfd67a7e261231e0292e85a74d1",
+    "web/dist/model.js": "3619e33a6da5522999b5eb817c779fbdb64dea5fc381c459493e69680939a0e4"
+  },
+  "full_regression_summary": "/Volumes/MacNAS-Dev/MacNAS-Workspace/Evidence/runs/20261015T154040-a1cfa3ac/summary.json",
+  "raw_evidence_directories": [
+    "/Volumes/MacNAS-Dev/MacNAS-Workspace/Evidence/runs/20261015T153032-8d59aa88",
+    "/Volumes/MacNAS-Dev/MacNAS-Workspace/Evidence/runs/20261015T153632-bd65ab67",
+    "/Volumes/MacNAS-Dev/MacNAS-Workspace/Evidence/runs/20261015T154040-a1cfa3ac"
+  ],
+  "requirements_verification": {
+    "status": "PASS",
+    "original_files_verified": 29,
+    "original_sources_verified": 5,
+    "parent_count": 111,
+    "priority_counts": {
+      "首版需要": 97,
+      "后续需要": 13,
+      "暂不需要": 1
+    },
+    "child_count": 828,
+    "database": "PostgreSQL 18, no fallback"
+  },
+  "requirements_index_sha256": "0c8eadce723010fd13dc9c877dfa3aed55a7d24978ddbdae328497c7bde341cf",
+  "compiler_receipt": {
+    "binary": "Build/swift/arm64-apple-macosx/debug/macnas",
+    "minos": "15.0",
+    "sdk": "26.5",
+    "runtime_on_macos15": "NOT_EXECUTED"
+  },
+  "recorded_at": "2026-10-15T16:01:13.672027+09:00",
+  "frontend_regression": {
+    "run_id": "20261015T155841-c1d480d4",
+    "status": "PASS",
+    "node_model_and_bridge_tests": 22,
+    "python_static_http_tests": 6,
+    "js_syntax_checks": 3,
+    "requirements_negative_tests": 5,
+    "browser_execution": false,
+    "no_listener_started": true,
+    "sources_unchanged": true,
+    "summary": "/Volumes/MacNAS-Dev/MacNAS-Workspace/Evidence/web-runs/20261015T155841-c1d480d4/summary.json",
+    "source_sha256": {
+      "scripts/dev_web.py": "a86d3f3e75ed76bc31f5b30ab12d871bd4685c1c2d431c8229f5da14a461d710",
+      "scripts/preview_web.py": "1b4f542913a36638226f798d641cbc51f7289dc0bf4501cd3e636271c051b51c",
+      "scripts/test_web.py": "f25f9b602ce7b897eea083ee31625b4f08079709b4afba962cf0d5780b4c9cd6",
+      "web/dist/desktop.css": "32b6d258c376fbafd9132a7304ea07f40edc2264b9162d6b9779bb84efc6b2a6",
+      "web/dist/desktop.js": "ecd2fbdd3ddaf0fdbce2322a96fb8101ba535a0985e5f531c78f90312f074623",
+      "web/dist/i18n.js": "ceb8cd246f14d594ddeda90cd5cdda2d1a9c2bfd8f4cf2a893971c9a9af4b356",
+      "web/dist/icon.svg": "5d4e5d90ccd33021afc98eb0386a45aefc975b51b8cedd69336a5ecac623b951",
+      "web/dist/index.html": "d2293093c0968b5b384e481e2dd5127d8030cd3b6c1c20ca42e0eda4712e3435",
+      "web/dist/model.js": "3619e33a6da5522999b5eb817c779fbdb64dea5fc381c459493e69680939a0e4",
+      "web/tests/bridge.test.cjs": "1d6c7fd10c73a54ab44f19cd3fada262d2f0b83409e079a6fc158c93ffe8c33e",
+      "web/tests/model.test.cjs": "bf0414239c0eba43134a2b7111caece6f979bd5c5327a9de29c15c4af93d666d"
+    }
+  },
+  "full_swift_test_seconds": 862.257,
+  "task_results": {
+    "N-014": "LOCAL_MAC_PASS"
+  },
+  "final_checks": {
+    "source_receipts": "MATCH",
+    "requirements_index": "MATCH",
+    "originals": {
+      "files": 29,
+      "sources": 5
+    },
+    "new_child_evidence_paths": "EXIST",
+    "document_links": "PASS",
+    "document_links_checked": 53,
+    "development_volume_uuid": "MATCH",
+    "test_postgresql_clusters": "STOPPED",
+    "port_8766": "NO_LISTENER",
+    "git_diff_check": "PASS",
+    "index": "EMPTY",
+    "head": "UNCHANGED",
+    "commit_or_push": "NOT_PERFORMED"
+  },
+  "publication_validation_snapshot": "final_checks records the completed test and pre-publication verification; subsequent push results are recorded outside the repository to avoid a self-referential commit hash"
+}

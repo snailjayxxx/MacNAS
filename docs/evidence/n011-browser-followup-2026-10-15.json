@@ -1,0 +1,84 @@
+{
+  "task": "N-011",
+  "date": "2026-10-15",
+  "timezone": "Asia/Tokyo",
+  "status": "IMPLEMENTED_AWAITING_BROWSER_QA",
+  "previous_evidence": "docs/evidence/n011-2026-10-15.json",
+  "browser_diagnosis": "后续远程排查：用户不在Mac mini旁并要求代改设置。原生工具明确禁止操作com.openai.codex自身界面；随后只读状态检查返回apps/browsers均为空，并报告Sky Computer Use native pipe startup failed。当前工具没有浏览器站点权限修改接口，因此未修改任何Codex权限、未启动新预览，也未绕过既有阻止。官方Browser文档提供codex://settings/browser-use直达入口；Remote connections说明远程会话沿用宿主权限与浏览器配置，但未提供本任务可调用的远程站点权限修改接口。用户无须重复授权或现在回到Mac mini，先继续不依赖浏览器的代码工作。",
+  "browser_observations": [
+    {
+      "action": "cua.getApp(com.openai.codex)",
+      "result": "Computer Use is not allowed to use the app com.openai.codex for safety reasons",
+      "evidence": "Tool transcript only"
+    },
+    {
+      "action": "cua.getState() read-only inventory",
+      "result": {
+        "apps": [],
+        "browsers": [],
+        "errors": [
+          "Native apps: Error: Sky Computer Use native pipe startup failed"
+        ]
+      },
+      "evidence": "Tool transcript only"
+    }
+  ],
+  "settings_changed": false,
+  "permission_workaround_used": false,
+  "browser_qa_executed": false,
+  "new_preview_started": false,
+  "user_authorization_already_granted": true,
+  "same_authorization_not_requested_again": true,
+  "official_documentation": [
+    "https://learn.chatgpt.com/docs/browser",
+    "https://learn.chatgpt.com/docs/remote-connections"
+  ],
+  "settings_deep_link": "codex://settings/browser-use",
+  "remote_settings_api": "No callable site-permission update interface among current tools; no documented remote method established",
+  "frontend_change": "Theme change now uses savePreferences result to select saved/prefsUnavailable feedback; previously always reported saved. Static code review finding; not browser verified.",
+  "before_fix_backup": "Evidence/n011-before-preference-fix-20261015T142459.js",
+  "automated_checks": {
+    "run_id": "20261015T142505-dc63b075",
+    "status": "PASS",
+    "node_model_tests": 15,
+    "python_static_http_policy_tests": 6,
+    "js_syntax_checks": 3,
+    "requirements_negative_tests": 5,
+    "requirements_children": 810,
+    "summary": "/Volumes/MacNAS-Dev/MacNAS-Workspace/Evidence/web-runs/20261015T142505-dc63b075/summary.json",
+    "no_listener_started": true
+  },
+  "source_sha256": {
+    "scripts/dev_web.py": "de3740f1de485a5404c61c465275fc2531986c2291c2d7b97064e3da08f25381",
+    "scripts/preview_web.py": "1b4f542913a36638226f798d641cbc51f7289dc0bf4501cd3e636271c051b51c",
+    "scripts/test_web.py": "f25f9b602ce7b897eea083ee31625b4f08079709b4afba962cf0d5780b4c9cd6",
+    "web/dist/desktop.css": "32b6d258c376fbafd9132a7304ea07f40edc2264b9162d6b9779bb84efc6b2a6",
+    "web/dist/desktop.js": "ecd2fbdd3ddaf0fdbce2322a96fb8101ba535a0985e5f531c78f90312f074623",
+    "web/dist/i18n.js": "ceb8cd246f14d594ddeda90cd5cdda2d1a9c2bfd8f4cf2a893971c9a9af4b356",
+    "web/dist/icon.svg": "5d4e5d90ccd33021afc98eb0386a45aefc975b51b8cedd69336a5ecac623b951",
+    "web/dist/index.html": "d2293093c0968b5b384e481e2dd5127d8030cd3b6c1c20ca42e0eda4712e3435",
+    "web/dist/model.js": "06677eebf3c38165e5fe13986eedc3100208effe7ec63a864e4c4323619fd390",
+    "web/tests/model.test.cjs": "bf0414239c0eba43134a2b7111caece6f979bd5c5327a9de29c15c4af93d666d"
+  },
+  "swift_product_changed": false,
+  "backend_full_regression_rerun": false,
+  "dependencies_added": [],
+  "commit_or_push_performed": false,
+  "next_task": "N-011 browser acceptance after actual browser availability/permission recovery; independent coding may continue",
+  "recorded_at": "2026-10-15T14:25:37.828365+09:00",
+  "final_checks": {
+    "source_receipts": "MATCH",
+    "prior_swift_sql_and_test_sources": "UNCHANGED",
+    "git_diff_check": "PASS",
+    "head": "UNCHANGED",
+    "port_8766": "NO_LISTENER",
+    "test_postgresql_clusters": "STOPPED",
+    "updated_document_links": "PASS"
+  },
+  "browser_permission_and_qa_followup": {
+    "status": "DEFERRED_AT_USER_REQUEST",
+    "user_instruction": "用户于2026-10-15明确要求：浏览器权限确认/设置排查及实际网页验收暂留待办，等用户回家后再处理。期间不再尝试修改这些设置、启动浏览器验收或重复询问授权；保留此前针对127.0.0.1:8766只读静态预览和浏览器访问的授权。此暂停仅针对浏览器设置与验收，不撤销已授权的非破坏性代码开发和自动测试。恢复时沿用现有进展，先依据用户实际设置界面定位，避免把官方文档菜单当作已核实界面。",
+    "existing_preview_authorization_retained": true,
+    "no_new_browser_attempts": true
+  }
+}

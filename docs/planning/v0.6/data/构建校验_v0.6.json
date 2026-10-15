@@ -1,0 +1,14 @@
+{
+  "schema": "mac-nas-planning-package-validation/v6",
+  "version": "0.6",
+  "generated_at": "2026-10-15",
+  "notes": "规划包校验，不是用户Mac上的测试或部署",
+  "requirements": {
+    "total": 111,
+    "first": 97,
+    "later": 13,
+    "not_needed": 1
+  },
+  "new_id": "MIG-05",
+  "test_scope": "plan-and-artifact-consistency-only"
+}
