@@ -1,0 +1,636 @@
+{
+  "task": "N-021",
+  "date": "2026-10-15",
+  "timezone": "Asia/Tokyo",
+  "status": "NATIVE_MODEL_AND_REAL_PIPE_PASS_BROWSER_PENDING",
+  "task_git_base": "0a4e0a066474abdd54d4ad1ce870182a6329c8a0",
+  "source_base": "0a4e0a066474abdd54d4ad1ce870182a6329c8a0",
+  "bootstrap_lineage": "e05b3d7e3acbeb447f10c2f5f27a64be332be6f5",
+  "branch": "dev/bootstrap",
+  "task_scope": "Read-only audience-scoped durable notification consumer positions and fixed typed message; observation only, no reconnection or old-batch reconciliation",
+  "database": "PostgreSQL 18.6 only; Schema 3 and all migrations unchanged",
+  "database_transport": "private Unix socket only; TCP disabled",
+  "synthetic_data": true,
+  "new_dependencies": [],
+  "new_listener_started": true,
+  "listener_scope": "Standing-authorized temporary 127.0.0.1:8766 static allowlist preview only; no business API/database TCP listener",
+  "production_system_settings_changed": false,
+  "source_start_backup": "Evidence/n021-before-20261015T223112.tar.gz",
+  "actual_macos_version": "26.5.2",
+  "architecture": "arm64",
+  "deployment_target": "macOS 15; actual macOS15 runtime NOT_EXECUTED",
+  "coverage": [
+    "Single read-only transaction and audience-limited SELECT of existing consumer row; no consumer creation, delivered/ACK mutation or event/receipt deletion",
+    "Missing and foreign user/app consumers share notVisible/null projection; own empty consumer visible/0/0; content digest unchanged",
+    "Persisted delivery, partial/full ACK and queue restart observations; database-enforced read-only recovery and rolled-back recovery refuse poll/ACK",
+    "Strict UTF-8 ID budgets, quoted Unicode as data, invalid inputs, missing database without fallback",
+    "Existing session/raw user bytes/role/allowed mode/instance identity and generation/database checked before query, after query and after final encoding",
+    "13th fixed eventConsumerStatus method, exactly five response fields, explicit nulls and JavaScript safe integer boundaries; encoding-budget failure has no writes",
+    "Typed client observes without seeding ack/seen, allocating delivery consumers, granting ACK authority or clearing old notification view batches",
+    "Same-client/consumer query and poll/ACK serialization; bounded pending waits, timeout/abort/close and discarded late response",
+    "Actual Swift/PostgreSQL committed ACK with withheld or timed-out response then status query on same/restarted host; old batch remains unresolved",
+    "Actual pipe missing-ID query does not reserve ownership; reader scope and recovery read/write separation",
+    "Complete new unfiltered Swift regression including actual embedded approved directory Node pipe and all transitive dependencies"
+  ],
+  "directed_regressions": [
+    {
+      "run_id": "20261015T223544-e8a59ea6",
+      "status": "PASS",
+      "test_filter": "EventConsumerStatusTests",
+      "swift_tests": 12,
+      "swift_seconds": 191.046,
+      "independent_cli_pipe_tests": 13,
+      "independent_cli_pipe_seconds": 231.285544208,
+      "sources_unchanged_during_run": true,
+      "source_file_count": 55,
+      "summary": "Evidence/runs/20261015T223544-e8a59ea6/summary.json",
+      "test_log": "Evidence/runs/20261015T223544-e8a59ea6/swift-tests.log",
+      "pipe_log": "Evidence/runs/20261015T223544-e8a59ea6/desktop-bridge-pipe-integration.log",
+      "postgres_stopped": true
+    },
+    {
+      "run_id": "20261015T224525-9814c1e5",
+      "status": "PASS",
+      "test_filter": "EventConsumerStatusTests",
+      "swift_tests": 12,
+      "swift_seconds": 127.903,
+      "independent_cli_pipe_tests": 13,
+      "independent_cli_pipe_seconds": 189.684479875,
+      "sources_unchanged_during_run": true,
+      "source_file_count": 55,
+      "summary": "Evidence/runs/20261015T224525-9814c1e5/summary.json",
+      "test_log": "Evidence/runs/20261015T224525-9814c1e5/swift-tests.log",
+      "pipe_log": "Evidence/runs/20261015T224525-9814c1e5/desktop-bridge-pipe-integration.log",
+      "postgres_stopped": true
+    }
+  ],
+  "development_refinement": {
+    "initial_run_status": "PASS",
+    "first_run_final_source_mismatches": [
+      "Sources/MacNASCore/PrototypePlatformAPI.swift",
+      "Tests/MacNASCoreTests/EventConsumerStatusTests.swift"
+    ],
+    "change": "Replace redundant whole-instance schema rechecks with scoped read-only metadata checks while preserving constructor/queue schema validation; add unknown-mode and generation-change cases",
+    "basis": "Both directed runs passed; only final run is a complete match for final runtime sources. Durations are test-run observations, not a production performance claim."
+  },
+  "core_full_regression": {
+    "run_id": "20261015T225352-7bc504ab",
+    "status": "PASS",
+    "test_filter": null,
+    "swift_tests": 217,
+    "swift_seconds": 1100.779,
+    "independent_cli_pipe_tests": 13,
+    "independent_cli_pipe_seconds": 192.477771583,
+    "sources_unchanged_during_run": true,
+    "source_file_count": 55,
+    "summary": "Evidence/runs/20261015T225352-7bc504ab/summary.json",
+    "test_log": "Evidence/runs/20261015T225352-7bc504ab/swift-tests.log",
+    "pipe_log": "Evidence/runs/20261015T225352-7bc504ab/desktop-bridge-pipe-integration.log",
+    "postgres_stopped": true,
+    "unfiltered": true,
+    "new_unfiltered_execution": true,
+    "reused_prior_suite": false,
+    "core_source_files": 41,
+    "core_source_sha256": {
+      "Package.swift": "09023b72b39b31dc54575ca6925cc2513aa09a4d6f70588851be384bdc267ea5",
+      "Sources/HelloDiagnostics/main.swift": "b04a06781130b60863f86dbb24e968de3284e0f427def19da7799586d6893aa5",
+      "Sources/MacNASCLI/main.swift": "8d4d5bdea0c9007f173ec286489285893289e79e929fc7a6dbbb00a3bc685f8c",
+      "Sources/MacNASCore/BridgeJSON.swift": "324b39d7d9b259c5cbe00458a6b971d12432fcfa6418d73ef30f5680893ebc33",
+      "Sources/MacNASCore/CapabilityProbe.swift": "7deb935038d37631251e0dc6307d0ae27f02f66186ba4d6707c5671ab3ec885a",
+      "Sources/MacNASCore/DescriptorLibrary.swift": "ba38e4170dd506d8c508f6876a943edb76e1fa5ccc5c32a2873ffa33d74cee0a",
+      "Sources/MacNASCore/DesktopBridge.swift": "7cc8035f3fd505b5db05ec0ab9ebddb35b326388992cd4e48964710f50386a85",
+      "Sources/MacNASCore/DirectoryPages.swift": "b8e8d1e924076da1215ebcdb9b9fa2584ae8579815d6c8df7dc55ab55c45af92",
+      "Sources/MacNASCore/DurableJobs.swift": "cc8d9b931d1e5b064b2d962b8c8386327d612f3ef00bc39e1ce264561e1b273b",
+      "Sources/MacNASCore/FixtureFileAPI.swift": "2de721a62016a2d398fce22950b61e11d07f464839073e24cb9f5fb8c1907745",
+      "Sources/MacNASCore/FixtureStorageAPI.swift": "86034cf2dee983e9b6e03e0249cd3b58882f8bf12d741e06cf7f21c9fbdae3bb",
+      "Sources/MacNASCore/FixtureStorageDemo.swift": "8c88422294cf3e52fec9c8a7d51315f67505684642bd92ca45af206ed7f53b68",
+      "Sources/MacNASCore/FixtureVolumeRegistry.swift": "dabf3e46d9c216cb1b8d1aaa04b27be601a131c12b0b3e522d9a9d843091962c",
+      "Sources/MacNASCore/JobPages.swift": "7a0bebb7064582720b26ad5e47ebf163dd49693552b43b4f8908b6a2c72641f0",
+      "Sources/MacNASCore/MigrationCoordinator.swift": "ecf5fbf4a822545ca2212985c4a7431714b4f12e5f514c6d75f400b64d62f361",
+      "Sources/MacNASCore/Models.swift": "91670ef41160705c80545f462f42101e1b611e925945b9eca584848363387051",
+      "Sources/MacNASCore/PhotoSmoke.swift": "3354d7f6a7486d35cfca548821d76e95dfa41970fb6cea686b283c43b0dbd084",
+      "Sources/MacNASCore/Plugins.swift": "5bb41154d4bd8fdc42d7f0018d8e6ff31b03df3472f5af484253b427b6085859",
+      "Sources/MacNASCore/PoolSimulation.swift": "3636d4a4e253ab360d4ddf02d8086539d9ba759b415c989e638db59b9c5e3c99",
+      "Sources/MacNASCore/PortableInstance.swift": "f4dc42a79389b27e8d5251290e221a1ed2d349ace380b71801f9eae91a6c62c6",
+      "Sources/MacNASCore/PrototypePlatformAPI.swift": "4be5a097a31412fc78c608570c57d29bf6cd748c2058a62030419ac2ed86b70d",
+      "Sources/MacNASCore/SafeFS.swift": "75d9f829af31e0ecb949b81f19cc8bd00661b009605ae91ff8f59de9cfe32577",
+      "Sources/MacNASCore/SecurityGate.swift": "97b3490f8405886fb4014198bbb43e61717860115a44d4628c5bbe666c3df49f",
+      "Sources/MacNASCore/StateStore.swift": "73045457dd62c018a5046cc55c7da97d7a537e470e2fe12e13b038d3d8968e05",
+      "Sources/MacNASCore/WriteBarrier.swift": "cbf542810c1e7ef39420ffe1f5b5842ae205f6a8b2730ffd209ecc2ddcf9b8e7",
+      "Sources/SampleFileIndex/main.swift": "4f57a1bc123eaf62baff11b6867ea8a413bbc314247cd0399f93b7874f1442ce",
+      "Tests/MacNASCoreTests/CoreTests.swift": "cbe1b6e1a92435761d43ffcdb6b8b3e9c0b629c48782270947de10574254a4d9",
+      "Tests/MacNASCoreTests/DesktopBridgeTests.swift": "b3edc4b0a4879b6c94117fe386dc0d67040bb86bea33b7c365d4f5395b76c782",
+      "Tests/MacNASCoreTests/DirectoryPageTests.swift": "f6284c89ea2c57357e5d2abeb8088953aaef83831bc2633ae39fb0d9ef636701",
+      "Tests/MacNASCoreTests/DurableIntegrationTests.swift": "b6adcf9623d7d4d5074c05fa65dcb7e9a81499bd9c48ab3ff6c6380ca8f47bbc",
+      "Tests/MacNASCoreTests/DurableJobTests.swift": "f496ffd39256e4e898c0c0da1c4835e0d16c87919931371e953522e139d2135e",
+      "Tests/MacNASCoreTests/EventConsumerStatusTests.swift": "3a319304b6959b2c47145219755fb516420783f986e3efb5ca6871d140670cfe",
+      "Tests/MacNASCoreTests/FixtureFileTests.swift": "721318bf1b9f6733f3360c5760c6d2231eaaec50f3660dfe4af67838eb1b5ac2",
+      "Tests/MacNASCoreTests/FixtureStorageTests.swift": "66dfa46e8718e320dca8f59adf5101ccd7d57023419402c4942b46da7df9aa93",
+      "Tests/MacNASCoreTests/JobPageTests.swift": "9b634346f1914e99ceb52c3be0b90f0c6ff166b468432d3f48be4dd9a62ea8f5",
+      "Tests/MacNASCoreTests/MigrationRecoveryTests.swift": "a01084c7ae0de34fd02e92e370b920825fabebf8055d5f4a2859682ca9e6e766",
+      "Tests/MacNASCoreTests/PrototypeAPITests.swift": "0e349d6c8707eba3b5ae4775c963aa808c2caf447f84555ed86355865e69b8e9",
+      "Tests/MacNASCoreTests/SmokeTests.swift": "9f808a70612068f05bfbdcd3cbb11f432467e1adc65795b2241c9898ec2a07dd",
+      "database/migrations/0001_initial.sql": "f609f4b3417afeb86aeb6bb37905da97cb58b681316ac7875e6d8184fa12628f",
+      "database/migrations/0002_app_state_revision.sql": "d77b2576f62543b30d529e1e2858bd51d49b2df3768adee5a74a461549cf23ed",
+      "database/migrations/0003_durable_jobs_outbox.sql": "300c433bd8aac1e27f6cfad341b78a5db83b72e9d902dd647c1ae31086401ccc"
+    },
+    "embedded_node_pipe_dependencies": {
+      "web/dist/model.js": "ba5a99bd6e9be79caa3ddd81150cbe6539e6666fb26d7b2107bd2881815b6cfd",
+      "web/dist/bridge-client.js": "2822e0c7fd2b807391231f178d2f3d5230d7743450bf61f9672540a6b766e632",
+      "web/dist/directory-view.js": "1a4a8880bc99e6ef3e5af166b40e361d8f80e33472fce8e5e40886488d90cb17",
+      "scripts/test_directory_bridge.cjs": "8bdc20e6d00bdb0a6ea3c1e7e8749ec253796596f3ceb1f1f2340d6a63a397a6"
+    },
+    "embedded_pipe_tests_included": 1,
+    "basis": "All 217 tests actually executed with no filter. Replaces the prior N-020 composite baseline; no prior suite reuse."
+  },
+  "runtime_regression": {
+    "run_id": "20261015T225352-7bc504ab",
+    "status": "PASS",
+    "test_filter": null,
+    "swift_tests": 217,
+    "swift_seconds": 1100.779,
+    "independent_cli_pipe_tests": 13,
+    "independent_cli_pipe_seconds": 192.477771583,
+    "sources_unchanged_during_run": true,
+    "source_file_count": 55,
+    "summary": "Evidence/runs/20261015T225352-7bc504ab/summary.json",
+    "test_log": "Evidence/runs/20261015T225352-7bc504ab/swift-tests.log",
+    "pipe_log": "Evidence/runs/20261015T225352-7bc504ab/desktop-bridge-pipe-integration.log",
+    "postgres_stopped": true,
+    "results": [
+      {
+        "name": "requirements",
+        "exit_code": 0,
+        "expected_exit": 0,
+        "log": "Evidence/runs/20261015T225352-7bc504ab/requirements.log"
+      },
+      {
+        "name": "requirements-negative-tests",
+        "exit_code": 0,
+        "expected_exit": 0,
+        "log": "Evidence/runs/20261015T225352-7bc504ab/requirements-negative-tests.log"
+      },
+      {
+        "name": "swift-build",
+        "exit_code": 0,
+        "expected_exit": 0,
+        "log": "Evidence/runs/20261015T225352-7bc504ab/swift-build.log"
+      },
+      {
+        "name": "postgres-initdb",
+        "exit_code": 0,
+        "expected_exit": 0,
+        "log": "Evidence/runs/20261015T225352-7bc504ab/postgres-initdb.log"
+      },
+      {
+        "name": "postgres-start",
+        "exit_code": 0,
+        "expected_exit": 0,
+        "log": "Evidence/runs/20261015T225352-7bc504ab/postgres-start.log"
+      },
+      {
+        "name": "postgres-test-role",
+        "exit_code": 0,
+        "expected_exit": 0,
+        "log": "Evidence/runs/20261015T225352-7bc504ab/postgres-test-role.log"
+      },
+      {
+        "name": "postgres-runtime",
+        "exit_code": 0,
+        "expected_exit": 0,
+        "log": "Evidence/runs/20261015T225352-7bc504ab/postgres-runtime.log"
+      },
+      {
+        "name": "swift-tests",
+        "exit_code": 0,
+        "expected_exit": 0,
+        "log": "Evidence/runs/20261015T225352-7bc504ab/swift-tests.log"
+      },
+      {
+        "name": "capabilities",
+        "exit_code": 0,
+        "expected_exit": 0,
+        "log": "Evidence/runs/20261015T225352-7bc504ab/capabilities.log"
+      },
+      {
+        "name": "demo-create",
+        "exit_code": 0,
+        "expected_exit": 0,
+        "log": "Evidence/runs/20261015T225352-7bc504ab/demo-create.log"
+      },
+      {
+        "name": "demo-preview",
+        "exit_code": 0,
+        "expected_exit": 0,
+        "log": "Evidence/runs/20261015T225352-7bc504ab/demo-preview.log"
+      },
+      {
+        "name": "demo-export",
+        "exit_code": 0,
+        "expected_exit": 0,
+        "log": "Evidence/runs/20261015T225352-7bc504ab/demo-export.log"
+      },
+      {
+        "name": "demo-doctor",
+        "exit_code": 0,
+        "expected_exit": 0,
+        "log": "Evidence/runs/20261015T225352-7bc504ab/demo-doctor.log"
+      },
+      {
+        "name": "demo-restore-preview",
+        "exit_code": 0,
+        "expected_exit": 0,
+        "log": "Evidence/runs/20261015T225352-7bc504ab/demo-restore-preview.log"
+      },
+      {
+        "name": "demo-restore",
+        "exit_code": 0,
+        "expected_exit": 0,
+        "log": "Evidence/runs/20261015T225352-7bc504ab/demo-restore.log"
+      },
+      {
+        "name": "demo-idempotent-retry",
+        "exit_code": 0,
+        "expected_exit": 0,
+        "log": "Evidence/runs/20261015T225352-7bc504ab/demo-idempotent-retry.log"
+      },
+      {
+        "name": "demo-journal-status",
+        "exit_code": 0,
+        "expected_exit": 0,
+        "log": "Evidence/runs/20261015T225352-7bc504ab/demo-journal-status.log"
+      },
+      {
+        "name": "demo-upgrade-preview",
+        "exit_code": 0,
+        "expected_exit": 0,
+        "log": "Evidence/runs/20261015T225352-7bc504ab/demo-upgrade-preview.log"
+      },
+      {
+        "name": "demo-upgrade",
+        "exit_code": 0,
+        "expected_exit": 0,
+        "log": "Evidence/runs/20261015T225352-7bc504ab/demo-upgrade.log"
+      },
+      {
+        "name": "demo-upgrade-doctor",
+        "exit_code": 0,
+        "expected_exit": 0,
+        "log": "Evidence/runs/20261015T225352-7bc504ab/demo-upgrade-doctor.log"
+      },
+      {
+        "name": "demo-upgrade-retry",
+        "exit_code": 0,
+        "expected_exit": 0,
+        "log": "Evidence/runs/20261015T225352-7bc504ab/demo-upgrade-retry.log"
+      },
+      {
+        "name": "demo-rollback-preview",
+        "exit_code": 0,
+        "expected_exit": 0,
+        "log": "Evidence/runs/20261015T225352-7bc504ab/demo-rollback-preview.log"
+      },
+      {
+        "name": "demo-rollback",
+        "exit_code": 0,
+        "expected_exit": 0,
+        "log": "Evidence/runs/20261015T225352-7bc504ab/demo-rollback.log"
+      },
+      {
+        "name": "demo-schema3-upgrade",
+        "exit_code": 0,
+        "expected_exit": 0,
+        "log": "Evidence/runs/20261015T225352-7bc504ab/demo-schema3-upgrade.log"
+      },
+      {
+        "name": "demo-jobs-create",
+        "exit_code": 0,
+        "expected_exit": 0,
+        "log": "Evidence/runs/20261015T225352-7bc504ab/demo-jobs-create.log"
+      },
+      {
+        "name": "demo-jobs-work-and-ack",
+        "exit_code": 0,
+        "expected_exit": 0,
+        "log": "Evidence/runs/20261015T225352-7bc504ab/demo-jobs-work-and-ack.log"
+      },
+      {
+        "name": "demo-jobs-idempotent",
+        "exit_code": 0,
+        "expected_exit": 0,
+        "log": "Evidence/runs/20261015T225352-7bc504ab/demo-jobs-idempotent.log"
+      },
+      {
+        "name": "demo-jobs-idle",
+        "exit_code": 0,
+        "expected_exit": 0,
+        "log": "Evidence/runs/20261015T225352-7bc504ab/demo-jobs-idle.log"
+      },
+      {
+        "name": "demo-jobs-export",
+        "exit_code": 0,
+        "expected_exit": 0,
+        "log": "Evidence/runs/20261015T225352-7bc504ab/demo-jobs-export.log"
+      },
+      {
+        "name": "demo-jobs-restore",
+        "exit_code": 0,
+        "expected_exit": 0,
+        "log": "Evidence/runs/20261015T225352-7bc504ab/demo-jobs-restore.log"
+      },
+      {
+        "name": "readonly-worker-refusal",
+        "exit_code": 1,
+        "expected_exit": 1,
+        "log": "Evidence/runs/20261015T225352-7bc504ab/readonly-worker-refusal.log"
+      },
+      {
+        "name": "storage-and-file-synthetic-demo",
+        "exit_code": 0,
+        "expected_exit": 0,
+        "log": "Evidence/runs/20261015T225352-7bc504ab/storage-and-file-synthetic-demo.log"
+      },
+      {
+        "name": "readonly-storage-binding-refusal",
+        "exit_code": 1,
+        "expected_exit": 1,
+        "log": "Evidence/runs/20261015T225352-7bc504ab/readonly-storage-binding-refusal.log"
+      },
+      {
+        "name": "desktop-bridge-pipe-integration",
+        "exit_code": 0,
+        "expected_exit": 0,
+        "log": "Evidence/runs/20261015T225352-7bc504ab/desktop-bridge-pipe-integration.log"
+      },
+      {
+        "name": "photo-synthetic-smoke",
+        "exit_code": 0,
+        "expected_exit": 0,
+        "log": "Evidence/runs/20261015T225352-7bc504ab/photo-synthetic-smoke.log"
+      },
+      {
+        "name": "cutover-refusal",
+        "exit_code": 1,
+        "expected_exit": 1,
+        "log": "Evidence/runs/20261015T225352-7bc504ab/cutover-refusal.log"
+      },
+      {
+        "name": "postgres-stop",
+        "exit_code": 0,
+        "expected_exit": 0,
+        "log": "Evidence/runs/20261015T225352-7bc504ab/postgres-stop.log"
+      }
+    ]
+  },
+  "source_sha256": {
+    "Package.swift": "09023b72b39b31dc54575ca6925cc2513aa09a4d6f70588851be384bdc267ea5",
+    "Sources/HelloDiagnostics/main.swift": "b04a06781130b60863f86dbb24e968de3284e0f427def19da7799586d6893aa5",
+    "Sources/MacNASCLI/main.swift": "8d4d5bdea0c9007f173ec286489285893289e79e929fc7a6dbbb00a3bc685f8c",
+    "Sources/MacNASCore/BridgeJSON.swift": "324b39d7d9b259c5cbe00458a6b971d12432fcfa6418d73ef30f5680893ebc33",
+    "Sources/MacNASCore/CapabilityProbe.swift": "7deb935038d37631251e0dc6307d0ae27f02f66186ba4d6707c5671ab3ec885a",
+    "Sources/MacNASCore/DescriptorLibrary.swift": "ba38e4170dd506d8c508f6876a943edb76e1fa5ccc5c32a2873ffa33d74cee0a",
+    "Sources/MacNASCore/DesktopBridge.swift": "7cc8035f3fd505b5db05ec0ab9ebddb35b326388992cd4e48964710f50386a85",
+    "Sources/MacNASCore/DirectoryPages.swift": "b8e8d1e924076da1215ebcdb9b9fa2584ae8579815d6c8df7dc55ab55c45af92",
+    "Sources/MacNASCore/DurableJobs.swift": "cc8d9b931d1e5b064b2d962b8c8386327d612f3ef00bc39e1ce264561e1b273b",
+    "Sources/MacNASCore/FixtureFileAPI.swift": "2de721a62016a2d398fce22950b61e11d07f464839073e24cb9f5fb8c1907745",
+    "Sources/MacNASCore/FixtureStorageAPI.swift": "86034cf2dee983e9b6e03e0249cd3b58882f8bf12d741e06cf7f21c9fbdae3bb",
+    "Sources/MacNASCore/FixtureStorageDemo.swift": "8c88422294cf3e52fec9c8a7d51315f67505684642bd92ca45af206ed7f53b68",
+    "Sources/MacNASCore/FixtureVolumeRegistry.swift": "dabf3e46d9c216cb1b8d1aaa04b27be601a131c12b0b3e522d9a9d843091962c",
+    "Sources/MacNASCore/JobPages.swift": "7a0bebb7064582720b26ad5e47ebf163dd49693552b43b4f8908b6a2c72641f0",
+    "Sources/MacNASCore/MigrationCoordinator.swift": "ecf5fbf4a822545ca2212985c4a7431714b4f12e5f514c6d75f400b64d62f361",
+    "Sources/MacNASCore/Models.swift": "91670ef41160705c80545f462f42101e1b611e925945b9eca584848363387051",
+    "Sources/MacNASCore/PhotoSmoke.swift": "3354d7f6a7486d35cfca548821d76e95dfa41970fb6cea686b283c43b0dbd084",
+    "Sources/MacNASCore/Plugins.swift": "5bb41154d4bd8fdc42d7f0018d8e6ff31b03df3472f5af484253b427b6085859",
+    "Sources/MacNASCore/PoolSimulation.swift": "3636d4a4e253ab360d4ddf02d8086539d9ba759b415c989e638db59b9c5e3c99",
+    "Sources/MacNASCore/PortableInstance.swift": "f4dc42a79389b27e8d5251290e221a1ed2d349ace380b71801f9eae91a6c62c6",
+    "Sources/MacNASCore/PrototypePlatformAPI.swift": "4be5a097a31412fc78c608570c57d29bf6cd748c2058a62030419ac2ed86b70d",
+    "Sources/MacNASCore/SafeFS.swift": "75d9f829af31e0ecb949b81f19cc8bd00661b009605ae91ff8f59de9cfe32577",
+    "Sources/MacNASCore/SecurityGate.swift": "97b3490f8405886fb4014198bbb43e61717860115a44d4628c5bbe666c3df49f",
+    "Sources/MacNASCore/StateStore.swift": "73045457dd62c018a5046cc55c7da97d7a537e470e2fe12e13b038d3d8968e05",
+    "Sources/MacNASCore/WriteBarrier.swift": "cbf542810c1e7ef39420ffe1f5b5842ae205f6a8b2730ffd209ecc2ddcf9b8e7",
+    "Sources/SampleFileIndex/main.swift": "4f57a1bc123eaf62baff11b6867ea8a413bbc314247cd0399f93b7874f1442ce",
+    "Tests/MacNASCoreTests/CoreTests.swift": "cbe1b6e1a92435761d43ffcdb6b8b3e9c0b629c48782270947de10574254a4d9",
+    "Tests/MacNASCoreTests/DesktopBridgeTests.swift": "b3edc4b0a4879b6c94117fe386dc0d67040bb86bea33b7c365d4f5395b76c782",
+    "Tests/MacNASCoreTests/DirectoryPageTests.swift": "f6284c89ea2c57357e5d2abeb8088953aaef83831bc2633ae39fb0d9ef636701",
+    "Tests/MacNASCoreTests/DurableIntegrationTests.swift": "b6adcf9623d7d4d5074c05fa65dcb7e9a81499bd9c48ab3ff6c6380ca8f47bbc",
+    "Tests/MacNASCoreTests/DurableJobTests.swift": "f496ffd39256e4e898c0c0da1c4835e0d16c87919931371e953522e139d2135e",
+    "Tests/MacNASCoreTests/EventConsumerStatusTests.swift": "3a319304b6959b2c47145219755fb516420783f986e3efb5ca6871d140670cfe",
+    "Tests/MacNASCoreTests/FixtureFileTests.swift": "721318bf1b9f6733f3360c5760c6d2231eaaec50f3660dfe4af67838eb1b5ac2",
+    "Tests/MacNASCoreTests/FixtureStorageTests.swift": "66dfa46e8718e320dca8f59adf5101ccd7d57023419402c4942b46da7df9aa93",
+    "Tests/MacNASCoreTests/JobPageTests.swift": "9b634346f1914e99ceb52c3be0b90f0c6ff166b468432d3f48be4dd9a62ea8f5",
+    "Tests/MacNASCoreTests/MigrationRecoveryTests.swift": "a01084c7ae0de34fd02e92e370b920825fabebf8055d5f4a2859682ca9e6e766",
+    "Tests/MacNASCoreTests/PrototypeAPITests.swift": "0e349d6c8707eba3b5ae4775c963aa808c2caf447f84555ed86355865e69b8e9",
+    "Tests/MacNASCoreTests/SmokeTests.swift": "9f808a70612068f05bfbdcd3cbb11f432467e1adc65795b2241c9898ec2a07dd",
+    "database/migrations/0001_initial.sql": "f609f4b3417afeb86aeb6bb37905da97cb58b681316ac7875e6d8184fa12628f",
+    "database/migrations/0002_app_state_revision.sql": "d77b2576f62543b30d529e1e2858bd51d49b2df3768adee5a74a461549cf23ed",
+    "database/migrations/0003_durable_jobs_outbox.sql": "300c433bd8aac1e27f6cfad341b78a5db83b72e9d902dd647c1ae31086401ccc",
+    "scripts/build_postgresql.py": "e7f17fed45e2ab393e4dc3ca99304fc0f3ae6ee2a6c0316f504f26911f35f311",
+    "scripts/dev.py": "ab81bc4daff13a05fc5967c8b6bec97d193a733efa7a94bb6bf0adc0f0122449",
+    "scripts/dev_web.py": "8588615308309fea60d258ab9ecc64805080f67bd3a96df0569f1fc1aa524850",
+    "scripts/preview_web.py": "1b86b3bb7a47d073bb2514069dc4398e8e0025658be12a02557e5c873e61854a",
+    "scripts/test_desktop_bridge.cjs": "3cd1ecf6806099a388e6ab04c64b5333ee30cf5e8ce7c3ba20090adcf4771cc2",
+    "scripts/test_directory_bridge.cjs": "8bdc20e6d00bdb0a6ea3c1e7e8749ec253796596f3ceb1f1f2340d6a63a397a6",
+    "scripts/test_requirements.py": "d85b26070a7d8d57e992a66e1b1c87c1f9c7588ce9ed1867412959d8d89989e0",
+    "scripts/test_web.py": "634bbfbf5b0909432b84a1ce83f98091a113b7e82238eae002ecf9532d80b5a8",
+    "scripts/verify_requirements.py": "ed7776aab51eaa9cc89ca10587034386a47fadfd67a7e261231e0292e85a74d1",
+    "web/dist/bridge-client.js": "2822e0c7fd2b807391231f178d2f3d5230d7743450bf61f9672540a6b766e632",
+    "web/dist/directory-view.js": "1a4a8880bc99e6ef3e5af166b40e361d8f80e33472fce8e5e40886488d90cb17",
+    "web/dist/model.js": "ba5a99bd6e9be79caa3ddd81150cbe6539e6666fb26d7b2107bd2881815b6cfd",
+    "web/dist/notification-view.js": "19d511b9669c104919603c7e76291bd1cb860a7a7f8a489982c9d1b1ae100d12",
+    "web/dist/task-pages.js": "2a8247eba37092c3a85782a9db817bf2b179ed4d2f3f71219bbc0425775efa70"
+  },
+  "source_sha256_basis": "Unmodified 55-file runtime receipt, including complete 41-file core and all four embedded Node dependencies",
+  "runtime_post_run_changes": [],
+  "browser_qa": {
+    "status": "PERMISSION_UI_ALLOW_TOOL_DENIED_NOT_EXECUTED",
+    "user_at_mac_mini": true,
+    "user_reported_manual_page_display": true,
+    "preview_started": true,
+    "preview_closed": true,
+    "settings_changed_by_agent": false,
+    "user_changed_origin_permission": true,
+    "human_screenshot_verified_origin": "http://127.0.0.1:8766",
+    "human_screenshot_verified_browse": "Always allow",
+    "human_screenshot_verified_download": "Requires approval",
+    "tool_content_access_after_change": "DENIED_SAVED_ORIGIN_POLICY",
+    "actual_exception_row_verification": "CONFIRMED_BY_USER_SCREENSHOT",
+    "permission_state_mismatch_cause": "UNKNOWN; no claim of a specific cache or managed-policy defect",
+    "DOM_or_screenshot_acquired": false,
+    "W01-W10": "NOT_EXECUTED",
+    "T01-T08": "NOT_EXECUTED",
+    "N01-N06": "NOT_EXECUTED",
+    "F01-F08": "NOT_EXECUTED",
+    "checklist": "web/tests/BROWSER_ACCEPTANCE.md",
+    "attempts_this_resume": 2,
+    "bypass_attempted": false,
+    "browser_settings_screenshot_is_not_application_QA": true
+  },
+  "requirements": {
+    "parent_count": 111,
+    "priority_counts": {
+      "first": 97,
+      "later": 13,
+      "not_needed": 1
+    },
+    "child_count": 865,
+    "new_children": 4,
+    "new_child_statuses": {
+      "LOCAL_MAC_PASS": 2,
+      "MOCK_PASS": 1,
+      "NOT_STARTED": 1
+    },
+    "updated_existing_browser_scopes": 4,
+    "existing_child_statuses_changed": false,
+    "parent_acceptance": "INCOMPLETE"
+  },
+  "resolved_test_failures": [],
+  "limitations": [
+    "No same-source reconnection proof or explicit old-batch reconciliation; status observation alone never resolves an old batch",
+    "No browser connection or DOM wiring for this query; static page remains explicit memory fixture",
+    "No production authentication/OS isolation/helper/SMB/service/cutover or strong fencing",
+    "No actual NAS/family data, macOS15 runtime, cross-Mac, physical disk/fault or scale acceptance"
+  ],
+  "frontend_regression": {
+    "status": "PASS",
+    "run_id": "20261015T231740-0105be7c",
+    "node_tests": 142,
+    "new_node_tests": 13,
+    "static_http_policy_tests": 9,
+    "syntax_checks": 7,
+    "requirements_negative_tests": 5,
+    "sources_unchanged": true,
+    "source_file_count": 21,
+    "summary": "Evidence/web-runs/20261015T231740-0105be7c/summary.json",
+    "no_listener_started_by_frontend_runner": true,
+    "browser_verification": "NOT_EXECUTED_SEPARATE_CUA_VERIFICATION_REQUIRED",
+    "core_regression_evidence": "docs/evidence/n021-2026-10-15.json"
+  },
+  "web_source_sha256": {
+    "scripts/dev_web.py": "8588615308309fea60d258ab9ecc64805080f67bd3a96df0569f1fc1aa524850",
+    "scripts/preview_web.py": "1b86b3bb7a47d073bb2514069dc4398e8e0025658be12a02557e5c873e61854a",
+    "scripts/test_web.py": "634bbfbf5b0909432b84a1ce83f98091a113b7e82238eae002ecf9532d80b5a8",
+    "web/dist/bridge-client.js": "2822e0c7fd2b807391231f178d2f3d5230d7743450bf61f9672540a6b766e632",
+    "web/dist/desktop.css": "aa0015f2e1d438bda1203e433cda20a20caa397ae0958286d0b04076357d3588",
+    "web/dist/desktop.js": "353b92c64cb75bf0ab05d3ac1c64619407b9ccdd2175d7c313c2bec1a6cefece",
+    "web/dist/directory-view.js": "1a4a8880bc99e6ef3e5af166b40e361d8f80e33472fce8e5e40886488d90cb17",
+    "web/dist/i18n.js": "ba0fa047d3b74c389564491629fec5cc141e1224778246a1b5d942778fa79a6f",
+    "web/dist/icon.svg": "5d4e5d90ccd33021afc98eb0386a45aefc975b51b8cedd69336a5ecac623b951",
+    "web/dist/index.html": "d33c9bc7b873d4f2f1c0d1b2fe81d4e6e526c2f040accb34a4ae76533f19d023",
+    "web/dist/model.js": "ba5a99bd6e9be79caa3ddd81150cbe6539e6666fb26d7b2107bd2881815b6cfd",
+    "web/dist/notification-view.js": "19d511b9669c104919603c7e76291bd1cb860a7a7f8a489982c9d1b1ae100d12",
+    "web/dist/task-pages.js": "2a8247eba37092c3a85782a9db817bf2b179ed4d2f3f71219bbc0425775efa70",
+    "web/tests/bridge.test.cjs": "1d6c7fd10c73a54ab44f19cd3fada262d2f0b83409e079a6fc158c93ffe8c33e",
+    "web/tests/client.test.cjs": "623e5ae920f1bef0951efe79a53c5b9478f116888c186ce5355f30a77465671f",
+    "web/tests/directory-pages.test.cjs": "26cd0d7a04f53142449a7e944a481dd2bec09dc890622b6f67cf22f6ffa8d104",
+    "web/tests/directory-view.test.cjs": "7c230aea1b0304bd48c1a105fd4cdc6353124c6ce1c7f5fdfe8d494bb789582e",
+    "web/tests/event-consumer-status.test.cjs": "1265ec1c0fb2cc7e6289d6c37f798d2ffe1a4e05067c5ddab77d3bb19a45ab51",
+    "web/tests/model.test.cjs": "bf0414239c0eba43134a2b7111caece6f979bd5c5327a9de29c15c4af93d666d",
+    "web/tests/notification-view.test.cjs": "50d32c94a6f1f55323158901d52a14dc048c00942f67eebef8831051bf5fa55b",
+    "web/tests/task-pages.test.cjs": "a17013cc7ece58a6111b4cf66e962e5843a01a111b9e89597458431fd5cac043"
+  },
+  "validated_source_sha256": {
+    "Package.swift": "09023b72b39b31dc54575ca6925cc2513aa09a4d6f70588851be384bdc267ea5",
+    "Sources/HelloDiagnostics/main.swift": "b04a06781130b60863f86dbb24e968de3284e0f427def19da7799586d6893aa5",
+    "Sources/MacNASCLI/main.swift": "8d4d5bdea0c9007f173ec286489285893289e79e929fc7a6dbbb00a3bc685f8c",
+    "Sources/MacNASCore/BridgeJSON.swift": "324b39d7d9b259c5cbe00458a6b971d12432fcfa6418d73ef30f5680893ebc33",
+    "Sources/MacNASCore/CapabilityProbe.swift": "7deb935038d37631251e0dc6307d0ae27f02f66186ba4d6707c5671ab3ec885a",
+    "Sources/MacNASCore/DescriptorLibrary.swift": "ba38e4170dd506d8c508f6876a943edb76e1fa5ccc5c32a2873ffa33d74cee0a",
+    "Sources/MacNASCore/DesktopBridge.swift": "7cc8035f3fd505b5db05ec0ab9ebddb35b326388992cd4e48964710f50386a85",
+    "Sources/MacNASCore/DirectoryPages.swift": "b8e8d1e924076da1215ebcdb9b9fa2584ae8579815d6c8df7dc55ab55c45af92",
+    "Sources/MacNASCore/DurableJobs.swift": "cc8d9b931d1e5b064b2d962b8c8386327d612f3ef00bc39e1ce264561e1b273b",
+    "Sources/MacNASCore/FixtureFileAPI.swift": "2de721a62016a2d398fce22950b61e11d07f464839073e24cb9f5fb8c1907745",
+    "Sources/MacNASCore/FixtureStorageAPI.swift": "86034cf2dee983e9b6e03e0249cd3b58882f8bf12d741e06cf7f21c9fbdae3bb",
+    "Sources/MacNASCore/FixtureStorageDemo.swift": "8c88422294cf3e52fec9c8a7d51315f67505684642bd92ca45af206ed7f53b68",
+    "Sources/MacNASCore/FixtureVolumeRegistry.swift": "dabf3e46d9c216cb1b8d1aaa04b27be601a131c12b0b3e522d9a9d843091962c",
+    "Sources/MacNASCore/JobPages.swift": "7a0bebb7064582720b26ad5e47ebf163dd49693552b43b4f8908b6a2c72641f0",
+    "Sources/MacNASCore/MigrationCoordinator.swift": "ecf5fbf4a822545ca2212985c4a7431714b4f12e5f514c6d75f400b64d62f361",
+    "Sources/MacNASCore/Models.swift": "91670ef41160705c80545f462f42101e1b611e925945b9eca584848363387051",
+    "Sources/MacNASCore/PhotoSmoke.swift": "3354d7f6a7486d35cfca548821d76e95dfa41970fb6cea686b283c43b0dbd084",
+    "Sources/MacNASCore/Plugins.swift": "5bb41154d4bd8fdc42d7f0018d8e6ff31b03df3472f5af484253b427b6085859",
+    "Sources/MacNASCore/PoolSimulation.swift": "3636d4a4e253ab360d4ddf02d8086539d9ba759b415c989e638db59b9c5e3c99",
+    "Sources/MacNASCore/PortableInstance.swift": "f4dc42a79389b27e8d5251290e221a1ed2d349ace380b71801f9eae91a6c62c6",
+    "Sources/MacNASCore/PrototypePlatformAPI.swift": "4be5a097a31412fc78c608570c57d29bf6cd748c2058a62030419ac2ed86b70d",
+    "Sources/MacNASCore/SafeFS.swift": "75d9f829af31e0ecb949b81f19cc8bd00661b009605ae91ff8f59de9cfe32577",
+    "Sources/MacNASCore/SecurityGate.swift": "97b3490f8405886fb4014198bbb43e61717860115a44d4628c5bbe666c3df49f",
+    "Sources/MacNASCore/StateStore.swift": "73045457dd62c018a5046cc55c7da97d7a537e470e2fe12e13b038d3d8968e05",
+    "Sources/MacNASCore/WriteBarrier.swift": "cbf542810c1e7ef39420ffe1f5b5842ae205f6a8b2730ffd209ecc2ddcf9b8e7",
+    "Sources/SampleFileIndex/main.swift": "4f57a1bc123eaf62baff11b6867ea8a413bbc314247cd0399f93b7874f1442ce",
+    "Tests/MacNASCoreTests/CoreTests.swift": "cbe1b6e1a92435761d43ffcdb6b8b3e9c0b629c48782270947de10574254a4d9",
+    "Tests/MacNASCoreTests/DesktopBridgeTests.swift": "b3edc4b0a4879b6c94117fe386dc0d67040bb86bea33b7c365d4f5395b76c782",
+    "Tests/MacNASCoreTests/DirectoryPageTests.swift": "f6284c89ea2c57357e5d2abeb8088953aaef83831bc2633ae39fb0d9ef636701",
+    "Tests/MacNASCoreTests/DurableIntegrationTests.swift": "b6adcf9623d7d4d5074c05fa65dcb7e9a81499bd9c48ab3ff6c6380ca8f47bbc",
+    "Tests/MacNASCoreTests/DurableJobTests.swift": "f496ffd39256e4e898c0c0da1c4835e0d16c87919931371e953522e139d2135e",
+    "Tests/MacNASCoreTests/EventConsumerStatusTests.swift": "3a319304b6959b2c47145219755fb516420783f986e3efb5ca6871d140670cfe",
+    "Tests/MacNASCoreTests/FixtureFileTests.swift": "721318bf1b9f6733f3360c5760c6d2231eaaec50f3660dfe4af67838eb1b5ac2",
+    "Tests/MacNASCoreTests/FixtureStorageTests.swift": "66dfa46e8718e320dca8f59adf5101ccd7d57023419402c4942b46da7df9aa93",
+    "Tests/MacNASCoreTests/JobPageTests.swift": "9b634346f1914e99ceb52c3be0b90f0c6ff166b468432d3f48be4dd9a62ea8f5",
+    "Tests/MacNASCoreTests/MigrationRecoveryTests.swift": "a01084c7ae0de34fd02e92e370b920825fabebf8055d5f4a2859682ca9e6e766",
+    "Tests/MacNASCoreTests/PrototypeAPITests.swift": "0e349d6c8707eba3b5ae4775c963aa808c2caf447f84555ed86355865e69b8e9",
+    "Tests/MacNASCoreTests/SmokeTests.swift": "9f808a70612068f05bfbdcd3cbb11f432467e1adc65795b2241c9898ec2a07dd",
+    "database/migrations/0001_initial.sql": "f609f4b3417afeb86aeb6bb37905da97cb58b681316ac7875e6d8184fa12628f",
+    "database/migrations/0002_app_state_revision.sql": "d77b2576f62543b30d529e1e2858bd51d49b2df3768adee5a74a461549cf23ed",
+    "database/migrations/0003_durable_jobs_outbox.sql": "300c433bd8aac1e27f6cfad341b78a5db83b72e9d902dd647c1ae31086401ccc",
+    "scripts/build_postgresql.py": "e7f17fed45e2ab393e4dc3ca99304fc0f3ae6ee2a6c0316f504f26911f35f311",
+    "scripts/dev.py": "ab81bc4daff13a05fc5967c8b6bec97d193a733efa7a94bb6bf0adc0f0122449",
+    "scripts/dev_web.py": "8588615308309fea60d258ab9ecc64805080f67bd3a96df0569f1fc1aa524850",
+    "scripts/preview_web.py": "1b86b3bb7a47d073bb2514069dc4398e8e0025658be12a02557e5c873e61854a",
+    "scripts/test_desktop_bridge.cjs": "3cd1ecf6806099a388e6ab04c64b5333ee30cf5e8ce7c3ba20090adcf4771cc2",
+    "scripts/test_directory_bridge.cjs": "8bdc20e6d00bdb0a6ea3c1e7e8749ec253796596f3ceb1f1f2340d6a63a397a6",
+    "scripts/test_requirements.py": "d85b26070a7d8d57e992a66e1b1c87c1f9c7588ce9ed1867412959d8d89989e0",
+    "scripts/test_web.py": "634bbfbf5b0909432b84a1ce83f98091a113b7e82238eae002ecf9532d80b5a8",
+    "scripts/verify_requirements.py": "ed7776aab51eaa9cc89ca10587034386a47fadfd67a7e261231e0292e85a74d1",
+    "web/dist/bridge-client.js": "2822e0c7fd2b807391231f178d2f3d5230d7743450bf61f9672540a6b766e632",
+    "web/dist/directory-view.js": "1a4a8880bc99e6ef3e5af166b40e361d8f80e33472fce8e5e40886488d90cb17",
+    "web/dist/model.js": "ba5a99bd6e9be79caa3ddd81150cbe6539e6666fb26d7b2107bd2881815b6cfd",
+    "web/dist/notification-view.js": "19d511b9669c104919603c7e76291bd1cb860a7a7f8a489982c9d1b1ae100d12",
+    "web/dist/task-pages.js": "2a8247eba37092c3a85782a9db817bf2b179ed4d2f3f71219bbc0425775efa70",
+    "web/dist/desktop.css": "aa0015f2e1d438bda1203e433cda20a20caa397ae0958286d0b04076357d3588",
+    "web/dist/desktop.js": "353b92c64cb75bf0ab05d3ac1c64619407b9ccdd2175d7c313c2bec1a6cefece",
+    "web/dist/i18n.js": "ba0fa047d3b74c389564491629fec5cc141e1224778246a1b5d942778fa79a6f",
+    "web/dist/icon.svg": "5d4e5d90ccd33021afc98eb0386a45aefc975b51b8cedd69336a5ecac623b951",
+    "web/dist/index.html": "d33c9bc7b873d4f2f1c0d1b2fe81d4e6e526c2f040accb34a4ae76533f19d023",
+    "web/tests/bridge.test.cjs": "1d6c7fd10c73a54ab44f19cd3fada262d2f0b83409e079a6fc158c93ffe8c33e",
+    "web/tests/client.test.cjs": "623e5ae920f1bef0951efe79a53c5b9478f116888c186ce5355f30a77465671f",
+    "web/tests/directory-pages.test.cjs": "26cd0d7a04f53142449a7e944a481dd2bec09dc890622b6f67cf22f6ffa8d104",
+    "web/tests/directory-view.test.cjs": "7c230aea1b0304bd48c1a105fd4cdc6353124c6ce1c7f5fdfe8d494bb789582e",
+    "web/tests/event-consumer-status.test.cjs": "1265ec1c0fb2cc7e6289d6c37f798d2ffe1a4e05067c5ddab77d3bb19a45ab51",
+    "web/tests/model.test.cjs": "bf0414239c0eba43134a2b7111caece6f979bd5c5327a9de29c15c4af93d666d",
+    "web/tests/notification-view.test.cjs": "50d32c94a6f1f55323158901d52a14dc048c00942f67eebef8831051bf5fa55b",
+    "web/tests/task-pages.test.cjs": "a17013cc7ece58a6111b4cf66e962e5843a01a111b9e89597458431fd5cac043"
+  },
+  "validated_source_file_count": 68,
+  "requirements_verification": {
+    "status": "PASS",
+    "original_planning_files": 29,
+    "source_coverage_files": 5,
+    "parents": 111,
+    "children": 865,
+    "source_bytes_unchanged": true,
+    "log": "Evidence/web-runs/20261015T231740-0105be7c/requirements.log"
+  },
+  "evidence_generation_repairs": [
+    {
+      "stage": "final report aggregation",
+      "error": "Relative web receipt path was compared to an absolute workspace path",
+      "fix": "Resolve the web receipt directory before computing relative log paths",
+      "project_tests_affected": false
+    },
+    {
+      "stage": "documentation update stdin invocation",
+      "error": "UTF-8 source decoding failed before execution",
+      "fix": "Apply documentation updates through UTF-8 file patches instead of the long shell stdin block",
+      "project_tests_affected": false
+    }
+  ],
+  "final_checks": {
+    "git_diff_check": "PASS",
+    "requirements_and_immutable_source_verification": "PASS",
+    "validated_source_hashes_match": 68,
+    "complete_native_source_set_match": 41,
+    "all_32_home_cases": "NOT_EXECUTED_PERMISSION_UI_ALLOW_TOOL_DENIED",
+    "owned_postgres_clusters": "STOPPED",
+    "port_8766_listener": "ABSENT",
+    "main_remote_before_publication": "e05b3d7e3acbeb447f10c2f5f27a64be332be6f5",
+    "development_remote_before_publication": "0a4e0a066474abdd54d4ad1ce870182a6329c8a0"
+  }
+}

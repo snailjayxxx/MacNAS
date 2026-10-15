@@ -37,7 +37,7 @@ N-011已加入[中文/日文静态桌面源码](web/dist/index.html)：窗口、
 /usr/bin/python3 scripts/dev_web.py
 ```
 
-使用现有Node内置测试和系统Python，不安装包，不启动监听。模型、桥接客户端和静态HTTP策略测试不能替代浏览器验收。已获授权的本轮临时静态预览入口为scripts/preview_web.py，绑定127.0.0.1:8766；浏览器验收按用户要求延期。详见[ADR-005](docs/decisions/ADR-005-static-desktop.md)及[桌面适配契约](docs/contracts/DESKTOP_API.md)。
+使用现有Node内置测试和系统Python，不安装包，此检查入口不启动监听。模型、桥接客户端和静态HTTP策略测试不能替代浏览器验收。已获授权的临时静态预览入口为scripts/preview_web.py，绑定127.0.0.1:8766；用户回家后确认页面可手动显示，临时预览已关闭；站点条目已核实为“浏览：始终允许”，但工具仍被权限层拒绝，原因待查。详见[ADR-005](docs/decisions/ADR-005-static-desktop.md)及[桌面适配契约](docs/contracts/DESKTOP_API.md)。
 
 N-012/N-013新增[合成卷绑定与只读资料库API](docs/contracts/FIXTURE_STORAGE_API.md)：UUID/介质/挂载会话检查、一次性绑定预览、掉线撤销、固定目录句柄、资料库读者范围和有界UTF-8预览。当前只用于host-binding内自建合成内容，未查询真实磁盘或连接网页。
 
@@ -55,7 +55,7 @@ N-015加入[具名业务客户端](web/dist/bridge-client.js)：完整展示数�
 
 N-016加入[有界任务页及统计](docs/decisions/ADR-010-bounded-job-pages.md)：固定UTF-8字节顺序、每页最多100条、60秒会话绑定的一次性游标；overview在数据库聚合，旧数组超过4096条明确拒绝。页为实时读取，不能当作一致性快照。静态网页及回家窗口验收状态保持不变。
 
-**网页窗口尚未实测。** 用户准备回家后验收，已整理[启动步骤与W01–W10窗口清单](web/tests/BROWSER_ACCEPTANCE.md)，覆盖打开/关闭、层级、最小化/恢复、拖动/缩放、最大化、dock、键盘和窄屏。全部保留待测，自动测试不代替浏览器验收。
+**网页窗口尚未实测。** 用户已回到Mac mini，站点条目已核实正确，但工具仍被权限层拒绝。[启动步骤与W01–W10窗口清单](web/tests/BROWSER_ACCEPTANCE.md)覆盖打开/关闭、层级、最小化/恢复、拖动/缩放、最大化、dock、键盘和窄屏。全部保留待测，手动看到页面及自动测试不代替功能验收。
 
 N-017加入[当前页任务展示](docs/decisions/ADR-011-task-page-presentation.md)：每页3条、下一页/重新读取、本页搜索范围、独立统计及关闭后的迟到结果丢弃。真实客户端展示适配只通过Node/管道验证，静态页仍是fixture；[W01–W10与T01–T08](web/tests/BROWSER_ACCEPTANCE.md)全部等待回家实测。
 
@@ -64,3 +64,5 @@ N-018加入[有界通知展示](docs/decisions/ADR-012-bounded-notification-view
 N-019加入[有界目录页原型](docs/decisions/ADR-013-bounded-directory-pages.md)：每页最多100，单次8192项/1MiB名称/5秒扫描预算；目录变化要求重读，继续链绑定目录批准/会话并限64条、60秒。已有1000项数组仍超限拒绝，元数据按读取时返回，没有文件系统快照或生产规模承诺。N-019完成时静态文件窗口尚未接入；接续任务为[目录当前页展示](docs/plans/N-020-DIRECTORY-PAGE-PRESENTATION.md)，实际网页验收仍等回家。
 
 N-020加入[目录当前页展示](docs/decisions/ADR-014-directory-page-presentation.md)：文件窗口每页3项，本页搜索/类型过滤、独立资料库摘要、面包屑及有界只读文本预览；目录来源借用会话，关闭文件窗口不关闭任务/通知连接，迟到结果不覆盖新目录。页面仍是固定内存演示，时间/估计未知，没有真实NAS连接。[回家清单](web/tests/BROWSER_ACCEPTANCE.md)新增F01–F08，全部待测；下一步为[通知消费位置只读核对](docs/plans/N-021-NOTIFICATION-CONSUMER-STATUS.md)。
+
+N-021加入[通知消费位置只读查询](docs/decisions/ADR-015-read-only-event-consumer-status.md)：第13个固定方法返回当前受众的ack/delivered位置，不创建消费者或推进游标；不可见与他人占用同样返回null，恢复只读可查但仍拒绝poll/ACK。客户端只观察，不据此清除旧通知批或获得ACK权限；静态网页未接入新查询。新的完整回归与实际管道结果见[验收记录](docs/plans/N-021-ACCEPTANCE.md)，后续为[来源上下文与显式核对模型](docs/plans/N-022-NOTIFICATION-SOURCE-CONTEXT.md)。

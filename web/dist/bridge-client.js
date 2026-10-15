@@ -119,10 +119,10 @@
     check(typeof transport==="function" && (closeTransport===undefined || typeof closeTransport==="function"),"invalidInput");
     integer(timeoutMs,1,60000,"invalidInput");integer(maximumPending,1,128,"invalidInput");
     check(typeof AbortController!=="undefined","unavailable");
-    const adapter=M.createBridgeAdapter(transport,{requestIdPrefix:"dc-"+uuid()}),pending=new Set(),consumers=new Map(),pages=new Map(),busyPages=new Set(),directories=new Map(),busyDirectories=new Set();
+    const adapter=M.createBridgeAdapter(transport,{requestIdPrefix:"dc-"+uuid()}),pending=new Set(),consumers=new Map(),statusQueries=new Set(),pages=new Map(),busyPages=new Set(),directories=new Map(),busyDirectories=new Set();
     let closed=false,binding;
     function close() {
-      if (closed) return;closed=true;binding=undefined;consumers.clear();pages.clear();busyPages.clear();directories.clear();busyDirectories.clear();
+      if (closed) return;closed=true;binding=undefined;consumers.clear();statusQueries.clear();pages.clear();busyPages.clear();directories.clear();busyDirectories.clear();
       for (const entry of [...pending]) entry.cancel();
       if (closeTransport) { try { Promise.resolve(closeTransport()).catch(()=>{}); } catch {} }
     }
@@ -158,6 +158,7 @@
     }
     function consumer(id) {
       text(id,128,{code:"invalidInput"});
+      check(!statusQueries.has(id),"busy");
       if (!consumers.has(id)) { check(consumers.size<32,"budgetExceeded");consumers.set(id,{ack:0,seen:new Map(),busy:false}); }
       const value=consumers.get(id);check(!value.busy,"busy");return value;
     }
@@ -236,6 +237,18 @@
         try {return await invoke("acknowledgeEvents",{consumerID,through},value=>{
           check(value===true);state.ack=through;for(const sequence of state.seen.keys())if(sequence<=through)state.seen.delete(sequence);return true;
         },opts);}finally{state.busy=false;}
+      },
+      async eventConsumerStatus(consumerID,opts) {
+        caller();text(consumerID,128,{code:"invalidInput"});
+        check(!/[\r\n]/.test(consumerID),"invalidInput");
+        check(!statusQueries.has(consumerID) && !consumers.get(consumerID)?.busy,"busy");statusQueries.add(consumerID);
+        try {return await invoke("eventConsumerStatus",{consumerID},value=>{
+          const v=fields(value,["statusVersion","consumerID","visibility","acknowledgedThrough","deliveredThrough"]);
+          check(v.statusVersion===1 && v.consumerID===consumerID && ["visible","notVisible"].includes(v.visibility));
+          if(v.visibility==="visible") { integer(v.acknowledgedThrough);integer(v.deliveredThrough,v.acknowledgedThrough); }
+          else check(v.acknowledgedThrough===null && v.deliveredThrough===null);
+          return value; // Observation only: do not seed ack/seen, confirm a view or grant ACK authority.
+        },opts);}finally{statusQueries.delete(consumerID);}
       },
       async listLibraries(opts) { caller();return invoke("listLibraries",{},libraries,opts); },
       async listFiles(params,opts) {

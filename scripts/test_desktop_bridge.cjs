@@ -256,6 +256,9 @@ test("bounded notification presentation retries a committed ACK with withheld su
     await assert.rejects(view.poll(),errorCode("budgetExceeded"));
     await assert.rejects(view.acknowledge(),errorCode("database"));
     assert.deepEqual(view.snapshot().items,batch.items);assert.equal(view.snapshot().confirmedThrough,0);
+    const observed=await client.eventConsumerStatus("presentation-ack");
+    assert.equal(observed.visibility,"visible");assert.equal(observed.acknowledgedThrough,batch.items[0].sequence);
+    assert.deepEqual(view.snapshot().items,batch.items);assert.equal(view.snapshot().confirmedThrough,0);
     const durable=await host.api.request("pollEvents",{consumerID:"presentation-ack",limit:2});
     assert.ok(durable.every(event=>event.sequence>batch.items[0].sequence));
     await assert.rejects(view.poll(),errorCode("staleState"));
@@ -292,10 +295,15 @@ test("committed notification ACK timeout keeps the old batch unresolved even whe
     lateResolve();await Promise.resolve();await assert.rejects(view.acknowledge(),errorCode("unavailable"));
   } finally {lateResolve();client.close();await host.finish();}
   const restarted=new PipeHost(root);
+  const query=restarted.typed();
   try {
+    await query.overview();const observed=await query.eventConsumerStatus("presentation-timeout");
+    assert.equal(observed.visibility,"visible");assert.equal(observed.acknowledgedThrough,batch.items[0].sequence);
+    assert.ok(observed.deliveredThrough>=observed.acknowledgedThrough);assert.ok(Object.isFrozen(observed));
+    await assert.rejects(query.acknowledgeEvents("presentation-timeout",observed.acknowledgedThrough),errorCode("denied"));
     assert.deepEqual(await restarted.api.request("pollEvents",{consumerID:"presentation-timeout",limit:100}),[]);
     assert.deepEqual(view.snapshot().items,batch.items);assert.equal(view.snapshot().confirmedThrough,0);
-  } finally {view.dispose();await restarted.finish();}
+  } finally {view.dispose();query.close();await restarted.finish();}
 });
 
 test("directory presentation preserves actual metadata and missing-volume authority while borrowing the shared client",async()=>{
@@ -309,4 +317,23 @@ test("directory presentation preserves actual metadata and missing-volume author
     pager.dispose();source.dispose();assert.equal(client.closed,false);assert.ok(Array.isArray((await client.listJobsPage({pageSize:1})).items));
     assert.equal(fs.existsSync(path.join(root,"host-binding/fixtures")),false);
   } finally {pager.dispose();source.dispose();client.close();await host.finish();}
+});
+
+test("read-only consumer observations hide foreign ownership and never reserve IDs or permit recovery writes",async()=>{
+  const owner=new PipeHost(root),reader=new PipeHost(root,"fixture-family"),client=owner.typed(),family=reader.typed();
+  try {
+    await client.overview();await family.overview();
+    const missing=await client.eventConsumerStatus("status-unclaimed");
+    assert.deepEqual(missing,{statusVersion:1,consumerID:"status-unclaimed",visibility:"notVisible",acknowledgedThrough:null,deliveredThrough:null});
+    assert.deepEqual(await family.pollEvents("status-unclaimed"),[]);
+    assert.deepEqual(await client.eventConsumerStatus("status-unclaimed"),missing);
+    const own=await family.eventConsumerStatus("status-unclaimed");assert.equal(own.visibility,"visible");assert.equal(own.acknowledgedThrough,0);assert.equal(own.deliveredThrough,0);
+    await assert.rejects(owner.api.request("eventConsumerStatus",{consumerID:"status-unclaimed",through:0}),errorCode("invalidInput"));
+  } finally {client.close();family.close();await Promise.all([owner.finish(),reader.finish()]);}
+  const restored=new PipeHost(readonly),query=restored.typed();
+  try {
+    await query.overview();assert.equal((await query.eventConsumerStatus("readonly-observation")).visibility,"notVisible");
+    await assert.rejects(query.pollEvents("readonly-observation"),errorCode("readOnly"));
+    await assert.rejects(query.acknowledgeEvents("readonly-observation",0),errorCode("readOnly"));
+  } finally {query.close();await restored.finish();}
 });

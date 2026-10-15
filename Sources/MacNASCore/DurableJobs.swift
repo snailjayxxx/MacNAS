@@ -51,6 +51,13 @@ public struct JobEvent:Codable,Equatable,Sendable {
     public var type:String
     public var state:String
 }
+public enum EventConsumerVisibility:String,Codable,Sendable { case visible,notVisible }
+public struct EventConsumerStatus:Codable,Equatable,Sendable {
+    public let consumerID:String
+    public let visibility:EventConsumerVisibility
+    public let acknowledgedThrough:Int64?
+    public let deliveredThrough:Int64?
+}
 public struct DurableJobStatistics: Codable, Equatable, Sendable {
     public let active:Int64
     public let completed:Int64
@@ -324,6 +331,24 @@ public final class DurableJobQueue {
           coalesce((SELECT max((item->>'sequence')::bigint) FROM macnas_result,jsonb_array_elements(value) item),ack_sequence)) WHERE id=c.id;
         """
         guard let events=try mutation([JobEvent].self,body:body,clock:false) else { throw NASError.denied };return events
+    }
+    /// A single read-only statement observes only this audience's row. Missing and foreign rows are indistinguishable.
+    public func consumerStatus(consumerID:String,audience:JobAudience) throws -> EventConsumerStatus {
+        try require(!consumerID.isEmpty && consumerID.utf8.count<=128,.invalidSchema)
+        let output=try readQuery("""
+        SELECT coalesce((SELECT jsonb_build_object('consumerID',id,'visibility','visible',
+          'acknowledgedThrough',ack_sequence,'deliveredThrough',delivered_sequence)
+          FROM macnas.event_consumers WHERE id=\(StateStore.quote(consumerID)) AND \(audience.predicate())),
+          jsonb_build_object('consumerID',\(StateStore.quote(consumerID)),'visibility','notVisible',
+          'acknowledgedThrough',NULL,'deliveredThrough',NULL));
+        """)
+        let result=try decode(EventConsumerStatus.self,output)
+        try require(Data(result.consumerID.utf8)==Data(consumerID.utf8),.integrity)
+        if result.visibility == .visible {
+            guard let ack=result.acknowledgedThrough,let delivered=result.deliveredThrough else { throw NASError.integrity }
+            try require(ack>=0 && delivered>=ack,.integrity)
+        } else { try require(result.acknowledgedThrough==nil && result.deliveredThrough==nil,.integrity) }
+        return result
     }
     public func acknowledge(consumerID:String,through sequence:Int64,audience:JobAudience,injectFailure:Bool=false) throws {
         try require(sequence>=0,.invalidSchema)

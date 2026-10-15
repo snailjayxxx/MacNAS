@@ -91,6 +91,24 @@ private struct DesktopOverview: Encodable {
     let taskTimestampsAvailable = false
     let libraries: [FixtureLibrarySummary]
 }
+private struct DesktopEventConsumerStatus:Encodable {
+    let statusVersion=1
+    let value:EventConsumerStatus
+    enum CodingKeys:String,CodingKey { case statusVersion,consumerID,visibility,acknowledgedThrough,deliveredThrough }
+    init(_ value:EventConsumerStatus) throws {
+        if value.visibility == .visible {
+            guard let ack=value.acknowledgedThrough,let delivered=value.deliveredThrough,
+                  ack>=0,delivered>=ack,delivered<=9_007_199_254_740_991 else { throw BridgeFault.invalidResponse }
+        } else if value.acknowledgedThrough != nil || value.deliveredThrough != nil { throw BridgeFault.invalidResponse }
+        self.value=value
+    }
+    func encode(to encoder:Encoder) throws {
+        var c=encoder.container(keyedBy:CodingKeys.self)
+        try c.encode(statusVersion,forKey:.statusVersion);try c.encode(value.consumerID,forKey:.consumerID);try c.encode(value.visibility,forKey:.visibility)
+        if let ack=value.acknowledgedThrough { try c.encode(ack,forKey:.acknowledgedThrough) } else { try c.encodeNil(forKey:.acknowledgedThrough) }
+        if let delivered=value.deliveredThrough { try c.encode(delivered,forKey:.deliveredThrough) } else { try c.encodeNil(forKey:.deliveredThrough) }
+    }
+}
 private struct DesktopJobPage: Encodable {
     let pageVersion = 1
     let order = "id-utf8"
@@ -229,6 +247,11 @@ public final class DesktopBridge: @unchecked Sendable {
                 let consumer = try p.text("consumerID"), through = try p.integer("through", range: 0...9_007_199_254_740_991)
                 try writable(); try api.acknowledgeJobEvents(consumerID: consumer, through: through, session: session)
                 return try response(true, id: id)
+            case "eventConsumerStatus":
+                let p=try params.fields(required:["consumerID"]),consumer=try p.text("consumerID")
+                return try api.withJobEventConsumerStatus(consumerID:consumer,session:session) {
+                    try self.response(DesktopEventConsumerStatus($0),id:id)
+                }
             case "listLibraries":
                 _ = try params.fields(required: [])
                 return try response(libraries(), id: id)

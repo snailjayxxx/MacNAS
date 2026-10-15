@@ -31,3 +31,5 @@ Schema 2→3 在迁移协调器的新候选库内执行；旧库和签名快照�
 依据：[PostgreSQL SELECT 与 SKIP LOCKED](https://www.postgresql.org/docs/18/sql-select.html)、[事务隔离](https://www.postgresql.org/docs/18/transaction-iso.html)、[clock_timestamp](https://www.postgresql.org/docs/18/functions-datetime.html)。
 
 当前任务ID、幂等键和消费者ID为实例数据库内全局唯一。客户端应使用不透明的唯一请求ID；受众之间碰撞会拒绝复用，不返回另一个受众的数据。后续多租户规模设计需评估命名空间与配额。
+
+后续N-021增加[消费位置只读查询](ADR-015-read-only-event-consumer-status.md)，读取现有表的受众ack/delivered而不写消费者或推进位置，恢复可读。它仍不提供跨连接来源证明或通知旧批自动核对/清理；历史N-018断连视图保持未解决，不能把新查询当作已完成安全重连。

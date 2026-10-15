@@ -130,6 +130,34 @@ public final class PrototypePlatformAPI: @unchecked Sendable {
         let caller=try user(session)
         try withManagedWrite { _=try user(session);try DurableJobQueue(store:PortableInstance.store(root)).acknowledge(consumerID:consumerID,through:sequence,audience:.user(caller.id)) }
     }
+    public func jobEventConsumerStatus(consumerID:String,session:PrototypeSession) throws -> EventConsumerStatus {
+        try withJobEventConsumerStatus(consumerID:consumerID,session:session) { $0 }
+    }
+    private struct EventConsumerReadScope:Equatable {
+        let identity:InstanceIdentity
+        let caller:JobPageScope
+    }
+    private func eventConsumerReadScope(_ session:PrototypeSession) throws -> EventConsumerReadScope {
+        // Construction validates the whole instance; rechecks need only this read's identity and authorization context.
+        let caller=try user(session),identity=try PortableInstance.strictRead(InstanceIdentity.self,SafeFS.resolve(root,"instance.json"))
+        try require(identity.schemaVersion==1 && identity.kind=="synthetic-prototype" && identity.generation>=0,.invalidSchema)
+        try require(identity.instanceID==instanceID && ["administrator","reader"].contains(caller.role),.denied)
+        let binding=try PortableInstance.strictRead(HostBinding.self,SafeFS.resolve(root,"host-binding/binding.json"))
+        try require(["synthetic_development","read_only_recovery","rolled_back_recovery"].contains(binding.mode),.denied)
+        try PostgreSQLTools.fixtureName(binding.databaseName)
+        return EventConsumerReadScope(identity:identity,caller:JobPageScope(sessionID:session.id,instanceID:identity.instanceID,
+            databaseName:binding.databaseName,userID:Data(caller.id.utf8),role:caller.role,mode:binding.mode))
+    }
+    func withJobEventConsumerStatus<T>(consumerID:String,session:PrototypeSession,_ render:(EventConsumerStatus) throws -> T) throws -> T {
+        // Include instance/database/user bytes/role/mode and recheck after the read and final projection.
+        let scope=try eventConsumerReadScope(session),queue=try DurableJobQueue(store:PortableInstance.store(root))
+        try require(queue.store.databaseName==scope.caller.databaseName,.denied)
+        let status=try queue.consumerStatus(consumerID:consumerID,audience:.user(String(decoding:scope.caller.userID,as:UTF8.self)))
+        try require(try eventConsumerReadScope(session)==scope,.denied)
+        let result=try render(status)
+        try require(try eventConsumerReadScope(session)==scope,.denied)
+        return result
+    }
     public func submitAppValueJob(id:String,key:String,valueID:String,value:String,grant:PluginGrant) throws -> DurableJob {
         try validate(grant)
         return try withManagedWrite {

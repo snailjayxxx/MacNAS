@@ -147,6 +147,15 @@
         for (const event of events) if (event.owner_user === user.id && event.sequence > consumer.ack && event.sequence <= through) consumer.receipts.add(event.sequence);
         consumer.ack = through;
       },
+      async eventConsumerStatus(consumerID, session) {
+        const user = caller(session);
+        check(typeof consumerID === "string" && consumerID.length > 0 && consumerID.length <= 128 && !/[\0\r\n]/.test(consumerID));
+        for (const character of consumerID) check(character.length === 2 || character.charCodeAt(0) < 0xD800 || character.charCodeAt(0) > 0xDFFF);
+        check(new TextEncoder().encode(consumerID).length <= 128);
+        const consumer = consumers.get(consumerID), visible = consumer?.user === user.id;
+        return Object.freeze({ statusVersion: 1, consumerID, visibility: visible ? "visible" : "notVisible",
+          acknowledgedThrough: visible ? consumer.ack : null, deliveredThrough: visible ? consumer.delivered : null });
+      },
       async listFiles(parent, session) {
         const user = caller(session); check(typeof parent === "string" && (parent === "" || files.some(f => f.id === parent && f.kind === "folder" && (f.audience === "all" || f.audience === user.id))), "denied");
         return clone(files.filter(f => f.parent === parent && (f.audience === "all" || f.audience === user.id)));
@@ -235,7 +244,7 @@
   }
   function createBridgeAdapter(transport, { requestIdPrefix = "desktop" } = {}) {
     check(typeof requestIdPrefix === "string" && /^[A-Za-z0-9._-]{1,96}$/.test(requestIdPrefix));
-    const allowed = new Set(["overview", "authorizeApp", "listJobs", "listJobsPage", "submitLabelJob", "cancelJob", "pollEvents", "acknowledgeEvents", "listLibraries", "listFiles", "listFilesPage", "previewFile"]);
+    const allowed = new Set(["overview", "authorizeApp", "listJobs", "listJobsPage", "submitLabelJob", "cancelJob", "pollEvents", "acknowledgeEvents", "eventConsumerStatus", "listLibraries", "listFiles", "listFilesPage", "previewFile"]);
     const errors = new Set(["invalidInput","invalidResponse","unsupported","denied","readOnly","unavailable","budgetExceeded","replay","collision","missingVolume","unsafePath","unsafeFile","integrity","database","busy","expired","staleState","interrupted","timedOut","cancelled","pluginFailed"]);
     let serial = 0;
     return Object.freeze({

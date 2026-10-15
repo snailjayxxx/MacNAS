@@ -64,11 +64,12 @@
         {
           "id": "SYS-01.desktop_window_visual_interaction_qa",
           "status": "BLOCKED",
-          "scope": "Deferred at owner request until return home; saved browser tool block unresolved. W01-W10 and full browser checklist not executed.",
+          "scope": "Owner is now at Mac mini. Screenshot confirms correct origin Browse=Always allow, but tool still denies content access; cause unknown. W01-W10 and full checklist remain unexecuted.",
           "evidence": [
             "docs/evidence/n011-2026-10-15.json",
             "docs/plans/N-011-ACCEPTANCE.md",
-            "web/tests/BROWSER_ACCEPTANCE.md"
+            "web/tests/BROWSER_ACCEPTANCE.md",
+            "docs/evidence/n021-2026-10-15.json"
           ]
         },
         {
@@ -135,12 +136,13 @@
         {
           "id": "SYS-01.task_page_browser_acceptance",
           "status": "NOT_STARTED",
-          "scope": "T01-T08 and W01-W10 remain deferred until user returns home",
+          "scope": "T01-T08 and W01-W10 remain unexecuted. Owner returned home and the correct origin allow rule is verified by screenshot; tool permission state still disagrees.",
           "evidence": [
             "docs/evidence/n017-2026-10-15.json",
             "docs/plans/N-017-ACCEPTANCE.md",
             "docs/decisions/ADR-011-task-page-presentation.md",
-            "web/tests/BROWSER_ACCEPTANCE.md"
+            "web/tests/BROWSER_ACCEPTANCE.md",
+            "docs/evidence/n021-2026-10-15.json"
           ]
         },
         {
@@ -157,23 +159,25 @@
         {
           "id": "SYS-01.notification_view_browser_acceptance",
           "status": "NOT_STARTED",
-          "scope": "N01-N06, W01-W10 and T01-T08 deferred until user returns home; no new browser/preview/settings attempts",
+          "scope": "N01-N06 remain unexecuted. Authorized temporary preview displays manually; screenshot confirms Browse=Always allow, but tool content access is still denied.",
           "evidence": [
             "docs/evidence/n018-2026-10-15.json",
             "docs/plans/N-018-ACCEPTANCE.md",
             "docs/decisions/ADR-012-bounded-notification-view.md",
-            "web/tests/BROWSER_ACCEPTANCE.md"
+            "web/tests/BROWSER_ACCEPTANCE.md",
+            "docs/evidence/n021-2026-10-15.json"
           ]
         },
         {
           "id": "SYS-01.directory_page_browser_acceptance",
           "status": "NOT_STARTED",
-          "scope": "F01-F08 plus W01-W10, T01-T08 and N01-N06 deferred until user returns home; no DOM/visual/focus result",
+          "scope": "F01-F08 and other 24 cases remain unexecuted. Correct allow rule is confirmed, tool still denies; manual display and settings screenshot are not DOM/layout/focus acceptance.",
           "evidence": [
             "docs/evidence/n020-2026-10-15.json",
             "docs/plans/N-020-ACCEPTANCE.md",
             "docs/decisions/ADR-014-directory-page-presentation.md",
-            "web/tests/BROWSER_ACCEPTANCE.md"
+            "web/tests/BROWSER_ACCEPTANCE.md",
+            "docs/evidence/n021-2026-10-15.json"
           ]
         }
       ]
@@ -575,6 +579,16 @@
             "docs/plans/N-018-ACCEPTANCE.md",
             "docs/decisions/ADR-012-bounded-notification-view.md",
             "web/tests/BROWSER_ACCEPTANCE.md"
+          ]
+        },
+        {
+          "id": "SYS-06.notification_status_observation_model",
+          "status": "MOCK_PASS",
+          "scope": "Strict immutable status DTO, bounds and serial lifecycle; observation does not grant ACK authority or clear unresolved notification batches. Headless model only.",
+          "evidence": [
+            "docs/evidence/n021-2026-10-15.json",
+            "docs/plans/N-021-ACCEPTANCE.md",
+            "docs/decisions/ADR-015-read-only-event-consumer-status.md"
           ]
         }
       ]
@@ -4719,6 +4733,26 @@
             "docs/decisions/ADR-014-directory-page-presentation.md",
             "web/tests/BROWSER_ACCEPTANCE.md"
           ]
+        },
+        {
+          "id": "APP-09.event_consumer_status_message_and_response_loss_pipe",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "13th fixed message and actual Swift/PostgreSQL pipes query committed ACK positions after withheld or timed-out response; no browser transport or source authentication.",
+          "evidence": [
+            "docs/evidence/n021-2026-10-15.json",
+            "docs/plans/N-021-ACCEPTANCE.md",
+            "docs/decisions/ADR-015-read-only-event-consumer-status.md"
+          ]
+        },
+        {
+          "id": "APP-09.same_source_reconnection_and_batch_reconciliation",
+          "status": "NOT_STARTED",
+          "scope": "Same-instance/database/user/consumer source proof and explicit old-batch reconciliation remain pending; no automatic connection, ACK or fixture fallback.",
+          "evidence": [
+            "docs/evidence/n021-2026-10-15.json",
+            "docs/plans/N-021-ACCEPTANCE.md",
+            "docs/decisions/ADR-015-read-only-event-consumer-status.md"
+          ]
         }
       ]
     },
@@ -5506,6 +5540,16 @@
             "docs/evidence/n015-2026-10-15.json",
             "docs/plans/N-015-ACCEPTANCE.md",
             "docs/decisions/ADR-009-typed-desktop-client.md"
+          ]
+        },
+        {
+          "id": "OPS-02.audience_readonly_event_consumer_positions",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "Single read-only audience-scoped PostgreSQL observation; no consumer creation, cursor mutation or foreign ownership disclosure. Synthetic current Mac only.",
+          "evidence": [
+            "docs/evidence/n021-2026-10-15.json",
+            "docs/plans/N-021-ACCEPTANCE.md",
+            "docs/decisions/ADR-015-read-only-event-consumer-status.md"
           ]
         }
       ]

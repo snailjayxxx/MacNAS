@@ -1,4 +1,4 @@
-# MacNAS 原型架构（N-020）
+# MacNAS 原型架构（N-021）
 
 Swift 6 / macOS 15部署目标，PostgreSQL 18。当前为非root CLI、无监听的业务API和两个自研可信样例；没有生产HTTP登录、系统Helper或正式接管。
 
@@ -45,7 +45,7 @@ flowchart LR
 
 每次fixture调用检查会话/角色/资源范围，恢复模式拒绝所有写入及事件游标变化；UI身份切换清除窗口并丢弃旧响应。它不是生产安全边界。createBridgeAdapter只有通用request，缺失/拒绝不回退fixture，尚无浏览器实时传输或真实登录。合成35TB不是实盘测量，套件说明不等于OS沙箱。
 
-用户已授权临时127.0.0.1:8766白名单静态预览；两次预览均停止。工具保存的站点拒绝及内置iab不可用导致浏览器验收待完成。模型/HTTP策略测试不替代实际视觉、键盘或响应式检查。详见ADR-005、DESKTOP_API和N-011证据。
+用户已授权临时127.0.0.1:8766白名单静态预览；N-011两次预览均停止。N-021期间用户已回到Mac mini并恢复排查，新的临时预览可手动显示，内置iab可列出页面但观察内容仍被保存的站点权限拒绝。用户截图已确认正确的8766“浏览：始终允许”，但工具仍拒绝，原因未知；不再要求修改正确条目，不换通道绕过。模型/HTTP策略测试不替代实际视觉、键盘或响应式检查，本轮临时预览已关闭。详见ADR-005、DESKTOP_API和浏览器验收清单。
 
 ## N-012 / N-013卷绑定与只读资料库
 
@@ -110,3 +110,13 @@ directory-view.js显式借用桌面已有fixture会话或具名客户端，投�
 静态文件窗口每页3项，搜索/类型过滤仅查本页，摘要独立，继续替换/重读回头；固定合成树有空/嵌套目录和私有库，时间及估计未知。fixture标记synthetic-fixed-directory，不冒充真实扫描/批准；真实宿主仍按N-019目录标记和预算读取。纯文本预览最多64KiB并再次校验上下文及字节数，没有文件写入接口。
 
 HTML/白名单仅增加directory-view.js，具名客户端仍未加载/提供，CSP connect-src为none。实际Node/Swift管道经展示来源/控制器，现有40份核心不变，204项原生证据与重跑的1项内嵌Node场景明确组成205项覆盖，不称本轮新全量。详见[ADR-014](docs/decisions/ADR-014-directory-page-presentation.md)及[证据](docs/evidence/n020-2026-10-15.json)。W/T/N及新增F01–F08全部等用户回家，DOM、布局、焦点、键盘和翻译质量仍未验收。
+
+## N-021通知消费位置观察
+
+DurableJobQueue在只读事务中按consumerID与受众读取现有event_consumers主键行；不创建行、不推进ack/delivered、不删除事件/收据。无当前受众行与他人行统一投影为notVisible及null，自己的空行返回visible/0/0。Schema 3及所有迁移不变。
+
+API查询前、查询后及最终编码后核对已有会话、用户原始字节、角色、允许模式、实例身份/generation与数据库。完整实例验证仍在构造阶段，查询仍验证队列Schema，前后检查只读相关元数据。恢复/回退模式可查询，写游标继续拒绝；最终检查后仍可能发生并发变化，此机制不提供生产认证或强fencing。
+
+第13个固定方法eventConsumerStatus只接收consumerID，返回精确五字段/version 1 DTO；位置必须为JS安全非负整数，ack不大于delivered，不可见时两位置显式null。具名客户端与同消费者poll/ACK串行，采用原有并发/超时/取消上限，不为只读查询保留无限消费者状态。结果仅观察，不回填本地ack/seen，不授予ACK、不清旧通知批或创建新连接。
+
+实际Swift/PostgreSQL及Node独立进程管道核对ACK已提交而响应扣留/超时后的位置；旧视图仍保持未解决批次。来源证明及显式批次协调留待N-022，不能把空轮询当确认。HTML/CSS/desktop.js及静态路由不变，网页仍只连fixture。见[ADR-015](docs/decisions/ADR-015-read-only-event-consumer-status.md)及[N-021验收](docs/plans/N-021-ACCEPTANCE.md)；新的未过滤完整回归必须覆盖全部原生核心和嵌入Node依赖。

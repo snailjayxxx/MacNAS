@@ -32,3 +32,9 @@ DurableJobQueue 是可信核心执行器，不传给 native 样例。内置工�
 jobStatistics(session:)按当前用户受众在PostgreSQL聚合active/completed/total；jobPage(pageSize:cursor:session:)返回当前用户的实时任务页，pageSize默认50、范围1至100。只读恢复可调用，继续令牌仅修改宿主内存，不修改数据库事件消费位置。durableJobs/appJobs保留完整数组语义，超过4096条或字节预算明确拒绝，不悄悄截断。
 
 DurableJobQueue.page(audience:afterID:pageSize:)供可信核心使用；afterID不是桌面输入。桌面通过API内存游标绑定会话、实例、数据库、用户、角色、模式和页大小。跨页不持有一致性快照；继续令牌短期、一次性、有界，重启或传输丢失可能需要重扫。详细预算及失败语义见[ADR-010](../decisions/ADR-010-bounded-job-pages.md)和[桌面契约](DESKTOP_API.md)。
+
+## N-021：通知消费位置只读查询
+
+jobEventConsumerStatus(consumerID:session:)返回EventConsumerStatus：consumerID、visibility、acknowledgedThrough、deliveredThrough。只读事务限定当前用户受众，自己的行visible，未创建或其它用户/套件行统一notVisible及空位置；不创建消费者，不改变交付/确认，也不删除事件/收据。恢复及回退只读允许查询，poll/ack继续拒写。
+
+实例/数据库、注册会话、用户原始字节、角色和模式在查询前后与最终编码后复核；上下文变化拒绝结果。核心可保留Int64，桌面消息拒绝超出JS安全整数的值。DurableJobQueue.consumerStatus的受众参数仅供可信核心，桌面不能选择受众。该结果是一次观察，不是跨连接来源证明或自动重连/清理旧批授权。详见[ADR-015](../decisions/ADR-015-read-only-event-consumer-status.md)及[桌面消息契约](DESKTOP_API.md)。

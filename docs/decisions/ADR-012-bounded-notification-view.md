@@ -21,3 +21,5 @@ phase为idle/polling/acknowledging/ready/error/closed。失败只保留固定错
 静态页容量100，“确认本批通知”成功后清空，后续通知等待手动刷新；关闭通知面板保留同一批次，身份切换清理旧视图。概览/任务变化可在无进行中请求、未满额且无待重试ACK时刷新通知，没有后台定时轮询。HTML/静态白名单只增加notification-view.js；bridge-client.js仍不加载或静态提供，connect-src仍为none，网页继续内存演示。
 
 Node模型、静态HTTP及真实Swift/PostgreSQL管道验证范围见[验收记录](../plans/N-018-ACCEPTANCE.md)。W01–W10、T01–T08及新增N01–N06全部等用户回家实测；无DOM、焦点、布局、翻译质量或生产浏览器传输验收。核心源码完全一致时复用N-016全量186项，过滤解析器轮次不冒称全量回归。生产身份、macOS15运行、真实磁盘、跨Mac、规模及OS服务仍未验证。
+
+后续N-021增加[消费位置只读查询](ADR-015-read-only-event-consumer-status.md)，读取现有表的受众ack/delivered而不写消费者或推进位置，恢复可读。它仍不提供跨连接来源证明或通知旧批自动核对/清理；历史N-018断连视图保持未解决，不能把新查询当作已完成安全重连。

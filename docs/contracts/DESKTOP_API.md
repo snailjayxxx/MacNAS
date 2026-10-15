@@ -1,4 +1,4 @@
-# 网页桌面适配契约（N-011 / N-014 / N-015 / N-016 / N-017 / N-018 / N-019，v1）
+# 网页桌面适配契约（N-011至N-021，v1）
 
 页面当前使用model.js的createFixtureAdapter。业务内容为合成数据、刷新重置；管理员/读者/只读恢复选择器是演示场景，不是登录。不连接Swift、PostgreSQL、NAS文件、系统账户或真实存储池。
 
@@ -17,6 +17,7 @@
 |cancelJob|任务ID、会话；当前任务|仅自己任务；恢复拒写；重复取消不改变终态|
 |pollEvents|consumerID、会话、limit；事件页|consumer绑定用户，未确认可重放；limit为1至100；恢复拒写|
 |acknowledgeEvents|consumerID、through、会话|仅推进到本受众已交付事件；拒绝倒退/越界；恢复拒写|
+|eventConsumerStatus|consumerID、会话；版本化状态|不创建消费者或推进位置；无本受众行与他人行都notVisible/null；恢复可读|
 |listFiles / previewFile|虚构目录/文件ID、会话；元数据/文案键|每次直接请求验证受众；无真实路径或读盘|
 
 任务状态沿用queued、running、waiting_for_volume、paused、failed、completed、cancelled。样例展示重试预算、错误、等待卷与终态；页面不运行工作者，也没有暂停/恢复/手动重试接口。进度0/2、1/2、2/2只描述两步检查点。
@@ -43,6 +44,7 @@ DesktopBridge绑定宿主已有的Schema 3 API和会话；createBridgeAdapter(tr
 |cancelJob|id|仅自己的任务，返回当前状态|
 |pollEvents|consumerID；可选limit|limit默认50、范围1至100；消费者绑定受众，轮询更新交付上界|
 |acknowledgeEvents|consumerID、through|through为0至9007199254740991的整数；只能确认本受众已交付范围|
+|eventConsumerStatus|consumerID|第13个固定方法；只读观察本受众ack/delivered，无权或不存在均notVisible/null，恢复可读|
 |listLibraries|空对象|仅有权资料库的libraryID/volumeID/estimatedBytes/state，不返回根路径或内容授权|
 |listFiles|libraryID；可选relativePath、maximumEntries|路径默认空，最多4096字节；条目默认1000、范围1至1000；仍需显式卷和内容批准|
 |listFilesPage|libraryID；可选relativePath、pageSize、cursor|第12个方法；默认空路径及50项，1至100，目录标记/授权绑定继续；见N-019|
@@ -152,6 +154,16 @@ preview({libraryID,relativePath})固定最多65536 UTF-8字节、仅txt/md/json/
 控制器snapshot为冻结的{phase,libraryID,relativePath,items,pageNumber,hasNext,error,requiresReload}，phase为idle/loading/ready/previewing/error/closed；不暴露游标。open({libraryID,relativePath?})切换上下文并清旧页；reload从头、next替换，preview(relativePath)仅本页。参数错误/并发/非法继续可同步抛ServiceError；异步读取错误固定code并保留标注的旧页、禁用继续/预览，待显式重读。open可在旧读/预览中失效旧代次，迟到预览返回null，迟到页只清理位置，不覆盖新状态；dispose清空并拒绝迟到结果，不关闭共享来源。filterFiles只接最多100项、all/directory/file和最长256字符查询，仅查当前页普通名称。
 
 静态文件窗口每页3项，提供独立库摘要、面包屑、本页搜索/类型过滤、列表/网格、继续/重读和只读预览；界面重建、最小化或聚焦不自动重读。HTML/白名单仅新增directory-view.js，bridge-client.js不加载/提供，connect-src为none。实际浏览器功能、视觉/焦点与F01–F08全部待测。见[ADR-014](../decisions/ADR-014-directory-page-presentation.md)、[范围](../plans/N-020-ACCEPTANCE.md)及[回家清单](../../web/tests/BROWSER_ACCEPTANCE.md)。
+
+## N-021通知消费位置只读观察
+
+原生jobEventConsumerStatus(consumerID:session:)与固定eventConsumerStatus消息读取现有event_consumers表，不创建消费者、不推进交付/确认、不删除事件/收据。数据库用只读事务的一条受众限定SELECT观察两个位置，读取后及最终编码后复查会话、实例/数据库、用户原始字节、角色/模式。允许开发、只读恢复、回退恢复；不授予写入或文件权限。
+
+请求参数恰好{consumerID}，ID为1至128个UTF-8字节，拒绝NUL/CR/LF和非法代理项。结果恰好{statusVersion:1,consumerID,visibility,acknowledgedThrough,deliveredThrough}。visibility=visible时两个位置是安全非负整数、ack不大于delivered；notVisible时两位置显式null，覆盖未创建和他人/套件行，不作为全局不存在的证明。自己的空消费者可visible/0/0。没有owner、数据库名、宿主路径、任意翻译键或来源认证凭据。
+
+具名客户端eventConsumerStatus(consumerID,{signal}?)需要已有overview，恢复模式可直接查询。精确校验/冻结结果，同客户端同ID与poll/ACK串行，沿用既有等待/并发预算。查询不分配本地delivery消费者、不回填ack/seen、不清旧通知批，也不赋予新连接ACK权限；可观察超过32个不同ID而不耗尽32个交付消费者槽，但在途仍受原并发预算限制。关闭/超时/取消丢弃迟到响应，无自动连接/重试或fixture回退。
+
+fixture同名方法借用注册会话，读取已有内存受众ack/delivered而不写Map；不存在与其它受众同样notVisible/null，恢复可查，持久性不由fixture证明。网页未调用此方法，notification-view未提供旧批核对入口。即使新宿主查询显示ACK已推进，旧批仍未自动确认；现有overview还不能证明跨连接同实例/同数据库，不能把查询成功或空轮询当作安全重连/批次清理。详见[ADR-015](../decisions/ADR-015-read-only-event-consumer-status.md)及[验收](../plans/N-021-ACCEPTANCE.md)。
 
 ## 状态与恢复
 
