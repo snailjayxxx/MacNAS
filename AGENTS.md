@@ -1,5 +1,7 @@
 # MacNAS 开发接续规则
 
+2026-10-16最新验收状态：用户要求仍由Codex完成，暂停人工点击方案。用户已删除8766例外、默认保持需要批准，配置条目确已移除；随后单次IAB获取仍被保存权限拒绝，没有新审批提示。预览已关闭，32项均待测，N-022仍暂停。不得继续同状态复试、借其它会话/浏览器/地址或改安全控制绕过；等待正规权限恢复或用户明确改优先级。最新记录为docs/evidence/n011-acceptance-recovery-2026-10-16.json，脱敏反馈材料已准备但未发送。
+
 先读 PROJECT_SPEC.md、ARCHITECTURE.md、PROGRESS.md、NEXT_TASK.md 和 docs/decisions。用户本轮后续指令优先于只读规划原件。
 
 - PostgreSQL 18-only；禁止引入 SQLite 或数据库不可用时的其他引擎回退。
