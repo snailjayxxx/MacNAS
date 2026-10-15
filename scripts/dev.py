@@ -21,6 +21,9 @@ flags=['--scratch-path',str(WORK/'Build/swift'),'--cache-path',str(WORK/'Build/s
 tracked_sources=[ROOT/'Package.swift',ROOT/'web/dist/model.js',ROOT/'web/dist/bridge-client.js']+[p for folder in ['Sources','Tests','database','scripts'] for p in (ROOT/folder).rglob('*') if p.is_file() and p.suffix in ['.swift','.sql','.py','.cjs']]
 source_hashes={str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(tracked_sources)}
 (evidence/'source-sha256.json').write_text(json.dumps(source_hashes,indent=2)+'\n')
+git_head=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip()
+git_branch=subprocess.check_output(['git','branch','--show-current'],cwd=ROOT,text=True).strip()
+git_status=subprocess.check_output(['git','status','--porcelain=v1'],cwd=ROOT,text=True)
 results=[];started=False
 
 def run(name,command,input=None,check=True,expected_exit=0):
@@ -111,7 +114,7 @@ finally:
         try:run('postgres-stop',[pgbin/'pg_ctl','-D',cluster,'--wait','--timeout=20','--mode=fast','stop'])
         except Exception as error:outcome='FAILED';print('PostgreSQL cleanup failed: '+str(error),flush=True)
     if not started or not (lab/'postgresql/postmaster.pid').exists():shutil.rmtree(socket)
-    summary={'run_id':runid,'status':outcome,'os':expected['os'],'architecture':'arm64','database':'PostgreSQL 18.6','database_transport':'private Unix socket only; TCP disabled','synthetic_data':True,'cross_mac':'NOT_EXECUTED','physical_pool':'BLOCKED_NO_DESTROYABLE_TEST_DISKS','macOS15_runtime':'NOT_EXECUTED','source_base':'e05b3d7e3acbeb447f10c2f5f27a64be332be6f5','commit':'uncommitted development work','test_filter':env.get('MACNAS_TEST_FILTER'),'source_receipt':'source-sha256.json','sources_unchanged':all(hashlib.sha256((ROOT/p).read_bytes()).hexdigest()==h for p,h in source_hashes.items()),'results':results}
+    summary={'run_id':runid,'status':outcome,'os':expected['os'],'architecture':'arm64','database':'PostgreSQL 18.6','database_transport':'private Unix socket only; TCP disabled','synthetic_data':True,'cross_mac':'NOT_EXECUTED','physical_pool':'BLOCKED_NO_DESTROYABLE_TEST_DISKS','macOS15_runtime':'NOT_EXECUTED','source_base':git_head,'bootstrap_lineage':'e05b3d7e3acbeb447f10c2f5f27a64be332be6f5','branch':git_branch,'working_tree_status_at_start':git_status,'commit':git_head,'test_filter':env.get('MACNAS_TEST_FILTER'),'source_receipt':'source-sha256.json','sources_unchanged':all(hashlib.sha256((ROOT/p).read_bytes()).hexdigest()==h for p,h in source_hashes.items()),'results':results}
     (evidence/'summary.json').write_text(json.dumps(summary,ensure_ascii=False,indent=2)+'\n')
     print('SUMMARY:',evidence/'summary.json',flush=True)
     print('STATUS:',outcome,flush=True)

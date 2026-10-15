@@ -63,12 +63,31 @@ private struct DesktopOverview: Encodable {
     let mode: String
     let languages: [String]
     let databaseSchema: Int
-    let active: Int
-    let completed: Int
+    let active: Int64
+    let completed: Int64
     let logicalReferenceBytes: Int64
     let physicalPool = "unbound"
     let taskTimestampsAvailable = false
     let libraries: [FixtureLibrarySummary]
+}
+private struct DesktopJobPage: Encodable {
+    let pageVersion = 1
+    let order = "id-utf8"
+    let consistency = "live"
+    let pageSize:Int
+    let items:[DesktopJob]
+    let nextCursor:String?
+    enum CodingKeys:String,CodingKey { case pageVersion,order,consistency,pageSize,items,nextCursor }
+    init(_ page:DurableJobPage) throws {
+        pageSize=page.pageSize;items=try page.items.map(DesktopJob.init);nextCursor=page.nextCursor
+    }
+    func encode(to encoder:Encoder) throws {
+        var c=encoder.container(keyedBy:CodingKeys.self)
+        try c.encode(pageVersion,forKey:.pageVersion);try c.encode(order,forKey:.order)
+        try c.encode(consistency,forKey:.consistency);try c.encode(pageSize,forKey:.pageSize)
+        try c.encode(items,forKey:.items)
+        if let nextCursor { try c.encode(nextCursor,forKey:.nextCursor) } else { try c.encodeNil(forKey:.nextCursor) }
+    }
 }
 
 /// A serialized, session-bound message dispatcher. No socket, WebView, authentication or disk authorization is created.
@@ -143,7 +162,8 @@ public final class DesktopBridge: @unchecked Sendable {
                 _ = try params.fields(required: [])
                 let info = try api.overview(session: session)
                 try require(info.databaseSchema == 3, .unsupported)
-                let jobs = try api.durableJobs(session: session), libraries = try self.libraries()
+                let stats = try api.jobStatistics(session: session), libraries = try self.libraries()
+                guard [stats.active,stats.completed,stats.total].allSatisfy({$0>=0 && $0<=9_007_199_254_740_991}) else { throw BridgeFault.invalidResponse }
                 var total: Int64 = 0
                 for library in libraries {
                     let sum = total.addingReportingOverflow(library.estimatedBytes)
@@ -151,8 +171,8 @@ public final class DesktopBridge: @unchecked Sendable {
                     total = sum.partialValue
                 }
                 return try response(DesktopOverview(userID: info.userID, role: info.role, mode: info.mode, languages: info.languages,
-                    databaseSchema: info.databaseSchema, active: jobs.filter { ["queued","running","waiting_for_volume"].contains($0.state) }.count,
-                    completed: jobs.filter { $0.state == "completed" }.count, logicalReferenceBytes: total, libraries: libraries), id: id)
+                    databaseSchema: info.databaseSchema, active: stats.active,
+                    completed: stats.completed, logicalReferenceBytes: total, libraries: libraries), id: id)
             case "authorizeApp":
                 let p = try params.fields(required: ["id"]), app = try p.text("id", maximum: 32)
                 try require(["overview","files","storage","apps","tasks","settings","preferences"].contains(app), .unsupported)
@@ -162,6 +182,11 @@ public final class DesktopBridge: @unchecked Sendable {
             case "listJobs":
                 _ = try params.fields(required: [])
                 return try response(api.durableJobs(session: session).map(DesktopJob.init), id: id)
+            case "listJobsPage":
+                let p=try params.fields(required:[],optional:["pageSize","cursor"])
+                let size=try p.integer("pageSize",range:1...100,fallback:50)
+                let cursor=try p["cursor"].map { try $0.text(maximumBytes:36) }
+                return try api.withJobPage(pageSize:Int(size),cursor:cursor,session:session) { try self.response(DesktopJobPage($0),id:id) }
             case "submitLabelJob":
                 let p = try params.fields(required: ["id","key","value"])
                 let jobID = try p.text("id"), key = try p.text("key"), value = try p.text("value", maximum: 1024)

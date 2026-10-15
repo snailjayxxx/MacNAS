@@ -192,3 +192,25 @@ test("new typed client prefixes prevent replay on a caller-retained host",async(
     }
   } finally {await host.finish();}
 });
+
+test("typed task pages traverse actual SQL rows with single-use session-scoped cursors",async()=>{
+  const host=new PipeHost(root),client=host.typed(),other=new PipeHost(root),reader=new PipeHost(root,"fixture-family");
+  try {
+    await client.overview();const expected=await client.listJobs(),seen=[];
+    let page=await client.listJobsPage({pageSize:1});
+    assert.ok(page.nextCursor);const first=page.nextCursor;
+    await assert.rejects(other.api.request("listJobsPage",{pageSize:1,cursor:first}),errorCode("denied"));
+    await assert.rejects(reader.api.request("listJobsPage",{pageSize:1,cursor:first}),errorCode("denied"));
+    while(true) {
+      seen.push(...page.items.map(x=>x.id));
+      if(page.nextCursor===null)break;
+      page=await client.listJobsPage({pageSize:1,cursor:page.nextCursor});
+    }
+    assert.deepEqual(seen,expected.map(x=>x.id).sort((a,b)=>Buffer.compare(Buffer.from(a),Buffer.from(b))));
+    await assert.rejects(host.api.request("listJobsPage",{pageSize:1,cursor:first}),errorCode("replay"));
+    assert.equal((await reader.api.request("listJobsPage")).items.length,0);
+  } finally {client.close();await Promise.all([host.finish(),other.finish(),reader.finish()]);}
+  const restored=new PipeHost(readonly),query=restored.typed();
+  try {await query.overview();assert.ok(Array.isArray((await query.listJobsPage()).items));}
+  finally{query.close();await restored.finish();}
+});

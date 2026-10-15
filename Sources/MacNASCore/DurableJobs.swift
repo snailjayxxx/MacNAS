@@ -51,6 +51,15 @@ public struct JobEvent:Codable,Equatable,Sendable {
     public var type:String
     public var state:String
 }
+public struct DurableJobStatistics: Codable, Equatable, Sendable {
+    public let active:Int64
+    public let completed:Int64
+    public let total:Int64
+}
+public struct DurableJobSlice: Sendable {
+    public let items:[DurableJob]
+    public let hasMore:Bool
+}
 
 /// Trusted core coordinator, never handed to native samples. PostgreSQL clock governs task leases.
 public final class DurableJobQueue {
@@ -137,8 +146,39 @@ public final class DurableJobQueue {
         guard let job=try mutation(DurableJob.self,body:body) else { throw NASError.collision };return job
     }
     public func jobs(audience:JobAudience) throws -> [DurableJob] {
-        let output=try store.tools.sql("SELECT coalesce(jsonb_agg(to_jsonb(t) ORDER BY id),'[]') FROM (SELECT \(Self.viewColumns) FROM macnas.jobs WHERE kind<>'legacy' AND \(audience.predicate())) t;",database:store.databaseName)
+        // The legacy array remains complete or fails explicitly; never silently truncate it.
+        let output=try readQuery("""
+        WITH selected AS MATERIALIZED (
+          SELECT \(Self.viewColumns) FROM macnas.jobs WHERE kind<>'legacy' AND \(audience.predicate())
+          ORDER BY id COLLATE "C" LIMIT 4097
+        ) SELECT CASE WHEN count(*)>4096 THEN 'null'::jsonb
+          ELSE coalesce(jsonb_agg(to_jsonb(selected) ORDER BY id COLLATE "C"),'[]') END FROM selected;
+        """)
+        try require(output != "null",.budgetExceeded)
         return try decode([DurableJob].self,output)
+    }
+    private func readQuery(_ sql:String) throws -> String {
+        try store.tools.sql("BEGIN READ ONLY; SET LOCAL lock_timeout='5000ms'; SET LOCAL statement_timeout='10000ms'; \(sql) COMMIT;",database:store.databaseName)
+    }
+    public func statistics(audience:JobAudience) throws -> DurableJobStatistics {
+        try decode(DurableJobStatistics.self,readQuery("""
+        SELECT jsonb_build_object('active',count(*) FILTER (WHERE state IN ('queued','running','waiting_for_volume')),
+          'completed',count(*) FILTER (WHERE state='completed'),'total',count(*))
+        FROM macnas.jobs WHERE kind<>'legacy' AND \(audience.predicate());
+        """))
+    }
+    public func page(audience:JobAudience,afterID:String?=nil,pageSize:Int=50) throws -> DurableJobSlice {
+        try require((1...100).contains(pageSize),.invalidSchema)
+        if let afterID { try require(!afterID.isEmpty && afterID.utf8.count<=128,.invalidSchema) }
+        let after=try afterID.map { try " AND id COLLATE \"C\">\(StateStore.quote($0)) COLLATE \"C\"" } ?? ""
+        let output=try readQuery("""
+        SELECT coalesce(jsonb_agg(to_jsonb(t) ORDER BY id COLLATE "C"),'[]') FROM (
+          SELECT \(Self.viewColumns) FROM macnas.jobs WHERE kind<>'legacy' AND \(audience.predicate())\(after)
+          ORDER BY id COLLATE "C" LIMIT \(pageSize+1)
+        ) t;
+        """)
+        let jobs=try decode([DurableJob].self,output)
+        return DurableJobSlice(items:Array(jobs.prefix(pageSize)),hasMore:jobs.count>pageSize)
     }
     public func claim(leaseSeconds:TimeInterval=5) throws -> JobLease? {
         try require(leaseSeconds>=0.1 && leaseSeconds<=30,.invalidSchema)

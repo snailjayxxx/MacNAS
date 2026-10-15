@@ -25,7 +25,7 @@ try:
     run('static-http-policy-tests',['/usr/bin/python3','scripts/test_web.py'])
     run('requirements',['/usr/bin/python3','scripts/verify_requirements.py'])
     run('requirements-negative-tests',['/usr/bin/python3','scripts/test_requirements.py'])
-    baseline_path=next(path for path in [ROOT/'docs/evidence/n015-2026-10-15.json',ROOT/'docs/evidence/n014-2026-10-15.json',ROOT/'docs/evidence/n012-n013-2026-10-15.json',ROOT/'docs/evidence/n010-2026-10-15.json'] if path.exists())
+    baseline_path=next(path for path in [ROOT/'docs/evidence/n016-2026-10-15.json',ROOT/'docs/evidence/n015-2026-10-15.json',ROOT/'docs/evidence/n014-2026-10-15.json',ROOT/'docs/evidence/n012-n013-2026-10-15.json',ROOT/'docs/evidence/n010-2026-10-15.json'] if path.exists())
     baseline=json.loads(baseline_path.read_text())['source_sha256']
     core={name:digest for name,digest in baseline.items() if name=='Package.swift' or name.startswith(('Sources/','Tests/','database/'))}
     assert core and all(hashlib.sha256((ROOT/name).read_bytes()).hexdigest()==digest for name,digest in core.items()),'Core or tests changed; latest full regression receipt is required'

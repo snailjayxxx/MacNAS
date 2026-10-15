@@ -1,4 +1,4 @@
-# 网页桌面适配契约（N-011 / N-014 / N-015，v1）
+# 网页桌面适配契约（N-011 / N-014 / N-015 / N-016，v1）
 
 页面当前使用model.js的createFixtureAdapter。业务内容为合成数据、刷新重置；管理员/读者/只读恢复选择器是演示场景，不是登录。不连接Swift、PostgreSQL、NAS文件、系统账户或真实存储池。
 
@@ -36,7 +36,8 @@ DesktopBridge绑定宿主已有的Schema 3 API和会话；createBridgeAdapter(tr
 |---|---|---|
 |overview|空对象|fixture-host来源、用户/角色/模式、Schema 3、受众任务计数、逻辑估计容量及资料库；物理池unbound|
 |authorizeApp|id|overview/files/storage/apps/tasks/settings/preferences；settings限管理员|
-|listJobs|空对象|当前用户且app_id为空的持久任务DTO；没有工作者启动操作|
+|listJobs|空对象|完整数组或明确拒绝；最多4096条，另受输出/响应字节预算约束；当前用户且app_id为空|
+|listJobsPage|可选pageSize、cursor|pageSize默认50、范围1至100；仅当前用户；返回版本化实时任务页，见下文|
 |submitLabelJob|id、key、value|仅开发模式管理员；id/key最多128字节；value最多80字符、1024字节且非空白；服务端推导标签目标|
 |cancelJob|id|仅自己的任务，返回当前状态|
 |pollEvents|consumerID；可选limit|limit默认50、范围1至100；消费者绑定受众，轮询更新交付上界|
@@ -81,6 +82,18 @@ bridge-client.js提供createDesktopClient({transport, closeTransport?, timeoutMs
 每个客户端使用独立随机请求前缀，通用适配器可选requestIdPrefix（1至96个允许ASCII字符，默认desktop），单适配器最多4096次请求，不能绕过宿主4096总数限制。新业务操作调用prepareLabelJob一次，保留其不可变id/key/value；超时不能证明数据库未提交，重试沿用原业务键和值。客户端不把意图写入localStorage。
 
 每客户端至多32个消费者，每消费者最多100条未确认事件，并串行轮询/确认。只能确认已交付序号或重复确认已知位置，确认成功后才清理；它不代替宿主数据库受众与交付上界校验。详细取舍见[ADR-009](../decisions/ADR-009-typed-desktop-client.md)。
+
+## N-016任务页
+
+新增第11个白名单方法listJobsPage；具名客户端调用listJobsPage({pageSize?,cursor?}, {signal}?)，不接受显式null默认值。首调用省略cursor；后续页传回同一客户端所得cursor和相同pageSize。静态页面尚未接入该方法。
+
+返回值恰好为{pageVersion:1, order:"id-utf8", consistency:"live", pageSize, items, nextCursor}。items沿用任务DTO且最多pageSize条；有继续游标时为满页，终页nextCursor显式null。没有total字段；overview统计独立聚合，不是列表快照。按原始UTF-8 ID字节升序，不按语言、JS UTF-16或Unicode规范化排序。翻页间可见提交的新状态；插入在已越过ID之前的记录要从第一页重新读取。
+
+cursor为随机小写UUID、宿主内存一次性能力，不是SQL afterID。宿主每API最多128个待用游标和128个消费墓碑；从第一页开始整条链60秒单调时间，到期不续期。绑定会话、用户、角色、模式、实例、数据库和页大小，客户端不能选择这些上下文。退出清除待用游标，重启/恢复不能延续。保留墓碑时重复使用报replay；未知或被清理令牌denied；已知到期expired；格式错误invalidInput。错误上下文不消费合法所有者令牌。Scope恢复后仍可能在原期限继续，没有撤权epoch承诺。
+
+查询/后置会话校验/DTO编码/字节预算失败不消费游标，重试必须换请求ID。成功编码后传输丢失可能已消费，需显式重启扫描。只读恢复允许此内存查询游标；pollEvents/acknowledgeEvents修改数据库交付位置，仍拒绝。
+
+客户端最多保留128条未结束链，同一令牌请求串行，校验页内与跨页字节递增、受众和精确DTO。完成继续请求后移除旧令牌；expired/denied/replay也移除，关闭清空；没有自动翻页、重试或本地持久化。旧listJobs不悄悄截断：超过4096条或字节预算返回budgetExceeded。详情见[ADR-010](../decisions/ADR-010-bounded-job-pages.md)。
 
 ## 状态与恢复
 

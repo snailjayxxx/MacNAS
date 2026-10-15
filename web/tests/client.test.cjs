@@ -8,6 +8,8 @@ const info=()=>({apiVersion:1,source:"fixture-host",userID:"fixture-owner",role:
 const job=(patch={})=>({id:"job",idempotency_key:"key",kind:"label",owner_user:"fixture-owner",title:"<script>普通数据</script>",titleKey:"jobLabels",state:"queued",attempts:0,max_attempts:3,effects:0,revision:1,checkpoint:{},...patch});
 const event=(sequence=1,patch={})=>({sequence,job_id:"job",revision:sequence,type:"queued",state:"queued",...patch});
 const file=(patch={})=>({name:"<b>笔记</b>.txt",relativePath:"<b>笔记</b>.txt",kind:"file",bytes:10,modifiedAt:"2026-10-15T00:00:00Z",...patch});
+const page=(items=[],patch={})=>({pageVersion:1,order:"id-utf8",consistency:"live",pageSize:50,items,nextCursor:null,...patch});
+const token="00000000-0000-4000-8000-000000000001";
 function transport(handler=()=>true){return async request=>({apiVersion:1,requestId:request.requestId,data:request.method==="overview"?info():await handler(request)});}
 async function opened(handler,config={}){const client=C.createDesktopClient({transport:transport(handler),...config});await client.overview();return client;}
 async function bad(method,value,params=[]){const client=await opened(()=>value);await assert.rejects(client[method](...params),errorCode("invalidResponse"));assert.equal(client.closed,true);}
@@ -144,4 +146,44 @@ test("generic prefix and request history are bounded independently of the typed 
   let calls=0;const api=M.createBridgeAdapter(r=>{calls++;return {apiVersion:1,requestId:r.requestId,data:true};},{requestIdPrefix:"bounded"});
   for(let i=0;i<4096;i++)assert.equal(await api.request("authorizeApp",{id:"overview"}),true);
   await assert.rejects(api.request("authorizeApp",{id:"overview"}),errorCode("budgetExceeded"));assert.equal(calls,4096);
+});
+
+test("task pages preserve raw Unicode byte ordering, metadata and terminal null",async()=>{
+  const ids=["a","e\u0301","é","中","\uE000","🐚"],client=await opened(()=>page(ids.map(id=>job({id,idempotency_key:id}))));
+  const result=await client.listJobsPage();assert.deepEqual(result.items.map(x=>x.id),ids);
+  assert.equal(result.nextCursor,null);assert.equal(result.consistency,"live");assert.ok(Object.isFrozen(result.items));client.close();
+});
+test("page DTOs reject wrong versions, order, shape, limits, cursors and unsorted IDs",async()=>{
+  for(const patch of [{pageVersion:2},{order:"locale"},{consistency:"snapshot"},{pageSize:1},{nextCursor:"sql"},{nextCursor:token},{total:100},{items:[job(),job()]},{items:[job({id:"z",idempotency_key:"z"}),job({id:"a",idempotency_key:"a"})]},{items:[job({owner_user:"other"})]}])await bad("listJobsPage",page([],{...patch}));
+  const absent=page();delete absent.nextCursor;await bad("listJobsPage",absent);
+  await bad("listJobsPage",page([job(),job({id:"other",idempotency_key:"other"})],{pageSize:1}),[{pageSize:1}]);
+});
+test("continuations are owned by the client, size-bound, serialized and checked across pages",async()=>{
+  let release,calls=0;
+  const client=await opened(request=>{calls++;return request.params.cursor?new Promise(resolve=>{release=resolve;}):page([job({id:"m"})],{pageSize:1,nextCursor:token});});
+  await client.listJobsPage({pageSize:1});
+  await assert.rejects(client.listJobsPage({pageSize:2,cursor:token}),errorCode("denied"));
+  const waiting=client.listJobsPage({pageSize:1,cursor:token});
+  await assert.rejects(client.listJobsPage({pageSize:1,cursor:token}),errorCode("busy"));assert.equal(calls,2);
+  release(page([job({id:"a"})],{pageSize:1}));await assert.rejects(waiting,errorCode("invalidResponse"));assert.equal(client.closed,true);
+  const other=await opened(()=>page());await assert.rejects(other.listJobsPage({pageSize:1,cursor:token}),errorCode("denied"));other.close();
+});
+test("successful continuation consumes the token, rejects repetition and bounds abandoned chains",async()=>{
+  let counter=0;
+  const client=await opened(request=>request.params.cursor?page([job({id:"z"})],{pageSize:1}):page([job({id:"a"})],{pageSize:1,nextCursor:`00000000-0000-4000-8000-${String(++counter).padStart(12,"0")}`}));
+  const first=await client.listJobsPage({pageSize:1});await client.listJobsPage({pageSize:1,cursor:first.nextCursor});
+  await assert.rejects(client.listJobsPage({pageSize:1,cursor:first.nextCursor}),errorCode("denied"));
+  for(let i=0;i<128;i++)await client.listJobsPage({pageSize:1});
+  await assert.rejects(client.listJobsPage({pageSize:1}),errorCode("budgetExceeded"));assert.equal(counter,129);client.close();
+});
+test("page input errors do not dispatch, and expired capabilities are removed without closing",async()=>{
+  let calls=0;
+  const client=await opened(()=>{calls++;return page([job()],{pageSize:1,nextCursor:token});});
+  for(const params of [{pageSize:null},{pageSize:true},{pageSize:0},{pageSize:101},{cursor:null},{cursor:"SQL"},{sort:"state"},{userID:"other"}])await assert.rejects(client.listJobsPage(params),errorCode("invalidInput"));
+  assert.equal(calls,0);client.close();
+  let continuations=0;
+  const expired=C.createDesktopClient({transport:async r=>r.method==="overview"?{apiVersion:1,requestId:r.requestId,data:info()}:r.params.cursor?(continuations++,{apiVersion:1,requestId:r.requestId,error:{code:"expired"}}):{apiVersion:1,requestId:r.requestId,data:page([job()],{pageSize:1,nextCursor:token})}});
+  await expired.overview();await expired.listJobsPage({pageSize:1});
+  await assert.rejects(expired.listJobsPage({pageSize:1,cursor:token}),errorCode("expired"));
+  await assert.rejects(expired.listJobsPage({pageSize:1,cursor:token}),errorCode("denied"));assert.equal(continuations,1);assert.equal(expired.closed,false);expired.close();
 });

@@ -110,6 +110,16 @@
             "docs/plans/N-015-ACCEPTANCE.md",
             "docs/decisions/ADR-009-typed-desktop-client.md"
           ]
+        },
+        {
+          "id": "SYS-01.typed_live_task_pages",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "Strict page DTO and cross-page byte-order validation, bounded client cursor ownership; no browser or DOM proof",
+          "evidence": [
+            "docs/evidence/n016-2026-10-15.json",
+            "docs/plans/N-016-ACCEPTANCE.md",
+            "docs/decisions/ADR-010-bounded-job-pages.md"
+          ]
         }
       ]
     },
@@ -425,6 +435,36 @@
             "docs/evidence/n015-2026-10-15.json",
             "docs/plans/N-015-ACCEPTANCE.md",
             "docs/decisions/ADR-009-typed-desktop-client.md"
+          ]
+        },
+        {
+          "id": "SYS-06.bounded_keyset_job_pages",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "Bounded SQL task pages in raw UTF-8 ID order; live consistency on synthetic PostgreSQL only",
+          "evidence": [
+            "docs/evidence/n016-2026-10-15.json",
+            "docs/plans/N-016-ACCEPTANCE.md",
+            "docs/decisions/ADR-010-bounded-job-pages.md"
+          ]
+        },
+        {
+          "id": "SYS-06.audience_sql_task_statistics",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "SQL aggregate counts exclude legacy and other users/apps; no full task materialization",
+          "evidence": [
+            "docs/evidence/n016-2026-10-15.json",
+            "docs/plans/N-016-ACCEPTANCE.md",
+            "docs/decisions/ADR-010-bounded-job-pages.md"
+          ]
+        },
+        {
+          "id": "SYS-06.legacy_task_array_explicit_cap",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "Complete legacy arrays through 4096 rows or explicit byte/row-budget refusal; no silent truncation",
+          "evidence": [
+            "docs/evidence/n016-2026-10-15.json",
+            "docs/plans/N-016-ACCEPTANCE.md",
+            "docs/decisions/ADR-010-bounded-job-pages.md"
           ]
         }
       ]
@@ -4453,6 +4493,16 @@
             "docs/evidence/n009-2026-10-15.json"
           ],
           "scope": "Synthetic prototype on current Mac; production/OS authorization unverified"
+        },
+        {
+          "id": "APP-09.session_bound_task_page_capabilities",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "Memory-only single-use cursors scoped to session/instance/database/user/role/mode/page size with bounded lifetime and capacity",
+          "evidence": [
+            "docs/evidence/n016-2026-10-15.json",
+            "docs/plans/N-016-ACCEPTANCE.md",
+            "docs/decisions/ADR-010-bounded-job-pages.md"
+          ]
         }
       ]
     },
@@ -5677,6 +5727,16 @@
           "id": "MIG-03.owner_acceptance",
           "status": "NOT_STARTED",
           "evidence": []
+        },
+        {
+          "id": "MIG-03.actual_git_head_and_source_receipts",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "Runner records checkout HEAD and bootstrap lineage separately, with exact dirty-tree source hashes",
+          "evidence": [
+            "docs/evidence/n016-2026-10-15.json",
+            "docs/plans/N-016-ACCEPTANCE.md",
+            "docs/decisions/ADR-010-bounded-job-pages.md"
+          ]
         }
       ]
     },

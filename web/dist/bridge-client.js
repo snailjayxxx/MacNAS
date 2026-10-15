@@ -45,6 +45,13 @@
     return value;
   }
   function unique(values, key) { const keys=values.map(key);check(new Set(keys).size===keys.length);return values; }
+  function cursorToken(value,code="invalidResponse") {
+    check(typeof value==="string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(value),code);return value;
+  }
+  function byteOrder(a,b) {
+    const x=encoder.encode(a),y=encoder.encode(b),length=Math.min(x.length,y.length);
+    for(let i=0;i<length;i++)if(x[i]!==y[i])return x[i]-y[i];return x.length-y.length;
+  }
   function library(value) {
     const v=fields(value,["libraryID","volumeID","estimatedBytes","state"]);
     text(v.libraryID);text(v.volumeID,36);check(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v.volumeID));
@@ -112,10 +119,10 @@
     check(typeof transport==="function" && (closeTransport===undefined || typeof closeTransport==="function"),"invalidInput");
     integer(timeoutMs,1,60000,"invalidInput");integer(maximumPending,1,128,"invalidInput");
     check(typeof AbortController!=="undefined","unavailable");
-    const adapter=M.createBridgeAdapter(transport,{requestIdPrefix:"dc-"+uuid()}),pending=new Set(),consumers=new Map();
+    const adapter=M.createBridgeAdapter(transport,{requestIdPrefix:"dc-"+uuid()}),pending=new Set(),consumers=new Map(),pages=new Map(),busyPages=new Set();
     let closed=false,binding;
     function close() {
-      if (closed) return;closed=true;binding=undefined;consumers.clear();
+      if (closed) return;closed=true;binding=undefined;consumers.clear();pages.clear();busyPages.clear();
       for (const entry of [...pending]) entry.cancel();
       if (closeTransport) { try { Promise.resolve(closeTransport()).catch(()=>{}); } catch {} }
     }
@@ -169,6 +176,33 @@
         const who=caller();return invoke("listJobs",{},value=>{
           const jobs=array(value,4096).map(v=>job(v,who));unique(jobs,v=>v.id);unique(jobs,v=>v.idempotency_key);return jobs;
         },opts);
+      },
+      async listJobsPage(params={},opts) {
+        const who=caller(),p=fields(params,[],["pageSize","cursor"],"invalidInput");
+        const pageSize=integer(Object.hasOwn(p,"pageSize")?p.pageSize:50,1,100,"invalidInput");
+        const cursor=Object.hasOwn(p,"cursor")?cursorToken(p.cursor,"invalidInput"):undefined;
+        const previous=cursor===undefined?undefined:pages.get(cursor);
+        if(cursor!==undefined) {
+          check(previous && previous.pageSize===pageSize,"denied");check(!busyPages.has(cursor),"busy");
+        } else check(pages.size<128,"budgetExceeded");
+        if(cursor!==undefined)busyPages.add(cursor);
+        try {return await invoke("listJobsPage",cursor===undefined?{pageSize}:{pageSize,cursor},value=>{
+          const v=fields(value,["pageVersion","order","consistency","pageSize","items","nextCursor"]);
+          check(v.pageVersion===1 && v.order==="id-utf8" && v.consistency==="live" && v.pageSize===pageSize);
+          const items=array(v.items,pageSize).map(x=>job(x,who));unique(items,x=>x.id);unique(items,x=>x.idempotency_key);
+          let after=previous?.after;
+          for(const item of items) {if(after!==undefined)check(byteOrder(after,item.id)<0);after=item.id;}
+          if(v.nextCursor!==null) {
+            cursorToken(v.nextCursor);check(items.length===pageSize && v.nextCursor!==cursor && !pages.has(v.nextCursor));
+            check(pages.size-(cursor===undefined?0:1)<128);
+          }
+          if(cursor!==undefined)pages.delete(cursor);
+          if(v.nextCursor!==null)pages.set(v.nextCursor,{pageSize,after});
+          return value;
+        },opts);}catch(error){
+          if(cursor!==undefined && ["expired","denied","replay"].includes(error.code))pages.delete(cursor);
+          throw error;
+        }finally{if(cursor!==undefined)busyPages.delete(cursor);}
       },
       async submitLabelJob(params,opts) {
         const who=caller(true,true),p=labelParams(params);

@@ -26,3 +26,9 @@ submitAppValueJob、appJobs、cancelAppJob、appJobEvents、acknowledgeAppJobEve
 这些方法要求数据库 Schema 3。历史 enqueue 接口只保留给 Schema 1/2 的第一轮测试；Schema 3 拒绝该旧入口，使用有载荷及作用域的 submit 方法。旧 legacy fixture 任务不由新工作进程领取。
 
 DurableJobQueue 是可信核心执行器，不传给 native 样例。内置工作只有测试标签、应用私有状态、合成文件摘要；没有任务脚本、网络发送、系统授权或真实卷绑定。workOne/CLI work-once 供当前合成测试手动驱动，不安装常驻服务。具体一致性、租约和事件语义见 ADR-004。
+
+## N-016：有界只读任务查询
+
+jobStatistics(session:)按当前用户受众在PostgreSQL聚合active/completed/total；jobPage(pageSize:cursor:session:)返回当前用户的实时任务页，pageSize默认50、范围1至100。只读恢复可调用，继续令牌仅修改宿主内存，不修改数据库事件消费位置。durableJobs/appJobs保留完整数组语义，超过4096条或字节预算明确拒绝，不悄悄截断。
+
+DurableJobQueue.page(audience:afterID:pageSize:)供可信核心使用；afterID不是桌面输入。桌面通过API内存游标绑定会话、实例、数据库、用户、角色、模式和页大小。跨页不持有一致性快照；继续令牌短期、一次性、有界，重启或传输丢失可能需要重扫。详细预算及失败语义见[ADR-010](../decisions/ADR-010-bounded-job-pages.md)和[桌面契约](DESKTOP_API.md)。

@@ -53,4 +53,6 @@ N-014加入[无监听桌面消息桥接](docs/decisions/ADR-008-desktop-message-
 
 N-015加入[具名业务客户端](web/dist/bridge-client.js)：完整展示数据校验、固定宿主身份、调用超时/关闭、迟到响应丢弃和业务幂等重试。仍通过Node与CLI管道验证，未接入网页。参见[ADR-009](docs/decisions/ADR-009-typed-desktop-client.md)与[接口](docs/contracts/DESKTOP_API.md)。
 
+N-016加入[有界任务页及统计](docs/decisions/ADR-010-bounded-job-pages.md)：固定UTF-8字节顺序、每页最多100条、60秒会话绑定的一次性游标；overview在数据库聚合，旧数组超过4096条明确拒绝。页为实时读取，不能当作一致性快照。静态网页及回家窗口验收状态保持不变。
+
 **网页窗口尚未实测。** 用户准备回家后验收，已整理[启动步骤与W01–W10窗口清单](web/tests/BROWSER_ACCEPTANCE.md)，覆盖打开/关闭、层级、最小化/恢复、拖动/缩放、最大化、dock、键盘和窄屏。全部保留待测，自动测试不代替浏览器验收。
