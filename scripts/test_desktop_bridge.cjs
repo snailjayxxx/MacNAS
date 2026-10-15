@@ -5,6 +5,7 @@ const {spawn,spawnSync}=require("node:child_process"),{createInterface}=require(
 const path=require("node:path"),fs=require("node:fs");
 const M=require("../web/dist/model.js");
 const C=require("../web/dist/bridge-client.js");
+const P=require("../web/dist/task-pages.js");
 const binary=path.join(process.env.MACNAS_BINARY_DIR||"","macnas");
 const root=process.env.MACNAS_BRIDGE_TEST_ROOT,readonly=process.env.MACNAS_BRIDGE_READONLY_ROOT;
 const hosts=new Set(),errorCode=code=>error=>error instanceof M.ServiceError&&error.code===code;
@@ -213,4 +214,27 @@ test("typed task pages traverse actual SQL rows with single-use session-scoped c
   const restored=new PipeHost(readonly),query=restored.typed();
   try {await query.overview();assert.ok(Array.isArray((await query.listJobsPage()).items));}
   finally{query.close();await restored.finish();}
+});
+
+test("task presentation projects actual host pages and refreshes cancellation in place",async()=>{
+  const host=new PipeHost(root),client=host.typed(),source=await P.createClientTaskSource(client),pager=P.createTaskPager({source,pageSize:1});
+  try {
+    await source.submitLabelJob({id:"a-presented-job",key:"a-presented-key",value:"jobHash"});
+    const before=await source.overview(),first=await pager.reload();
+    assert.equal(first.items[0].id,"a-presented-job");assert.equal(first.items[0].updated,undefined);
+    assert.equal(P.taskName(first.items[0],()=>{throw Error("plain host title must not be translated");}),"jobHash");
+    const cancelled=await pager.cancelJob(first.items[0].id);
+    assert.equal(cancelled.pageNumber,1);assert.equal(cancelled.items[0].state,"cancelled");
+    assert.equal((await source.overview()).active,before.active-1);
+    while(pager.snapshot().hasNext){const view=await pager.next();assert.ok(view.items.length<=1);}
+    pager.dispose();assert.deepEqual(pager.snapshot().items,[]);assert.equal(client.closed,false);
+  } finally {pager.dispose();await source.close();await host.finish();}
+  for(const [target,user] of [[root,"fixture-family"],[readonly,"fixture-owner"]]) {
+    const host=new PipeHost(target,user),source=await P.createClientTaskSource(host.typed()),pager=P.createTaskPager({source,pageSize:1});
+    try {
+      const view=await pager.reload();assert.ok(view.items.length<=1);
+      await assert.rejects(source.submitLabelJob({id:"blocked-view",key:"blocked-view",value:"x"}),errorCode(source.context.role==="reader"?"denied":"readOnly"));
+      if(source.context.role==="reader")assert.equal(view.items.length,0);
+    } finally {pager.dispose();await source.close();await host.finish();}
+  }
 });

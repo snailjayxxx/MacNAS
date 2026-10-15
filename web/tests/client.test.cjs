@@ -164,6 +164,7 @@ test("continuations are owned by the client, size-bound, serialized and checked 
   await client.listJobsPage({pageSize:1});
   await assert.rejects(client.listJobsPage({pageSize:2,cursor:token}),errorCode("denied"));
   const waiting=client.listJobsPage({pageSize:1,cursor:token});
+  assert.throws(()=>client.discardJobPage(token),errorCode("busy"));
   await assert.rejects(client.listJobsPage({pageSize:1,cursor:token}),errorCode("busy"));assert.equal(calls,2);
   release(page([job({id:"a"})],{pageSize:1}));await assert.rejects(waiting,errorCode("invalidResponse"));assert.equal(client.closed,true);
   const other=await opened(()=>page());await assert.rejects(other.listJobsPage({pageSize:1,cursor:token}),errorCode("denied"));other.close();
@@ -186,4 +187,14 @@ test("page input errors do not dispatch, and expired capabilities are removed wi
   await expired.overview();await expired.listJobsPage({pageSize:1});
   await assert.rejects(expired.listJobsPage({pageSize:1,cursor:token}),errorCode("expired"));
   await assert.rejects(expired.listJobsPage({pageSize:1,cursor:token}),errorCode("denied"));assert.equal(continuations,1);assert.equal(expired.closed,false);expired.close();
+});
+
+test("discard releases local cursor ownership without sending a host mutation",async()=>{
+  let calls=0,counter=0;
+  const client=await opened(()=>{calls++;return page([job()],{pageSize:1,nextCursor:`00000000-0000-4000-8000-${String(++counter).padStart(12,"0")}`});});
+  const tokens=[];for(let i=0;i<128;i++)tokens.push((await client.listJobsPage({pageSize:1})).nextCursor);
+  assert.equal(client.discardJobPage(tokens[0]),true);assert.equal(client.discardJobPage(tokens[0]),false);assert.equal(calls,128);
+  assert.throws(()=>client.discardJobPage(null),errorCode("invalidInput"));
+  await assert.rejects(client.listJobsPage({pageSize:1,cursor:tokens[0]}),errorCode("denied"));assert.equal(calls,128);
+  await client.listJobsPage({pageSize:1});assert.equal(calls,129);client.close();
 });

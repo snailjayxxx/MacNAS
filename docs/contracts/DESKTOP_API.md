@@ -1,4 +1,4 @@
-# 网页桌面适配契约（N-011 / N-014 / N-015 / N-016，v1）
+# 网页桌面适配契约（N-011 / N-014 / N-015 / N-016 / N-017，v1）
 
 页面当前使用model.js的createFixtureAdapter。业务内容为合成数据、刷新重置；管理员/读者/只读恢复选择器是演示场景，不是登录。不连接Swift、PostgreSQL、NAS文件、系统账户或真实存储池。
 
@@ -12,6 +12,7 @@
 |overview|会话；版本、用户/角色/模式、任务计数、合成容量、unbound池|仅当前受众|
 |authorizeApp|应用ID、会话|settings限管理员，preferences均可|
 |listJobs|会话；任务数组|仅当前用户且app_id为空|
+|listJobsPage / discardJobPage|params、会话；版本化页 / 本地释放|默认50、1至100；UTF-8编号排序、会话及页大小绑定、60秒整链、一次性、最多128待用/消费记录；只读可查询|
 |submitLabelJob|id、key、value、会话；queued任务|仅开发模式管理员；幂等键绑定用户和值，冲突拒绝|
 |cancelJob|任务ID、会话；当前任务|仅自己任务；恢复拒写；重复取消不改变终态|
 |pollEvents|consumerID、会话、limit；事件页|consumer绑定用户，未确认可重放；limit为1至100；恢复拒写|
@@ -85,7 +86,7 @@ bridge-client.js提供createDesktopClient({transport, closeTransport?, timeoutMs
 
 ## N-016任务页
 
-新增第11个白名单方法listJobsPage；具名客户端调用listJobsPage({pageSize?,cursor?}, {signal}?)，不接受显式null默认值。首调用省略cursor；后续页传回同一客户端所得cursor和相同pageSize。静态页面尚未接入该方法。
+新增第11个白名单方法listJobsPage；具名客户端调用listJobsPage({pageSize?,cursor?}, {signal}?)，不接受显式null默认值。首调用省略cursor；后续页传回同一客户端所得cursor和相同pageSize。N-017静态页面接入fixture版本，真实客户端来源只在Node/管道验证。
 
 返回值恰好为{pageVersion:1, order:"id-utf8", consistency:"live", pageSize, items, nextCursor}。items沿用任务DTO且最多pageSize条；有继续游标时为满页，终页nextCursor显式null。没有total字段；overview统计独立聚合，不是列表快照。按原始UTF-8 ID字节升序，不按语言、JS UTF-16或Unicode规范化排序。翻页间可见提交的新状态；插入在已越过ID之前的记录要从第一页重新读取。
 
@@ -94,6 +95,20 @@ cursor为随机小写UUID、宿主内存一次性能力，不是SQL afterID。�
 查询/后置会话校验/DTO编码/字节预算失败不消费游标，重试必须换请求ID。成功编码后传输丢失可能已消费，需显式重启扫描。只读恢复允许此内存查询游标；pollEvents/acknowledgeEvents修改数据库交付位置，仍拒绝。
 
 客户端最多保留128条未结束链，同一令牌请求串行，校验页内与跨页字节递增、受众和精确DTO。完成继续请求后移除旧令牌；expired/denied/replay也移除，关闭清空；没有自动翻页、重试或本地持久化。旧listJobs不悄悄截断：超过4096条或字节预算返回budgetExceeded。详情见[ADR-010](../decisions/ADR-010-bounded-job-pages.md)。
+
+## N-017任务展示来源和控制器
+
+task-pages.js在model.js之后加载，提供async createFixtureTaskSource(api, session)和async createClientTaskSource(client)，后者须显式传入已创建的具名客户端；缺失报unavailable，不创建fixture回退或网络连接。来源公开context、overview、page、cancelJob、submitLabelJob、discardCursor、close及closed。close拥有原会话/客户端生命周期，调用方不能继续旧来源；窗口只dispose控制器。
+
+来源page({pageSize?,cursor?})校验原页后返回恰好为{viewVersion:1,pageSize,tasks,nextCursor}的展示页。tasks是固定投影：id、name、kind、state、attempts、maxAttempts、revision、steps、lastError。name={kind:"text"|"key",value}；只有固定key进入词典，text始终原文。没有payload、幂等键、租约、路径或updated；overview只含固定上下文、active/completed和taskTimestampsAvailable:false，不按已读取页补造统计。
+
+createTaskPager({source,pageSize=50})接受以上来源，pageSize为1至100；snapshot()返回冻结的{phase,items,pageNumber,hasNext,error,requiresReload}，不暴露游标。reload/next/cancelJob返回Promise，失败为固定ServiceError并设置error/显式重读状态；cancelJob限本页任务并使用服务端结果更新该行。dispose幂等清空当前页并忽略迟到结果，不关闭共享来源。没有自动聚合所有页、快照或自动重试承诺。
+
+具名客户端新增同步discardJobPage(cursor)，仅释放本地已见令牌，无RPC；进行中报busy，未知/已丢弃返回false，错误格式invalidInput。fixture同名方法为async discardJobPage(cursor,session)，实际释放其本地内存令牌并检查会话。来源discardCursor是尽力清理；进行中的页在迟到结果完成后再释放。真实宿主待用令牌仍按N-016上限/时限清理，反复重读可能触发budgetExceeded。
+
+网页任务窗口每页3条，首页2项编号顺序预览；搜索和状态过滤仅当前页。空页、无本页匹配、末页、加载、修改及失败分别显示，失败页注明是上次结果并禁用继续/修改；创建后从首页重读，取消后更新当前行及独立统计。身份/窗口/模态框和刷新代次检查用于防止旧结果覆盖，但实际DOM/焦点仍待浏览器验收。
+
+HTML/白名单只新增task-pages.js，bridge-client.js仍不加载/不静态提供，connect-src仍为none。当前fixture权威队列仍在内存，显示页上限不是生产数据库规模证明。详细范围见[ADR-011](../decisions/ADR-011-task-page-presentation.md)及[验收记录](../../web/tests/BROWSER_ACCEPTANCE.md)。
 
 ## 状态与恢复
 

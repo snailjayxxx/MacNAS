@@ -59,4 +59,12 @@ class WebStaticTests(unittest.TestCase):
         self.assertIn('prefers-reduced-motion:reduce',css);self.assertIn(':focus-visible',css)
         self.assertEqual(css.count('{'),css.count('}'))
         self.assertEqual(css.count('('),css.count(')'))
+    def test_task_presentation_loads_after_model_and_keeps_host_transport_explicit(self):
+        html=(ROOT/'web/dist/index.html').read_text()
+        scripts=re.findall(r'<script defer src="([^"]+)"',html)
+        self.assertLess(scripts.index('model.js'),scripts.index('task-pages.js'))
+        self.assertLess(scripts.index('task-pages.js'),scripts.index('desktop.js'))
+        self.assertNotIn('bridge-client.js',scripts)
+        self.assertEqual(exchange('/bridge-client.js')[0],404)
+        self.assertEqual(exchange('/task-pages.js')[0],200)
 if __name__=='__main__':unittest.main()

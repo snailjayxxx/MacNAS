@@ -204,6 +204,10 @@
           throw error;
         }finally{if(cursor!==undefined)busyPages.delete(cursor);}
       },
+      discardJobPage(cursor) {
+        caller();cursorToken(cursor,"invalidInput");check(!busyPages.has(cursor),"busy");
+        return pages.delete(cursor); // Local ownership only; the host capability expires independently.
+      },
       async submitLabelJob(params,opts) {
         const who=caller(true,true),p=labelParams(params);
         return invoke("submitLabelJob",p,value=>{job(value,who);check(value.kind==="label" && value.idempotency_key===p.key && value.title===p.value);return value;},opts);

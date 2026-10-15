@@ -120,6 +120,28 @@
             "docs/plans/N-016-ACCEPTANCE.md",
             "docs/decisions/ADR-010-bounded-job-pages.md"
           ]
+        },
+        {
+          "id": "SYS-01.task_page_dom_integration",
+          "status": "IN_PROGRESS",
+          "scope": "Static page wiring, localized controls and source review complete; actual DOM/event/layout/focus remain unverified",
+          "evidence": [
+            "docs/evidence/n017-2026-10-15.json",
+            "docs/plans/N-017-ACCEPTANCE.md",
+            "docs/decisions/ADR-011-task-page-presentation.md",
+            "web/tests/BROWSER_ACCEPTANCE.md"
+          ]
+        },
+        {
+          "id": "SYS-01.task_page_browser_acceptance",
+          "status": "NOT_STARTED",
+          "scope": "T01-T08 and W01-W10 remain deferred until user returns home",
+          "evidence": [
+            "docs/evidence/n017-2026-10-15.json",
+            "docs/plans/N-017-ACCEPTANCE.md",
+            "docs/decisions/ADR-011-task-page-presentation.md",
+            "web/tests/BROWSER_ACCEPTANCE.md"
+          ]
         }
       ]
     },
@@ -465,6 +487,39 @@
             "docs/evidence/n016-2026-10-15.json",
             "docs/plans/N-016-ACCEPTANCE.md",
             "docs/decisions/ADR-010-bounded-job-pages.md"
+          ]
+        },
+        {
+          "id": "SYS-06.fixture_task_page_limits_and_expiry",
+          "status": "MOCK_PASS",
+          "scope": "Synthetic memory-only page metadata, byte ordering, cursor scope/capacity/expiry and local release; not SQL or production authentication",
+          "evidence": [
+            "docs/evidence/n017-2026-10-15.json",
+            "docs/plans/N-017-ACCEPTANCE.md",
+            "docs/decisions/ADR-011-task-page-presentation.md",
+            "web/tests/BROWSER_ACCEPTANCE.md"
+          ]
+        },
+        {
+          "id": "SYS-06.current_page_task_search_and_state_view",
+          "status": "MOCK_PASS",
+          "scope": "Bounded single-page view model, independent overview counts, local search/filter and cancellation row projection; no DOM proof",
+          "evidence": [
+            "docs/evidence/n017-2026-10-15.json",
+            "docs/plans/N-017-ACCEPTANCE.md",
+            "docs/decisions/ADR-011-task-page-presentation.md",
+            "web/tests/BROWSER_ACCEPTANCE.md"
+          ]
+        },
+        {
+          "id": "SYS-06.task_page_late_result_disposal",
+          "status": "MOCK_PASS",
+          "scope": "Headless close/session change and pending page/write disposal, error and explicit reload; not browser focus verification",
+          "evidence": [
+            "docs/evidence/n017-2026-10-15.json",
+            "docs/plans/N-017-ACCEPTANCE.md",
+            "docs/decisions/ADR-011-task-page-presentation.md",
+            "web/tests/BROWSER_ACCEPTANCE.md"
           ]
         }
       ]
@@ -4502,6 +4557,17 @@
             "docs/evidence/n016-2026-10-15.json",
             "docs/plans/N-016-ACCEPTANCE.md",
             "docs/decisions/ADR-010-bounded-job-pages.md"
+          ]
+        },
+        {
+          "id": "APP-09.task_presentation_pipe_adapter",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "Explicit task facade and current-page cancellation on actual Swift/PostgreSQL stdin/stdout, including reader/restored contexts; no browser proof",
+          "evidence": [
+            "docs/evidence/n017-2026-10-15.json",
+            "docs/plans/N-017-ACCEPTANCE.md",
+            "docs/decisions/ADR-011-task-page-presentation.md",
+            "web/tests/BROWSER_ACCEPTANCE.md"
           ]
         }
       ]

@@ -1,4 +1,4 @@
-# MacNAS 原型架构（N-015）
+# MacNAS 原型架构（N-017）
 
 Swift 6 / macOS 15部署目标，PostgreSQL 18。当前为非root CLI、无监听的业务API和两个自研可信样例；没有生产HTTP登录、系统Helper或正式接管。
 
@@ -76,3 +76,11 @@ bridge-client.js包装通用消息适配器，校验overview/任务/事件/资�
 ## N-016任务读取边界
 
 任务统计在PostgreSQL按受众聚合；新增listJobsPage使用唯一ID的C/UTF-8字节顺序，每页默认50、最多100。60秒单调寿命、会话/实例/数据库/用户/角色/模式/页大小绑定的内存一次性游标，每API最多128个待用令牌和128个消费墓碑；失败的SQL/校验/编码不消费。列表为实时页，不能当作快照；旧数组超过4096条明确拒绝，仍有字节预算。Schema 3和可携数据不变。见[ADR-010](docs/decisions/ADR-010-bounded-job-pages.md)及[接口契约](docs/contracts/DESKTOP_API.md)。网页仍使用内存演示，W01–W10等用户回家实测。
+
+## N-017当前页任务展示
+
+task-pages.js把显式fixture来源/具名客户端来源投影为有界任务视图。控制器只保留当前页，串行读取/取消，关闭清空并丢弃迟到结果；窗口dispose不关闭共享连接，身份切换关闭旧来源。任务名区分普通文本和固定翻译键，不传递原始任务载荷或伪造时间。
+
+静态任务窗口每页3项，首页另有2项编号顺序预览，统计独立读取；搜索/过滤明确限当前页，下一页替换而不累积，错误等待显式重读。HTML只新增task-pages脚本，主机客户端仍未加载，没有浏览器传输或数据库回退。本地discardJobPage不撤销宿主预算；宿主令牌仍依照60秒期限清理。
+
+模型/Node与真实管道验证不能证明DOM、焦点、布局或翻译质量。W01–W10及T01–T08全待实测，父阶段P03未验收；见[ADR-011](docs/decisions/ADR-011-task-page-presentation.md)和[验收范围](docs/plans/N-017-ACCEPTANCE.md)。

@@ -1,6 +1,6 @@
 (function () {
   "use strict";
-  const M = window.MacNASModel, I = window.MacNASI18n;
+  const M = window.MacNASModel, I = window.MacNASI18n, P = window.MacNASTaskPages;
   const api = M.createFixtureAdapter();
   const $ = (query, root = document) => root.querySelector(query);
   const paths = {
@@ -44,12 +44,13 @@
   let storage;
   try { storage = window.localStorage; } catch { storage = { getItem: () => null, setItem: () => { throw new Error("unavailable"); } }; }
   const prefs = M.readPreferences(storage);
-  const state = { prefs, session: null, overview: null, jobs: [], events: [], ack: 0, consumer: "desktop-preview", scenario: "owner", epoch: 0, z: 10, windows: new Map(), active: null, panel: null, modal: null };
+  const state = { prefs, session: null, taskSource: null, overview: null, previewJobs: [], events: [], ack: 0, consumer: "desktop-preview", scenario: "owner", epoch: 0, dataRequest: 0, z: 10, windows: new Map(), active: null, panel: null, modal: null };
   const t = (key, vars) => I.t(prefs.locale, key, vars);
   const appIDs = ["overview", "files", "storage", "apps", "tasks", "settings"];
   const canWrite = () => state.overview?.mode === "synthetic_development";
   const isOwner = () => state.overview?.role === "administrator";
-  const jobName = job => job.title || t(job.titleKey || "tasks");
+  const jobName = job => P.taskName(job, t);
+  const currentWindow = win => state.windows.get(win.id) === win && win.element.isConnected;
   function persist() { return M.savePreferences(storage, prefs); }
   let toastTimer;
   function toast(message) {
@@ -76,6 +77,7 @@
   }
   function closeWindow(id) {
     const win = state.windows.get(id); if (!win) return;
+    win.pager?.dispose();
     saveGeometry(win); win.element.remove(); state.windows.delete(id);
     if (state.active === id) state.active = [...state.windows.values()].filter(w => !w.minimized).at(-1)?.id || null;
     if (state.active) focusWindow(state.active); else renderDock();
@@ -118,6 +120,7 @@
     win.element.setAttribute("aria-labelledby", title.id); win.resize.setAttribute("aria-label", t("resize")); win.resize.title = t("resize");
   }
   async function openWindow(id, { route = false } = {}) {
+    if (!state.session || !state.taskSource || !state.overview) return;
     const epoch = state.epoch;
     let denied = null;
     try { await api.authorizeApp(id, state.session); } catch (error) { denied = error; }
@@ -174,7 +177,7 @@
     const epoch = state.epoch;
     try {
       await api.authorizeApp(win.id, state.session);
-      if (epoch !== state.epoch) return;
+      if (epoch !== state.epoch || !currentWindow(win)) return;
       if (win.id === "overview") renderOverview(win);
       if (win.id === "tasks") renderTasks(win);
       if (win.id === "files") await renderFiles(win);
@@ -184,7 +187,7 @@
     } catch (error) { if (epoch === state.epoch) renderDenied(win, error); }
   }
   function statePill(job) { return el("span", "state-pill " + job.state, t(job.state)); }
-  function progress(job) { return job.checkpoint?.step === "completed" ? 2 : job.checkpoint?.step === "prepared" ? 1 : 0; }
+  function progress(job) { return job.steps; }
   function miniTask(job) {
     const row = el("div", "mini-task"), mark = el("span", "mini-task-icon"); mark.append(icon(job.state === "waiting_for_volume" ? "storage" : "file"));
     const copy = el("div", "mini-task-main"); copy.append(el("strong", "", jobName(job)), el("p", "", t("stepProgress", { count: progress(job) })));
@@ -216,7 +219,8 @@
     const pool = el("div", "pool-note"), poolCopy = el("div"); poolCopy.append(el("strong", "", t("poolUnbound")), el("p", "", t("poolHint")));
     pool.append(icon("shield"), poolCopy, button(t("seeStorage"), "text-button", () => openWindow("storage"), "arrow"));
     grid.append(capacity, side, pool); page.append(grid, sectionTitle("recentTasks", () => openWindow("tasks")));
-    const recent = el("div"); for (const job of state.jobs.slice(0, 2)) recent.append(miniTask(job)); page.append(recent);
+    const recent = el("div"); for (const job of state.previewJobs) recent.append(miniTask(job));
+    page.append(el("p", "content-note", t("taskPreviewHint")), recent);
     page.append(sectionTitle("installedApps", () => openWindow("apps")));
     const cards = el("div", "app-cards"); cards.append(sampleAppCard("diagnostics"), sampleAppCard("fileIndex")); page.append(cards);
   }
@@ -230,8 +234,9 @@
     input.addEventListener("input", handler); label.append(icon("search"), input); return label;
   }
   function renderTasks(win) {
+    if (!win.pager) win.pager = P.createTaskPager({ source: state.taskSource, pageSize: 3 });
     const { page, heading } = buildPage(win, "taskIntro");
-    if (isOwner()) { const create = button(t("newTask"), "primary-button", createTaskModal, "plus"); create.dataset.createTask = ""; create.disabled = !canWrite(); if (!canWrite()) create.title = t("readOnlyAction"); heading.append(create); }
+    if (isOwner()) { const create = button(t("newTask"), "primary-button", () => createTaskModal(win), "plus"); win.taskCreate = create; create.dataset.createTask = ""; create.disabled = !canWrite(); if (!canWrite()) create.title = t("readOnlyAction"); heading.append(create); }
     if (!canWrite()) page.append(el("p", "readonly-note", t("readOnlyAction")));
     const toolbar = el("div", "task-toolbar"), filters = el("div", "filter-tabs");
     filters.setAttribute("role", "group"); filters.setAttribute("aria-label", t("status"));
@@ -243,28 +248,55 @@
       }); tab.dataset.filter = key; tab.setAttribute("aria-pressed", String(win.view.filter === key)); filters.append(tab);
     }
     const search = searchField("searchTasks", win.view.search, event => { win.view.search = event.target.value; renderTaskRows(win); });
-    search.querySelector("input").dataset.taskSearch = "";
+    search.querySelector("input").dataset.taskSearch = ""; search.querySelector("input").maxLength = 128;
     toolbar.append(filters, search); page.append(toolbar);
-    win.taskList = el("div", "task-list"); page.append(win.taskList); renderTaskRows(win);
+    page.append(el("p", "content-note task-scope", t("taskPageScope")));
+    const navigation = el("div", "task-pagination"), actions = el("div", "task-page-actions");
+    win.taskCount = el("p", "toolbar-count"); win.taskCount.setAttribute("role", "status"); win.taskCount.setAttribute("aria-live", "polite"); win.taskCount.tabIndex = -1;
+    win.taskReload = button(t("reloadTasks"), "secondary-button", () => moveTaskPage(win, "reload"), "refresh"); win.taskReload.dataset.taskReload = "";
+    win.taskNext = button(t("nextTaskPage"), "secondary-button", () => moveTaskPage(win, "next"), "arrow"); win.taskNext.dataset.taskNext = "";
+    actions.append(win.taskReload, win.taskNext); navigation.append(win.taskCount, actions); page.append(navigation);
+    win.taskFailure = el("p", "readonly-note"); win.taskFailure.setAttribute("role", "alert"); page.append(win.taskFailure);
+    win.taskList = el("div", "task-list"); page.append(win.taskList);
+    win.taskEnd = el("p", "content-note"); page.append(win.taskEnd); renderTaskRows(win);
+    if (win.pager.snapshot().phase === "idle") void moveTaskPage(win, "reload", false);
+  }
+  async function moveTaskPage(win, direction, focus = true) {
+    if (!currentWindow(win)) return;
+    const epoch = state.epoch, pending = win.pager[direction](); renderTaskRows(win);
+    let succeeded = true;
+    try { await pending; } catch { succeeded = false; }
+    if (epoch !== state.epoch || !currentWindow(win)) return false;
+    renderTaskRows(win); if (focus && !state.modal) win.taskCount.focus(); return succeeded;
   }
   function renderTaskRows(win) {
+    const view = win.pager.snapshot(), busy = ["loading", "mutating"].includes(view.phase);
+    if (!currentWindow(win) || !win.taskList) return;
     win.taskList.replaceChildren();
-    const filtered = state.jobs.filter(job => {
-      const matches = win.view.filter === "all" || (win.view.filter === "inProgress" && ["queued", "running"].includes(job.state)) || (win.view.filter === "waiting" && ["waiting_for_volume", "paused"].includes(job.state)) || (win.view.filter === "finished" && ["completed", "failed", "cancelled"].includes(job.state));
-      return matches && jobName(job).toLocaleLowerCase().includes(win.view.search.trim().toLocaleLowerCase());
-    });
-    if (!filtered.length) { win.taskList.append(emptyState("tasks", "noTasks", "noTaskHint")); return; }
+    win.taskList.setAttribute("aria-busy", String(busy));
+    const filtered = P.filterTasks(view.items, win.view, t);
+    win.taskCount.textContent = t(view.phase === "loading" ? "tasksReading" : view.phase === "mutating" ? "tasksMutating" : view.pageNumber ? "taskPageCount" : "taskPageStart", { page: view.pageNumber, count: view.items.length, matches: filtered.length });
+    win.taskReload.disabled = busy || view.phase === "closed";
+    if (win.taskCreate) win.taskCreate.disabled = !canWrite() || busy || view.phase === "closed";
+    win.taskNext.disabled = busy || !view.hasNext || view.requiresReload || view.phase !== "ready";
+    win.taskFailure.hidden = !view.error;
+    win.taskFailure.textContent = view.error ? (["expired", "replay", "denied", "staleState"].includes(view.error) ? t("taskPageLost") : errorMessage({ code: view.error })) + (view.items.length ? " " + t("taskStaleHint") : "") : "";
+    if (win.taskEnd) { win.taskEnd.hidden = view.phase !== "ready" || view.hasNext; win.taskEnd.textContent = t("taskPageEnd"); }
+    if (!filtered.length) {
+      if (!busy && view.phase === "ready") win.taskList.append(emptyState("tasks", view.items.length ? "taskNoMatches" : "taskEmptyPage", view.items.length ? "taskNoMatchHint" : "taskEmptyHint"));
+      return;
+    }
     for (const job of filtered) {
       const row = el("article", "task-row " + job.state); row.dataset.jobId = job.id; row.dataset.state = job.state;
       const mark = el("span", "mini-task-icon"); mark.append(icon(job.kind === "fixtureHash" ? "file" : "tasks"));
       const copy = el("div", "task-copy"), top = el("div", "task-top"); top.append(el("h3", "", jobName(job)), statePill(job));
-      const meta = el("div", "task-meta"); meta.append(el("span", "", t("attempts", { count: job.attempts, max: job.max_attempts })), el("span", "", t("stepProgress", { count: progress(job) })));
+      const meta = el("div", "task-meta"); meta.append(el("span", "", t("attempts", { count: job.attempts, max: job.maxAttempts })), el("span", "", t("stepProgress", { count: progress(job) })));
       const bar = el("div", "progress-track"), fill = el("span"); fill.style.width = progress(job) * 50 + "%"; bar.append(fill); bar.setAttribute("role", "progressbar"); bar.setAttribute("aria-label", jobName(job) + " / " + t("progress")); bar.setAttribute("aria-valuemin", "0"); bar.setAttribute("aria-valuemax", "2"); bar.setAttribute("aria-valuenow", String(progress(job)));
       copy.append(top, meta, bar);
-      if (job.last_error) copy.append(el("p", "task-error", t(job.state === "queued" ? "autoRetry" : job.state === "failed" ? "retryExhausted" : "missingVolume")));
+      if (job.lastError) copy.append(el("p", "task-error", errorMessage({ code: job.lastError })));
       const actions = el("div", "task-actions"); actions.append(button(t("details"), "text-button", () => taskDetail(job)));
       if (!["failed", "completed", "cancelled"].includes(job.state)) {
-        const cancel = button(t("cancelTask"), "secondary-button", () => cancelTaskModal(job)); cancel.dataset.cancelJob = job.id; cancel.disabled = !canWrite(); if (!canWrite()) cancel.title = t("readOnlyAction"); actions.append(cancel);
+        const cancel = button(t("cancelTask"), "secondary-button", () => cancelTaskModal(job, win)); cancel.dataset.cancelJob = job.id; cancel.disabled = !canWrite() || view.phase !== "ready"; if (!canWrite()) cancel.title = t("readOnlyAction"); actions.append(cancel);
       }
       row.append(mark, copy, actions); win.taskList.append(row);
     }
@@ -274,30 +306,44 @@
   }
   function taskDetail(job) {
     const content = el("div"), list = el("dl", "detail-grid");
-    for (const [key, value] of [["status", t(job.state)], ["progress", t("stepProgress", { count: progress(job) })], ["checkpoint", t(job.checkpoint?.step === "completed" ? "stepComplete" : job.checkpoint?.step === "prepared" ? "prepared" : "notStarted")], ["actions", t("attempts", { count: job.attempts, max: job.max_attempts })]]) list.append(el("dt", "", t(key)), el("dd", "", value));
-    content.append(list); if (job.last_error) content.append(el("p", "", t(job.last_error)));
+    for (const [key, value] of [["status", t(job.state)], ["progress", t("stepProgress", { count: progress(job) })], ["checkpoint", t(job.steps === 2 ? "stepComplete" : job.steps === 1 ? "prepared" : "notStarted")], ["actions", t("attempts", { count: job.attempts, max: job.maxAttempts })]]) list.append(el("dt", "", t(key)), el("dd", "", value));
+    content.append(list); if (job.lastError) content.append(el("p", "", errorMessage({ code: job.lastError })));
     showModal(jobName(job), content, [{ key: "done", style: "secondary-button", action: closeModal }]);
   }
-  function cancelTaskModal(job) {
-    const epoch = state.epoch, session = state.session, content = el("div"); content.append(el("p", "", t("cancelHint")));
+  function cancelTaskModal(job, win) {
+    const epoch = state.epoch, content = el("div"); content.append(el("p", "", t("cancelHint")));
     showModal(t("cancelQuestion", { name: jobName(job) }), content, [
       { key: "back", style: "secondary-button", action: closeModal },
-      { key: "cancelConfirm", style: "danger-button", action: async () => {
-        await api.cancelJob(job.id, session); if (epoch !== state.epoch) return;
-        closeModal(); await refreshData(); toast(t("cancelledToast")); focusActiveHeading();
+      { key: "cancelConfirm", style: "danger-button", action: async ({ isCurrent }) => {
+        const pending = win.pager.cancelJob(job.id); renderTaskRows(win);
+        try { await pending; } finally { if (epoch === state.epoch && currentWindow(win)) renderTaskRows(win); }
+        if (epoch !== state.epoch || !currentWindow(win) || !isCurrent()) return;
+        const cancelled = win.pager.snapshot().items.find(item => item.id === job.id)?.state === "cancelled";
+        closeModal();
+        try { await refreshData(); } catch { if (epoch === state.epoch && currentWindow(win)) toast(t("taskRefreshFailed")); return; }
+        if (epoch === state.epoch && currentWindow(win)) { toast(t(cancelled ? "cancelledToast" : "taskStateRefreshed")); focusActiveHeading(); }
       }}
     ]);
   }
-  function createTaskModal() {
+  function createTaskModal(win) {
     const content = el("div"), hint = el("p", "", t("newTaskHint")), label = el("label", "", t("taskValue")), input = el("input");
     input.id = "new-task-value"; input.type = "text"; input.maxLength = 80; input.placeholder = t("taskPlaceholder"); input.value = t("jobNew"); label.htmlFor = input.id;
     content.append(hint, label, input);
-    const epoch = state.epoch, session = state.session, id = "preview-" + crypto.randomUUID();
+    const epoch = state.epoch, source = state.taskSource, id = "preview-" + crypto.randomUUID(); let intent;
     showModal(t("newTask"), content, [
       { key: "back", style: "secondary-button", action: closeModal },
-      { key: "addToQueue", style: "primary-button", action: async () => {
-        await api.submitLabelJob({ id, key: id, value: input.value.trim() }, session); if (epoch !== state.epoch) return;
-        closeModal(); await refreshData(); toast(t("taskCreated")); focusActiveHeading();
+      { key: "addToQueue", style: "primary-button", action: async ({ isCurrent }) => {
+        if (!intent) {
+          const value = input.value.trim();
+          if (!value || value.length > 80 || value.includes("\0")) throw new M.ServiceError("invalidInput");
+          intent = Object.freeze({ id, key: id, value }); input.readOnly = true;
+        }
+        await source.submitLabelJob(intent); if (epoch !== state.epoch || !currentWindow(win) || !isCurrent()) return;
+        closeModal();
+        const refreshed = await moveTaskPage(win, "reload");
+        if (epoch !== state.epoch || !currentWindow(win)) return;
+        try { await refreshData(); } catch { if (epoch === state.epoch && currentWindow(win)) toast(t("taskRefreshFailed")); return; }
+        if (epoch === state.epoch && currentWindow(win)) { toast(t(refreshed ? "taskCreated" : "taskRefreshFailed")); focusActiveHeading(); }
       }}
     ]); input.focus(); input.select();
   }
@@ -375,15 +421,17 @@
   function showModal(title, content, actions) {
     closeModal(false); hidePanels();
     const previousFocus = document.activeElement, backdrop = el("div", "modal-backdrop"), modal = el("section", "modal"), head = el("header", "modal-header"), heading = el("h2", "", title);
+    const modalState = { element: modal, previousFocus }, isCurrent = () => state.modal === modalState;
     heading.id = "modal-title"; modal.setAttribute("role", "dialog"); modal.setAttribute("aria-modal", "true"); modal.setAttribute("aria-labelledby", heading.id);
     head.append(heading, namedIconButton("close", "close", closeModal)); const footer = el("div", "modal-actions"), failure = el("p", "modal-error"); failure.setAttribute("role", "alert");
     for (const action of actions) {
       const control = button(t(action.key), action.style, async () => {
+        if (!isCurrent()) return;
         control.disabled = true;
-        try { await action.action(); } catch (error) { failure.textContent = errorMessage(error); } finally { control.disabled = false; }
+        try { await action.action({ isCurrent }); } catch (error) { if (isCurrent()) failure.textContent = errorMessage(error); } finally { if (isCurrent()) control.disabled = false; }
       }); control.dataset.modalAction = action.key; footer.append(control);
     }
-    modal.append(head, content, failure, footer); backdrop.append(modal); $("#modal-root").replaceChildren(backdrop); state.modal = { element: modal, previousFocus };
+    modal.append(head, content, failure, footer); backdrop.append(modal); $("#modal-root").replaceChildren(backdrop); state.modal = modalState;
     backdrop.addEventListener("pointerdown", event => { if (event.target === backdrop) closeModal(); });
     $("input,button,select", modal)?.focus();
   }
@@ -391,7 +439,7 @@
     const previous = state.modal?.previousFocus; $("#modal-root").replaceChildren(); state.modal = null;
     if (restoreFocus !== false && previous?.isConnected) previous.focus();
   }
-  function focusActiveHeading() { const win = state.windows.get(state.active); const heading = win && $("h1", win.content); if (heading) { heading.tabIndex = -1; heading.focus(); } }
+  function focusActiveHeading() { if (state.modal) return; const win = state.windows.get(state.active); const heading = win && $("h1", win.content); if (heading) { heading.tabIndex = -1; heading.focus(); } }
 
   function renderDock() {
     const previous = document.activeElement?.dataset?.dockApp, dock = $("#dock"); dock.replaceChildren(); dock.setAttribute("aria-label", t("dock"));
@@ -433,7 +481,7 @@
     for (const event of state.events) {
       const row = el("article", "notification-item " + event.state + (event.sequence > state.ack ? " unread" : "")); row.dataset.eventSequence = String(event.sequence);
       row.append(icon(event.state === "failed" ? "error" : event.state === "waiting_for_volume" ? "storage" : event.type === "cancelled" ? "close" : event.state === "completed" ? "check" : "tasks"));
-      const copy = el("div"), job = state.jobs.find(j => j.id === event.job_id);
+      const copy = el("div"), job = [...(state.windows.get("tasks")?.pager?.snapshot().items || []), ...state.previewJobs].find(j => j.id === event.job_id);
       copy.append(el("strong", "", eventTitle(event)), el("p", "", job ? jobName(job) : t("tasks"))); row.append(copy); list.append(row);
     }
     if (!state.events.length) list.append(emptyState("bell", "emptyNotifications"));
@@ -475,13 +523,14 @@
     closeModal(false); prefs.locale = locale; const saved = persist(); refreshViews(); if (!saved) toast(t("prefsUnavailable"));
   }
   async function refreshData() {
-    const epoch = state.epoch, session = state.session;
-    const [overview, jobs] = await Promise.all([api.overview(session), api.listJobs(session)]);
-    if (epoch !== state.epoch) return;
-    state.overview = overview; state.jobs = jobs; state.consumer = "desktop-preview-" + overview.userID;
+    const epoch = state.epoch, serial = ++state.dataRequest, session = state.session, source = state.taskSource;
+    const overview = await source.overview(), preview = await source.page({ pageSize: 2 });
+    source.discardCursor(preview.nextCursor);
+    if (epoch !== state.epoch || serial !== state.dataRequest || source !== state.taskSource) return;
+    state.overview = overview; state.previewJobs = preview.tasks; state.consumer = "desktop-preview-" + overview.userID;
     if (canWrite()) {
       const events = await api.pollEvents(state.consumer, session);
-      if (epoch !== state.epoch) return;
+      if (epoch !== state.epoch || serial !== state.dataRequest) return;
       state.events = M.mergeEvents(state.events, events);
     }
     refreshViews();
@@ -489,12 +538,15 @@
   async function switchScenario(scenario, showPreferences = false) {
     const epoch = ++state.epoch, old = state.session;
     document.body.dataset.ready = "false"; closeModal(false); hidePanels();
-    for (const win of state.windows.values()) win.element.remove();
-    state.windows.clear(); state.active = null; state.jobs = []; state.events = []; state.ack = 0; state.overview = null;
-    await api.endSession(old);
+    for (const win of state.windows.values()) { win.pager?.dispose(); win.element.remove(); }
+    const oldSource = state.taskSource;
+    state.windows.clear(); state.active = null; state.previewJobs = []; state.events = []; state.ack = 0; state.overview = null; state.taskSource = null; state.session = null;
+    if (oldSource) await oldSource.close(); else await api.endSession(old);
     const session = await api.beginFixtureSession(scenario);
     if (epoch !== state.epoch) { await api.endSession(session); return; }
-    state.session = session; state.scenario = scenario; await refreshData();
+    const source = await P.createFixtureTaskSource(api, session);
+    if (epoch !== state.epoch) { await source.close(); return; }
+    state.session = session; state.taskSource = source; state.scenario = scenario; await refreshData();
     if (epoch !== state.epoch) return;
     await openWindow("overview", { route: true });
     if (showPreferences) await openWindow("preferences");
@@ -509,7 +561,7 @@
   $("#profile-button").addEventListener("click", () => togglePanel("profile-menu"));
   $("#open-preferences").addEventListener("click", () => openWindow("preferences"));
   $("#open-about").addEventListener("click", () => { hidePanels(); const copy = el("div"); copy.append(el("p", "", t("aboutText"))); showModal(t("about"), copy, [{ key: "done", style: "secondary-button", action: closeModal }]); });
-  $("#refresh-events").addEventListener("click", async () => { try { await refreshData(); } catch (error) { toast(errorMessage(error)); } });
+  $("#refresh-events").addEventListener("click", async () => { const epoch = state.epoch; try { await refreshData(); } catch (error) { if (epoch === state.epoch) toast(errorMessage(error)); } });
   $("#read-all").addEventListener("click", async () => {
     const epoch = state.epoch, session = state.session, last = Math.max(0, ...state.events.map(e => e.sequence)), control = $("#read-all");
     control.disabled = true;

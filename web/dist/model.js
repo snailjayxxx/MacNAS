@@ -34,9 +34,25 @@
     { id: "note", parent: "personal", nameKey: "noteFile", kind: "text", audience: "fixture-owner", size: "4 KB", modified: "2026-10-15", previewKey: "notePreview" },
     { id: "list", parent: "travel", nameKey: "tripFile", kind: "text", audience: "fixture-owner", size: "1 KB", modified: "2026-10-13", previewKey: "tripPreview" }
   ];
-  function createFixtureAdapter({ now = () => new Date().toISOString() } = {}) {
+  function compareTaskIDs(a, b) {
+    const encoder = new TextEncoder(), x = encoder.encode(a), y = encoder.encode(b);
+    for (let i = 0; i < Math.min(x.length, y.length); i++) if (x[i] !== y[i]) return x[i] - y[i];
+    return x.length - y.length;
+  }
+  function pageParameters(params = {}) {
+    check(params && Object.getPrototypeOf(params) === Object.prototype);
+    const descriptors = Object.getOwnPropertyDescriptors(params), keys = Reflect.ownKeys(descriptors);
+    check(keys.every(key => ["pageSize", "cursor"].includes(key) && descriptors[key].enumerable && Object.hasOwn(descriptors[key], "value")));
+    const pageSize = Object.hasOwn(params, "pageSize") ? params.pageSize : 50;
+    check(Number.isInteger(pageSize) && pageSize >= 1 && pageSize <= 100);
+    const cursor = Object.hasOwn(params, "cursor") ? params.cursor : undefined;
+    if (Object.hasOwn(params, "cursor")) check(typeof cursor === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(cursor));
+    return { pageSize, cursor };
+  }
+  function createFixtureAdapter({ now = () => new Date().toISOString(), monotonicNow = () => performance.now() } = {}) {
+    check(typeof now === "function" && typeof monotonicNow === "function");
     const jobs = clone(initialJobs), events = clone(initialEvents);
-    const sessions = new Map(), consumers = new Map(), submissions = new Map();
+    const sessions = new Map(), consumers = new Map(), submissions = new Map(), pages = new Map(), consumedPages = new Map();
     let nextSequence = 5, serial = 0;
     function caller(session) {
       const value = sessions.get(session);
@@ -56,7 +72,7 @@
         sessions.set(session, { id: scenario === "reader" ? "fixture-family" : "fixture-owner", role: scenario === "reader" ? "reader" : "administrator", mode: scenario === "recovery" ? "read_only_recovery" : "synthetic_development" });
         return session;
       },
-      async endSession(session) { sessions.delete(session); },
+      async endSession(session) { sessions.delete(session); for (const [token, entry] of pages) if (entry.session === session) pages.delete(token); },
       async overview(session) {
         const user = caller(session), visible = jobs.filter(j => j.owner_user === user.id && j.app_id === null);
         return clone({ apiVersion: 1, source: "fixture", userID: user.id, role: user.role, mode: user.mode, languages: ["zh-CN", "ja-JP"], databaseSchema: 3,
@@ -65,6 +81,37 @@
       },
       async authorizeApp(id, session) { const user = caller(session); check(apps.includes(id), "notFound"); check(id !== "settings" || user.role === "administrator", "denied"); return true; },
       async listJobs(session) { const user = caller(session); return clone(jobs.filter(j => j.owner_user === user.id && j.app_id === null)); },
+      async listJobsPage(params, session) {
+        const user = caller(session), { pageSize, cursor } = pageParameters(params), time = monotonicNow();
+        check(Number.isFinite(time), "unavailable");
+        for (const [token, entry] of consumedPages) if (entry.deadline <= time) consumedPages.delete(token);
+        let previous;
+        if (cursor !== undefined) {
+          const used = consumedPages.get(cursor);
+          if (used) { check(used.session === session, "denied"); throw new ServiceError("replay"); }
+          previous = pages.get(cursor);
+          check(previous && previous.session === session && previous.pageSize === pageSize, "denied");
+          if (previous.deadline <= time) { pages.delete(cursor); throw new ServiceError("expired"); }
+        }
+        for (const [token, entry] of pages) if (entry.deadline <= time) pages.delete(token);
+        const visible = jobs.filter(j => j.owner_user === user.id && j.app_id === null && (!previous || compareTaskIDs(j.id, previous.after) > 0)).sort((a, b) => compareTaskIDs(a.id, b.id));
+        const items = visible.slice(0, pageSize), hasMore = visible.length > pageSize;
+        if (hasMore) check(pages.size - (previous ? 1 : 0) < 128, "budgetExceeded");
+        const nextCursor = hasMore ? crypto.randomUUID() : null, deadline = previous?.deadline ?? time + 60000;
+        const result = clone({ pageVersion: 1, order: "id-utf8", consistency: "live", pageSize, items, nextCursor });
+        if (previous) {
+          pages.delete(cursor);
+          if (consumedPages.size >= 128) consumedPages.delete(consumedPages.keys().next().value);
+          consumedPages.set(cursor, { session, deadline });
+        }
+        if (nextCursor) pages.set(nextCursor, { session, pageSize, after: items.at(-1).id, deadline });
+        return result;
+      },
+      async discardJobPage(cursor, session) {
+        caller(session); pageParameters({ cursor });
+        const entry = pages.get(cursor); if (!entry) return false;
+        check(entry.session === session, "denied"); return pages.delete(cursor);
+      },
       async submitLabelJob({ id, key, value }, session) {
         const user = write(session); check(user.role === "administrator", "denied");
         check(typeof id === "string" && id.length > 0 && id.length <= 128 && typeof key === "string" && key.length > 0 && key.length <= 128);
@@ -213,5 +260,5 @@
       }
     });
   }
-  return { states, apps, ServiceError, createFixtureAdapter, createBridgeAdapter, mergeEvents, geometry, readPreferences, savePreferences };
+  return { states, apps, ServiceError, createFixtureAdapter, createBridgeAdapter, compareTaskIDs, pageParameters, mergeEvents, geometry, readPreferences, savePreferences };
 });
