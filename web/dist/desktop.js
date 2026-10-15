@@ -1,6 +1,6 @@
 (function () {
   "use strict";
-  const M = window.MacNASModel, I = window.MacNASI18n, P = window.MacNASTaskPages, N = window.MacNASNotifications;
+  const M = window.MacNASModel, I = window.MacNASI18n, P = window.MacNASTaskPages, N = window.MacNASNotifications, F = window.MacNASDirectoryView;
   const api = M.createFixtureAdapter();
   const $ = (query, root = document) => root.querySelector(query);
   const paths = {
@@ -44,7 +44,7 @@
   let storage;
   try { storage = window.localStorage; } catch { storage = { getItem: () => null, setItem: () => { throw new Error("unavailable"); } }; }
   const prefs = M.readPreferences(storage);
-  const state = { prefs, session: null, taskSource: null, overview: null, previewJobs: [], notifications: null, scenario: "owner", epoch: 0, dataRequest: 0, z: 10, windows: new Map(), active: null, panel: null, modal: null };
+  const state = { prefs, session: null, taskSource: null, directorySource: null, overview: null, previewJobs: [], notifications: null, scenario: "owner", epoch: 0, dataRequest: 0, z: 10, windows: new Map(), active: null, panel: null, modal: null, modalEpoch: 0 };
   const t = (key, vars) => I.t(prefs.locale, key, vars);
   const appIDs = ["overview", "files", "storage", "apps", "tasks", "settings"];
   const canWrite = () => state.overview?.mode === "synthetic_development";
@@ -78,6 +78,8 @@
   function closeWindow(id) {
     const win = state.windows.get(id); if (!win) return;
     win.pager?.dispose();
+    win.filePager?.dispose(); win.previewRequest = (win.previewRequest || 0) + 1;
+    if (win.fileModal && state.modal === win.fileModal) closeModal(false);
     saveGeometry(win); win.element.remove(); state.windows.delete(id);
     if (state.active === id) state.active = [...state.windows.values()].filter(w => !w.minimized).at(-1)?.id || null;
     if (state.active) focusWindow(state.active); else renderDock();
@@ -184,7 +186,7 @@
       if (win.id === "storage") renderStorage(win);
       if (win.id === "apps") renderApps(win);
       if (win.id === "settings" || win.id === "preferences") renderPreferences(win);
-    } catch (error) { if (epoch === state.epoch) renderDenied(win, error); }
+    } catch (error) { if (epoch === state.epoch && currentWindow(win)) renderDenied(win, error); }
   }
   function statePill(job) { return el("span", "state-pill " + job.state, t(job.state)); }
   function progress(job) { return job.steps; }
@@ -347,35 +349,115 @@
       }}
     ]); input.focus(); input.select();
   }
-  async function renderFiles(win) {
-    const { page } = buildPage(win, "fileIntro"), epoch = state.epoch;
-    const crumbs = el("nav", "file-breadcrumbs"); crumbs.setAttribute("aria-label", t("root"));
-    crumbs.append(button(t("root"), "", () => { win.view.path = []; renderWindow(win); }));
-    win.view.path.forEach((part, index) => { crumbs.append(icon("arrow"), button(t(part.nameKey), "", () => { win.view.path = win.view.path.slice(0, index + 1); renderWindow(win); })); });
-    page.append(crumbs);
+  function renderFiles(win) {
+    const { page } = buildPage(win, "fileIntro"); win.previewRequest = (win.previewRequest || 0) + 1;
+    if (!win.filePager) { win.filePager = F.createDirectoryPager({ source: state.directorySource, pageSize: 3 }); win.libraryPhase = "idle"; win.libraries = []; }
+    const libraries = el("div", "file-libraries"), label = el("label", "", t("fileLibrary")); label.htmlFor = "file-library";
+    win.librarySelect = el("select"); win.librarySelect.id = label.htmlFor;
+    win.librarySelect.addEventListener("change", event => { void moveFilePage(win, "open", { libraryID: event.target.value }); });
+    win.libraryReload = button(t("reloadLibraries"), "secondary-button", () => loadFileLibraries(win), "refresh");
+    libraries.append(label, win.librarySelect, win.libraryReload); page.append(libraries);
+    win.librarySummary = el("p", "content-note"); win.librarySummary.setAttribute("role", "status"); page.append(win.librarySummary);
+    win.fileCrumbs = el("nav", "file-breadcrumbs"); win.fileCrumbs.setAttribute("aria-label", t("root")); page.append(win.fileCrumbs);
     const toolbar = el("div", "files-toolbar");
     const search = searchField("searchFiles", win.view.search, event => { win.view.search = event.target.value; renderFileRows(win); });
-    const view = namedIconButton("fileView", win.view.grid ? "list" : "apps", () => { win.view.grid = !win.view.grid; renderWindow(win); });
-    toolbar.append(search, view); page.append(toolbar, el("p", "content-note", t("sampleFiles")));
-    const parent = win.view.path.at(-1)?.id || "", response = await api.listFiles(parent, state.session);
-    if (epoch !== state.epoch || !win.element.isConnected) return;
-    win.files = response; win.fileList = el("div", "file-list" + (win.view.grid ? " grid" : "")); page.append(win.fileList); renderFileRows(win);
+    win.fileSearch = $("input", search); win.fileSearch.maxLength = 128; win.fileSearch.dataset.fileSearch = "";
+    const filter = selectField("file-type", "fileType", [["all", "allFiles"], ["directory", "foldersOnly"], ["file", "filesOnly"]], win.view.filter, event => { win.view.filter = event.target.value; renderFileRows(win); });
+    win.fileFilter = $("select", filter);
+    const grid = namedIconButton("fileView", win.view.grid ? "list" : "apps", () => { win.view.grid = !win.view.grid; renderFiles(win); }); grid.setAttribute("aria-pressed", String(win.view.grid));
+    toolbar.append(search, filter, grid); page.append(toolbar, el("p", "content-note file-scope", t("filePageScope")), el("p", "content-note", t("fileSyntheticHint")));
+    const navigation = el("div", "task-pagination"), actions = el("div", "task-page-actions");
+    win.fileCount = el("p", "toolbar-count"); win.fileCount.setAttribute("role", "status"); win.fileCount.setAttribute("aria-live", "polite"); win.fileCount.tabIndex = -1;
+    win.fileReload = button(t("reloadFiles"), "secondary-button", () => moveFilePage(win, "reload"), "refresh"); win.fileReload.dataset.fileReload = "";
+    win.fileNext = button(t("nextFilePage"), "secondary-button", () => moveFilePage(win, "next"), "arrow"); win.fileNext.dataset.fileNext = "";
+    actions.append(win.fileReload, win.fileNext); navigation.append(win.fileCount, actions); page.append(navigation);
+    win.fileFailure = el("p", "readonly-note"); win.fileFailure.setAttribute("role", "alert"); page.append(win.fileFailure);
+    win.fileList = el("div", "file-list" + (win.view.grid ? " grid" : "")); page.append(win.fileList);
+    win.fileEnd = el("p", "content-note"); page.append(win.fileEnd); renderFileRows(win);
+    if (win.libraryPhase === "idle") void loadFileLibraries(win);
+  }
+  function fileError(error) {
+    const keys = { staleState: "fileDirectoryChanged", expired: "fileContinuationLost", replay: "fileContinuationLost", denied: "fileAccessDenied", missingVolume: "fileVolumeMissing", budgetExceeded: "fileBudgetExceeded", unavailable: "fileUnavailable", timedOut: "fileUnavailable", cancelled: "fileUnavailable" };
+    return keys[error] ? t(keys[error]) : errorMessage({ code: error }) + " " + t("fileReloadRequired");
+  }
+  async function loadFileLibraries(win) {
+    if (!currentWindow(win) || win.libraryPhase === "loading") return;
+    const epoch = state.epoch, serial = win.libraryRequest = (win.libraryRequest || 0) + 1, source = state.directorySource;
+    win.libraryPhase = "loading"; win.libraryError = null; renderFileRows(win);
+    try {
+      const libraries = await source.libraries();
+      if (epoch !== state.epoch || !currentWindow(win) || serial !== win.libraryRequest) return;
+      win.libraries = libraries; win.libraryPhase = "ready";
+      const current = win.filePager.snapshot().libraryID;
+      if (!libraries.some(item => item.libraryID === current)) {
+        if (libraries.length) await moveFilePage(win, "open", { libraryID: libraries[0].libraryID }, false);
+        else { win.filePager.dispose(); win.filePager = F.createDirectoryPager({ source, pageSize: 3 }); }
+      }
+    } catch (error) {
+      if (epoch !== state.epoch || !currentWindow(win) || serial !== win.libraryRequest) return;
+      win.libraryPhase = "error"; win.libraryError = error.code || "unavailable";
+    }
+    if (epoch === state.epoch && currentWindow(win)) renderFileRows(win);
+  }
+  async function moveFilePage(win, direction, target, focus = true) {
+    if (!currentWindow(win) || win.libraryPhase !== "ready") return;
+    const epoch = state.epoch, pager = win.filePager;
+    win.previewRequest = (win.previewRequest || 0) + 1;
+    if (win.fileModal && state.modal === win.fileModal) closeModal(false);
+    if (direction === "open") { win.view.search = ""; win.view.filter = "all"; win.fileSearch.value = ""; win.fileFilter.value = "all"; }
+    const pending = direction === "open" ? pager.open(target) : pager[direction](); renderFileRows(win);
+    try { await pending; } catch { /* The controller exposes only a fixed error code and retains its labelled last page. */ }
+    if (epoch !== state.epoch || !currentWindow(win) || pager !== win.filePager) return;
+    renderFileRows(win); if (focus && !state.modal) win.fileCount.focus();
+  }
+  async function previewFile(win, file) {
+    if (!currentWindow(win) || win.libraryPhase !== "ready") return;
+    focusWindow(win.id);
+    const epoch = state.epoch, pager = win.filePager, serial = win.previewRequest = (win.previewRequest || 0) + 1, modalEpoch = state.modalEpoch;
+    const pending = pager.preview(file.relativePath); renderFileRows(win);
+    let data;
+    try { data = await pending; } catch { /* The current page shows the failure; no raw diagnostics enter the DOM. */ }
+    if (epoch !== state.epoch || !currentWindow(win) || pager !== win.filePager || serial !== win.previewRequest) return;
+    renderFileRows(win); if (!data || state.modalEpoch !== modalEpoch || state.active !== win.id) return;
+    [...win.fileList.querySelectorAll("[data-file-path]")].find(row => row.dataset.filePath === file.relativePath)?.focus();
+    const content = el("div"); content.append(el("p", "", t("filePreviewHint")), el("div", "preview-content", data.text));
+    showModal(file.name, content, [{ key: "done", style: "secondary-button", action: closeModal }]); win.fileModal = state.modal;
   }
   function renderFileRows(win) {
-    if (!win.fileList) return;
-    win.fileList.replaceChildren();
-    const visible = win.files.filter(file => t(file.nameKey).toLocaleLowerCase().includes(win.view.search.trim().toLocaleLowerCase()));
-    if (!visible.length) { win.fileList.append(emptyState("files", "emptyFolder")); return; }
+    if (!currentWindow(win) || !win.fileList) return;
+    const view = win.filePager.snapshot(), busy = ["loading", "previewing"].includes(view.phase), available = win.libraryPhase === "ready";
+    const actionable = available && view.phase === "ready" && !view.requiresReload, visible = F.filterFiles(view.items, win.view);
+    win.librarySelect.replaceChildren();
+    for (const library of win.libraries) { const option = el("option", "", library.libraryID); option.value = library.libraryID; win.librarySelect.append(option); }
+    win.librarySelect.value = view.libraryID || ""; win.librarySelect.disabled = !available || !win.libraries.length;
+    win.libraryReload.disabled = win.libraryPhase === "loading";
+    const selected = win.libraries.find(item => item.libraryID === view.libraryID);
+    win.librarySummary.textContent = win.libraryPhase === "loading" ? t("librariesReading") : t("fileLibraryCount", { count: win.libraries.length }) + " " + (selected?.estimatedBytes === null || !selected ? t("fileEstimateUnavailable") : t("fileLibraryEstimate", { bytes: new Intl.NumberFormat(prefs.locale).format(selected.estimatedBytes) }));
+    win.fileCrumbs.replaceChildren();
+    if (view.libraryID) {
+      win.fileCrumbs.append(button(view.libraryID, "", () => moveFilePage(win, "open", { libraryID: view.libraryID })));
+      const parts = view.relativePath ? view.relativePath.split("/") : [];
+      parts.forEach((part, index) => { win.fileCrumbs.append(icon("arrow"), button(part, "", () => moveFilePage(win, "open", { libraryID: view.libraryID, relativePath: parts.slice(0, index + 1).join("/") }))); });
+    }
+    win.fileCount.textContent = t(view.phase === "loading" ? "filesReading" : view.phase === "previewing" ? "filePreviewReading" : view.pageNumber ? "filePageCount" : "filePageStart", { page: view.pageNumber, count: view.items.length, matches: visible.length });
+    win.fileReload.disabled = !available || busy || !view.libraryID || view.phase === "closed";
+    win.fileNext.disabled = !actionable || !view.hasNext;
+    const failure = win.libraryError || view.error;
+    win.fileFailure.hidden = !failure;
+    win.fileFailure.textContent = failure ? (win.libraryError ? t("fileLibrariesFailed") + " " : "") + fileError(failure) + (view.items.length ? " " + t("fileStaleView") : "") : "";
+    win.fileEnd.hidden = view.phase !== "ready" || view.hasNext; win.fileEnd.textContent = t("filePageEnd");
+    win.fileList.replaceChildren(); win.fileList.setAttribute("aria-busy", String(busy));
+    win.fileList.classList.toggle("stale", !actionable && view.items.length > 0);
+    if (busy && view.items.length) win.fileList.append(el("p", "content-note", t("filePreviousWhileLoading")));
+    if (!visible.length && !busy && available && view.phase === "ready") win.fileList.append(emptyState("files", view.items.length ? "fileNoMatches" : "emptyFolder", view.items.length ? "fileNoMatchHint" : "fileEmptyHint"));
+    if (available && !win.libraries.length) win.fileList.append(emptyState("files", "fileNoLibraries"));
     for (const file of visible) {
-      const row = button("", "file-row", async () => {
-        if (file.kind === "folder") { win.view.path.push({ id: file.id, nameKey: file.nameKey }); win.view.search = ""; await renderWindow(win); }
-        else {
-          const epoch = state.epoch; const data = await api.previewFile(file.id, state.session); if (epoch !== state.epoch) return;
-          const content = el("div"); content.append(el("p", "", t("sampleFiles")), el("div", "preview-content", t(data.previewKey))); showModal(t(data.nameKey), content, [{ key: "done", style: "secondary-button", action: closeModal }]);
-        }
-      });
-      row.dataset.fileId = file.id;
-      const name = el("span"); name.append(icon(file.kind === "folder" ? "folder" : "file"), el("span", "", t(file.nameKey))); row.append(name, el("span", "", file.size || t("folder")), el("span", "", file.modified)); win.fileList.append(row);
+      const row = button("", "file-row", () => file.kind === "directory" ? moveFilePage(win, "open", { libraryID: view.libraryID, relativePath: file.relativePath }) : previewFile(win, file));
+      row.disabled = !actionable || file.kind === "file" && !file.canPreview; row.dataset.filePath = file.relativePath;
+      if (file.kind === "file" && !file.canPreview) row.title = t("filePreviewUnsupported");
+      const name = el("span"); name.append(icon(file.kind === "directory" ? "folder" : "file"), el("span", "", file.name));
+      row.append(name, el("span", "", file.bytes === null ? t("folder") : t("fileBytes", { bytes: new Intl.NumberFormat(prefs.locale).format(file.bytes) })), el("span", "", file.modifiedAt === null ? t("fileTimeUnavailable") : new Intl.DateTimeFormat(prefs.locale, { dateStyle: "medium", timeStyle: "short" }).format(new Date(file.modifiedAt))));
+      win.fileList.append(row);
     }
   }
   function renderStorage(win) {
@@ -436,7 +518,7 @@
     $("input,button,select", modal)?.focus();
   }
   function closeModal(restoreFocus = true) {
-    const previous = state.modal?.previousFocus; $("#modal-root").replaceChildren(); state.modal = null;
+    const previous = state.modal?.previousFocus; $("#modal-root").replaceChildren(); state.modal = null; state.modalEpoch++;
     if (restoreFocus !== false && previous?.isConnected) previous.focus();
   }
   function focusActiveHeading() { if (state.modal) return; const win = state.windows.get(state.active); const heading = win && $("h1", win.content); if (heading) { heading.tabIndex = -1; heading.focus(); } }
@@ -551,19 +633,20 @@
   async function switchScenario(scenario, showPreferences = false) {
     const epoch = ++state.epoch, old = state.session;
     document.body.dataset.ready = "false"; closeModal(false); hidePanels();
-    for (const win of state.windows.values()) { win.pager?.dispose(); win.element.remove(); }
+    for (const win of state.windows.values()) { win.pager?.dispose(); win.filePager?.dispose(); win.element.remove(); }
     const oldSource = state.taskSource; state.notifications?.dispose();
-    state.windows.clear(); state.active = null; state.previewJobs = []; state.notifications = null; state.overview = null; state.taskSource = null; state.session = null;
+    state.directorySource?.dispose();
+    state.windows.clear(); state.active = null; state.previewJobs = []; state.notifications = null; state.overview = null; state.taskSource = null; state.directorySource = null; state.session = null;
     if (oldSource) await oldSource.close(); else await api.endSession(old);
     const session = await api.beginFixtureSession(scenario);
     if (epoch !== state.epoch) { await api.endSession(session); return; }
     const source = await P.createFixtureTaskSource(api, session);
     if (epoch !== state.epoch) { await source.close(); return; }
-    let notifications;
-    try { notifications = await N.createFixtureNotificationView(api, session, { consumerID: "desktop-preview-" + source.context.userID }); }
-    catch (error) { await source.close(); throw error; }
-    if (epoch !== state.epoch) { notifications.dispose(); await source.close(); return; }
-    state.session = session; state.taskSource = source; state.notifications = notifications; state.scenario = scenario; await refreshData();
+    let notifications, directorySource;
+    try { notifications = await N.createFixtureNotificationView(api, session, { consumerID: "desktop-preview-" + source.context.userID }); directorySource = await F.createFixtureDirectorySource(api, session); }
+    catch (error) { notifications?.dispose(); directorySource?.dispose(); await source.close(); throw error; }
+    if (epoch !== state.epoch) { notifications.dispose(); directorySource.dispose(); await source.close(); return; }
+    state.session = session; state.taskSource = source; state.directorySource = directorySource; state.notifications = notifications; state.scenario = scenario; await refreshData();
     if (epoch !== state.epoch) return;
     await openWindow("overview", { route: true });
     if (showPreferences) await openWindow("preferences");

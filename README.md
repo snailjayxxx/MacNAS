@@ -61,4 +61,6 @@ N-017加入[当前页任务展示](docs/decisions/ADR-011-task-page-presentation
 
 N-018加入[有界通知展示](docs/decisions/ADR-012-bounded-notification-view.md)：最多100条已加载待确认通知，满额停止读取，确认成功后清理本批；失败保留原批/原位置供显式重试，断连不伪装确认或自动重连。名称仅查当前页/预览，静态页仍不连接数据库。回家清单新增N01–N06，窗口/任务/通知及实际DOM均待测；后续计划为[有界目录查询](docs/plans/N-019-BOUNDED-DIRECTORY-PAGES.md)。
 
-N-019加入[有界目录页原型](docs/decisions/ADR-013-bounded-directory-pages.md)：每页最多100，单次8192项/1MiB名称/5秒扫描预算；目录变化要求重读，继续链绑定目录批准/会话并限64条、60秒。已有1000项数组仍超限拒绝，元数据按读取时返回，没有文件系统快照或生产规模承诺。静态文件窗口尚未接入；后续为[目录当前页展示](docs/plans/N-020-DIRECTORY-PAGE-PRESENTATION.md)，实际网页验收仍等回家。
+N-019加入[有界目录页原型](docs/decisions/ADR-013-bounded-directory-pages.md)：每页最多100，单次8192项/1MiB名称/5秒扫描预算；目录变化要求重读，继续链绑定目录批准/会话并限64条、60秒。已有1000项数组仍超限拒绝，元数据按读取时返回，没有文件系统快照或生产规模承诺。N-019完成时静态文件窗口尚未接入；接续任务为[目录当前页展示](docs/plans/N-020-DIRECTORY-PAGE-PRESENTATION.md)，实际网页验收仍等回家。
+
+N-020加入[目录当前页展示](docs/decisions/ADR-014-directory-page-presentation.md)：文件窗口每页3项，本页搜索/类型过滤、独立资料库摘要、面包屑及有界只读文本预览；目录来源借用会话，关闭文件窗口不关闭任务/通知连接，迟到结果不覆盖新目录。页面仍是固定内存演示，时间/估计未知，没有真实NAS连接。[回家清单](web/tests/BROWSER_ACCEPTANCE.md)新增F01–F08，全部待测；下一步为[通知消费位置只读核对](docs/plans/N-021-NOTIFICATION-CONSUMER-STATUS.md)。

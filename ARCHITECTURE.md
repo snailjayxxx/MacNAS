@@ -1,4 +1,4 @@
-# MacNAS 原型架构（N-019）
+# MacNAS 原型架构（N-020）
 
 Swift 6 / macOS 15部署目标，PostgreSQL 18。当前为非root CLI、无监听的业务API和两个自研可信样例；没有生产HTTP登录、系统Helper或正式接管。
 
@@ -102,3 +102,11 @@ DescriptorLibrary新增UTF-8名称顺序的受限目录页；每次扫描最多8
 第12个固定方法listFilesPage与具名客户端支持精确页DTO、跨页UTF-8顺序及有界本地继续链；普通名称不进入词典，客户端本地discardFilePage无RPC，不释放宿主预算。Schema 3/SQL表与生产身份保持原范围。实际Node子进程管道仅由测试宿主先批准新建合成目录，生产消息/CLI没有新增自动授权入口。
 
 静态网页尚未接入目录页，HTML/CSP/白名单不变，W/T/N及完整浏览器清单仍全部待测。取舍与验证范围见[ADR-013](docs/decisions/ADR-013-bounded-directory-pages.md)及[N-019验收范围](docs/plans/N-019-ACCEPTANCE.md)。
+
+## N-020目录当前页展示
+
+directory-view.js显式借用桌面已有fixture会话或具名客户端，投影普通名称/路径/文本及有界元数据；来源dispose与窗口dispose都不关闭共享提供者，由身份所有者统一关闭一次。控制器只保留当前页，库/路径/窗口/身份代次丢弃迟到页及预览，失败保留标注的旧结果并等待显式重读。
+
+静态文件窗口每页3项，搜索/类型过滤仅查本页，摘要独立，继续替换/重读回头；固定合成树有空/嵌套目录和私有库，时间及估计未知。fixture标记synthetic-fixed-directory，不冒充真实扫描/批准；真实宿主仍按N-019目录标记和预算读取。纯文本预览最多64KiB并再次校验上下文及字节数，没有文件写入接口。
+
+HTML/白名单仅增加directory-view.js，具名客户端仍未加载/提供，CSP connect-src为none。实际Node/Swift管道经展示来源/控制器，现有40份核心不变，204项原生证据与重跑的1项内嵌Node场景明确组成205项覆盖，不称本轮新全量。详见[ADR-014](docs/decisions/ADR-014-directory-page-presentation.md)及[证据](docs/evidence/n020-2026-10-15.json)。W/T/N及新增F01–F08全部等用户回家，DOM、布局、焦点、键盘和翻译质量仍未验收。

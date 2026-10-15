@@ -35,3 +35,9 @@ DescriptorLibrary每次有界全扫描，最多8192项、名称合计1MiB、单�
 每API最多64个待用及64个消费墓碑，整条链60秒不续期；绑定会话/实例/数据库/用户/角色/模式、资料库/路径/页大小、卷/介质/挂载身份、批准/清单修订及内容reader身份。范围不符denied，已知过期expired，已消费且保留墓碑replay，未知denied；退出/重启不延续。无关清单修订也保守拒绝。查询/授权/编码失败不消费，成功响应传输丢失可能已消费，需显式重读；不会自动重试。
 
 恢复只读可以使用同进程既有批准读取，但不能扩大授权；新恢复实例仍无清单/批准。令牌/标记不进入可携包，无新SQL表/迁移。完整消息和具名客户端DTO见[桌面契约](DESKTOP_API.md)，取舍与限制见[ADR-013](../decisions/ADR-013-bounded-directory-pages.md)。
+
+## N-020展示边界
+
+新增directory-view.js显式借用已有fixture会话或具名客户端。宿主仍使用本契约原有卷/目录批准及有界读取；网页本身为固定内存样例，每页3项，没有真实批准或磁盘扫描。样例consistency为synthetic-fixed-directory，实际宿主仍为directory-stamped-live-metadata；未知时间/库估计为null，不把样例数组排序当成真实扫描证据。
+
+控制器只保留当前页，错误保留标注的旧内容并要求显式重读；关闭窗口不关闭任务/通知共享提供者。预览限当前页普通文本且再次校验64KiB/UTF-8/上下文，宿主依旧每次独立授权。接口见[桌面契约](DESKTOP_API.md)，生命周期、迟到结果及限制见[ADR-014](../decisions/ADR-014-directory-page-presentation.md)。F01–F08和既有W/T/N均待用户回家实测，没有浏览器业务连接或生产文件访问。

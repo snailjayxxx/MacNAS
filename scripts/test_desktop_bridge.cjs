@@ -7,6 +7,7 @@ const M=require("../web/dist/model.js");
 const C=require("../web/dist/bridge-client.js");
 const P=require("../web/dist/task-pages.js");
 const N=require("../web/dist/notification-view.js");
+const F=require("../web/dist/directory-view.js");
 const binary=path.join(process.env.MACNAS_BINARY_DIR||"","macnas");
 const root=process.env.MACNAS_BRIDGE_TEST_ROOT,readonly=process.env.MACNAS_BRIDGE_READONLY_ROOT;
 const hosts=new Set(),errorCode=code=>error=>error instanceof M.ServiceError&&error.code===code;
@@ -295,4 +296,17 @@ test("committed notification ACK timeout keeps the old batch unresolved even whe
     assert.deepEqual(await restarted.api.request("pollEvents",{consumerID:"presentation-timeout",limit:100}),[]);
     assert.deepEqual(view.snapshot().items,batch.items);assert.equal(view.snapshot().confirmedThrough,0);
   } finally {view.dispose();await restarted.finish();}
+});
+
+test("directory presentation preserves actual metadata and missing-volume authority while borrowing the shared client",async()=>{
+  const host=new PipeHost(root),client=host.typed(),source=await F.createClientDirectorySource(client),pager=F.createDirectoryPager({source,pageSize:3});
+  try {
+    const libraries=await source.libraries();assert.equal(libraries.length,1);assert.equal(libraries[0].state,"missing");
+    assert.equal(libraries[0].root,undefined);assert.ok(Number.isSafeInteger(libraries[0].estimatedBytes));
+    await assert.rejects(pager.open({libraryID:libraries[0].libraryID}),errorCode("missingVolume"));
+    assert.equal(pager.snapshot().requiresReload,true);assert.equal(pager.snapshot().hasNext,false);
+    await assert.rejects(source.preview({libraryID:libraries[0].libraryID,relativePath:"README.txt"}),errorCode("missingVolume"));
+    pager.dispose();source.dispose();assert.equal(client.closed,false);assert.ok(Array.isArray((await client.listJobsPage({pageSize:1})).items));
+    assert.equal(fs.existsSync(path.join(root,"host-binding/fixtures")),false);
+  } finally {pager.dispose();source.dispose();client.close();await host.finish();}
 });

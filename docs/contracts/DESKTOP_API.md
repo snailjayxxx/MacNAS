@@ -137,6 +137,22 @@ listFilesPage参数为{libraryID,relativePath?,pageSize?,cursor?}，默认空路
 
 恢复只读可查询同进程既有批准目录，不能扩大批准；新宿主/恢复实例没有自动目录授权。实际Node子进程管道由Swift测试宿主先显式批准新建合成目录，不为生产CLI添加自动批准入口。静态fixture页面尚未接入本方法，主机客户端仍不加载/提供，HTML/CSP/白名单不变。详见[ADR-013](../decisions/ADR-013-bounded-directory-pages.md)、[合成资料库契约](FIXTURE_STORAGE_API.md)及[N-019范围](../plans/N-019-ACCEPTANCE.md)。
 
+## N-020目录展示来源与控制器
+
+directory-view.js在model之后、desktop之前加载。async createFixtureDirectorySource(api,session,{monotonicNow?}?)借用已注册会话；async createClientDirectorySource(client)借用显式创建的具名客户端，不创建连接/会话或失败回退。context固定source/userID/role/mode；libraries/page/preview/discardCursor/dispose及closed公开。dispose不endSession或close客户端，身份所有者负责最后统一关闭共享提供者。
+
+libraries()最多1024个不可变{libraryID,state,estimatedBytes}，没有根路径；具名值来自原宿主授权元数据，估计是逻辑值，不是物理剩余容量。fixture的state为synthetic、estimatedBytes为null。摘要与目录页分别读取，不拿当前页行数补总数/容量。
+
+page({libraryID,relativePath?,pageSize?,cursor?})默认空目录及50条、1至100，校验路径/上下文/精确页/名称碰撞/UTF-8页内跨页递增后返回{viewVersion:1,libraryID,relativePath,pageSize,items,nextCursor}。items仅{name,relativePath,kind,bytes,modifiedAt,canPreview}；目录bytes为null，宿主modifiedAt仍来自有效UTC日期，fixture为null。没有翻译键、宿主根、total或伪造日期。来源64条链、首请求有界预留、同令牌串行，丢弃仅清理本地位置，不释放宿主预算；失败不自动重试/扩大扫描上限。
+
+fixture是新固定树而非旧翻译键文件数组，页原始consistency为synthetic-fixed-directory，共享根8项、空/嵌套及私有样例；60秒整链、64待用/64消费或过期记录。它对已注册会话每次检查，读者看共享、管理员含个人库；不证明真实目录标记、卷修订、内容批准或8192项全扫描。真实宿主页继续使用N-019的directory-stamped-live-metadata，不改变后端语义。
+
+preview({libraryID,relativePath})固定最多65536 UTF-8字节、仅txt/md/json/csv/log；结果{libraryID,relativePath,text,utf8Bytes}校验上下文及实际字节数。createDirectoryPager({source,pageSize=50})只允许预览当前页可预览文件；宿主继续独立检查读取授权与实际大小，不因列表声明取得更大权限。所有内容作为普通文字。
+
+控制器snapshot为冻结的{phase,libraryID,relativePath,items,pageNumber,hasNext,error,requiresReload}，phase为idle/loading/ready/previewing/error/closed；不暴露游标。open({libraryID,relativePath?})切换上下文并清旧页；reload从头、next替换，preview(relativePath)仅本页。参数错误/并发/非法继续可同步抛ServiceError；异步读取错误固定code并保留标注的旧页、禁用继续/预览，待显式重读。open可在旧读/预览中失效旧代次，迟到预览返回null，迟到页只清理位置，不覆盖新状态；dispose清空并拒绝迟到结果，不关闭共享来源。filterFiles只接最多100项、all/directory/file和最长256字符查询，仅查当前页普通名称。
+
+静态文件窗口每页3项，提供独立库摘要、面包屑、本页搜索/类型过滤、列表/网格、继续/重读和只读预览；界面重建、最小化或聚焦不自动重读。HTML/白名单仅新增directory-view.js，bridge-client.js不加载/提供，connect-src为none。实际浏览器功能、视觉/焦点与F01–F08全部待测。见[ADR-014](../decisions/ADR-014-directory-page-presentation.md)、[范围](../plans/N-020-ACCEPTANCE.md)及[回家清单](../../web/tests/BROWSER_ACCEPTANCE.md)。
+
 ## 状态与恢复
 
 localStorage键macnas.desktop.preferences.v1只含version、locale、theme和允许应用的窗口几何；损坏/不可访问时使用默认值。会话/业务数据/令牌不保存，此偏好不属于可携实例配置。数据库仍为PostgreSQL 18-only。

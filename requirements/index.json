@@ -164,6 +164,17 @@
             "docs/decisions/ADR-012-bounded-notification-view.md",
             "web/tests/BROWSER_ACCEPTANCE.md"
           ]
+        },
+        {
+          "id": "SYS-01.directory_page_browser_acceptance",
+          "status": "NOT_STARTED",
+          "scope": "F01-F08 plus W01-W10, T01-T08 and N01-N06 deferred until user returns home; no DOM/visual/focus result",
+          "evidence": [
+            "docs/evidence/n020-2026-10-15.json",
+            "docs/plans/N-020-ACCEPTANCE.md",
+            "docs/decisions/ADR-014-directory-page-presentation.md",
+            "web/tests/BROWSER_ACCEPTANCE.md"
+          ]
         }
       ]
     },
@@ -1794,12 +1805,35 @@
         },
         {
           "id": "FIL-01.directory_page_web_integration",
-          "status": "NOT_STARTED",
-          "scope": "New directory pages are not wired into static memory-fixture DOM; W/T/N and full home browser checklist remain deferred",
+          "status": "IN_PROGRESS",
+          "scope": "Static fixture file window wired to explicit borrowed directory source/current-page controller; actual DOM, focus, keyboard, layout and translations remain unverified",
           "evidence": [
-            "docs/evidence/n019-2026-10-15.json",
-            "docs/plans/N-019-ACCEPTANCE.md",
-            "docs/decisions/ADR-013-bounded-directory-pages.md"
+            "docs/evidence/n020-2026-10-15.json",
+            "docs/plans/N-020-ACCEPTANCE.md",
+            "docs/decisions/ADR-014-directory-page-presentation.md",
+            "web/tests/BROWSER_ACCEPTANCE.md"
+          ]
+        },
+        {
+          "id": "FIL-01.current_page_directory_presentation_model",
+          "status": "MOCK_PASS",
+          "scope": "Bounded immutable current page, scoped filters, metadata/preview validation and fixed errors; synthetic provider only",
+          "evidence": [
+            "docs/evidence/n020-2026-10-15.json",
+            "docs/plans/N-020-ACCEPTANCE.md",
+            "docs/decisions/ADR-014-directory-page-presentation.md",
+            "web/tests/BROWSER_ACCEPTANCE.md"
+          ]
+        },
+        {
+          "id": "FIL-01.borrowed_directory_provider_lifecycle",
+          "status": "MOCK_PASS",
+          "scope": "Registered fixture session/explicit named client borrowed without owning close; late page/preview and directory/window disposal tests, no production authentication",
+          "evidence": [
+            "docs/evidence/n020-2026-10-15.json",
+            "docs/plans/N-020-ACCEPTANCE.md",
+            "docs/decisions/ADR-014-directory-page-presentation.md",
+            "web/tests/BROWSER_ACCEPTANCE.md"
           ]
         }
       ]
@@ -4673,6 +4707,17 @@
             "docs/evidence/n019-2026-10-15.json",
             "docs/plans/N-019-ACCEPTANCE.md",
             "docs/decisions/ADR-013-bounded-directory-pages.md"
+          ]
+        },
+        {
+          "id": "APP-09.directory_presentation_pipe_adapter",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "Explicit directory facade/current-page controller through actual approved Swift test host and PostgreSQL pipes, plus CLI metadata/missing-volume refusal; no browser connection",
+          "evidence": [
+            "docs/evidence/n020-2026-10-15.json",
+            "docs/plans/N-020-ACCEPTANCE.md",
+            "docs/decisions/ADR-014-directory-page-presentation.md",
+            "web/tests/BROWSER_ACCEPTANCE.md"
           ]
         }
       ]
