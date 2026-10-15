@@ -301,6 +301,21 @@ public final class DesktopBridge: @unchecked Sendable {
                 let library = try p.text("libraryID"), path = try p.text("relativePath", maximum: 4096)
                 let count = try p.integer("maximumBytes", range: 1...65536, fallback: 65536)
                 return try response(api.previewFixtureText(libraryID: library, relativePath: path, maximumBytes: Int(count), session: session), id: id)
+            case "previewFileOperation":
+                let p=try params.fields(required:["libraryID","kind","name"],optional:["parentPath","sourceName"])
+                guard let kind=FixtureFileOperationKind(rawValue:try p.text("kind")) else{throw NASError.invalidSchema}
+                let intent=try FixtureFileOperationIntent(libraryID:p.text("libraryID"),parentPath:p.text("parentPath",maximum:4096,fallback:"",allowEmpty:true),kind:kind,
+                    sourceName:p["sourceName"].map{try $0.text(maximumBytes:255)},name:p.text("name",maximum:255))
+                try writable()
+                return try api.withFixtureFileOperationPreview(intent,session:session){try self.response($0,id:id)}
+            case "commitFileOperation":
+                let p=try params.fields(required:["operationID","confirmed"])
+                guard case .bool(true) = p["confirmed"]! else{throw NASError.invalidSchema}
+                try writable()
+                return try response(api.commitFixtureFileOperation(operationID:p.text("operationID",maximum:36),confirmed:true,session:session),id:id)
+            case "fileOperationStatus":
+                let p=try params.fields(required:["operationID"])
+                return try response(api.fixtureFileOperationStatus(operationID:p.text("operationID",maximum:36),session:session),id:id)
             default: throw NASError.unsupported
             }
         } catch {

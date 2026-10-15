@@ -1,6 +1,8 @@
-# MacNAS 原型架构（N-023）
+# MacNAS 原型架构（N-024）
 
 Swift 6 / macOS 15部署目标，PostgreSQL 18。当前为非root CLI、无监听的业务API和两个自研可信样例；没有生产HTTP登录、系统Helper或正式接管。
+
+N-024补齐建文件夹和同目录重命名：独立宿主写批准、绑定目录与源身份的预览、不覆盖执行、同宿主结果查询及成功后重读。短操作同步完成，32条/300秒内存回执不作为持久任务或数据库替代；Schema 3不变。网页只修改显式合成树，原生测试另在新建批准目录验证真实文件系统，二者不等同于浏览器已连接NAS。见[ADR-018](docs/decisions/ADR-018-guarded-fixture-file-operations.md)。
 
 N-022补充可信合成管道的事件来源上下文、第14个观察消息与显式旧批核对模型；宿主固定来源，事件写入使用捕获的StateStore，防止重绑把写入投向新库。上下文仅是防错等值标记，不构成生产认证/强fencing；核对不清旧批、不采用候选连接。见[ADR-016](docs/decisions/ADR-016-fixture-event-source-context.md)。
 

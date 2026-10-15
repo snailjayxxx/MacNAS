@@ -64,14 +64,15 @@
         {
           "id": "SYS-01.desktop_window_visual_interaction_qa",
           "status": "BLOCKED",
-          "scope": "All W01-W10, T01-T08, N01-N06 and current N023 F01-F08 remain NOT_EXECUTED. Owner removed only the 8766 exception; actual tool still denied. Preview stopped, no bypass or new attempt. Settings images are not functional acceptance.",
+          "scope": "All original 32 W/T/N/F cases and six new FO cases (38 total) remain NOT_EXECUTED. Original permission rejection unchanged; no new attempt, listener or bypass.",
           "evidence": [
             "docs/evidence/n011-2026-10-15.json",
             "docs/plans/N-011-ACCEPTANCE.md",
             "web/tests/BROWSER_ACCEPTANCE.md",
             "docs/evidence/n021-2026-10-15.json",
             "docs/evidence/n011-acceptance-recovery-2026-10-16.json",
-            "docs/plans/N-023-ACCEPTANCE.md"
+            "docs/plans/N-023-ACCEPTANCE.md",
+            "docs/plans/N-024-ACCEPTANCE.md"
           ]
         },
         {
@@ -138,7 +139,7 @@
         {
           "id": "SYS-01.task_page_browser_acceptance",
           "status": "NOT_STARTED",
-          "scope": "All W01-W10, T01-T08, N01-N06 and current N023 F01-F08 remain NOT_EXECUTED. Owner removed only the 8766 exception; actual tool still denied. Preview stopped, no bypass or new attempt. Settings images are not functional acceptance.",
+          "scope": "All original 32 W/T/N/F cases and six new FO cases (38 total) remain NOT_EXECUTED. Original permission rejection unchanged; no new attempt, listener or bypass.",
           "evidence": [
             "docs/evidence/n017-2026-10-15.json",
             "docs/plans/N-017-ACCEPTANCE.md",
@@ -146,7 +147,8 @@
             "web/tests/BROWSER_ACCEPTANCE.md",
             "docs/evidence/n021-2026-10-15.json",
             "docs/evidence/n011-acceptance-recovery-2026-10-16.json",
-            "docs/plans/N-023-ACCEPTANCE.md"
+            "docs/plans/N-023-ACCEPTANCE.md",
+            "docs/plans/N-024-ACCEPTANCE.md"
           ]
         },
         {
@@ -163,7 +165,7 @@
         {
           "id": "SYS-01.notification_view_browser_acceptance",
           "status": "NOT_STARTED",
-          "scope": "All W01-W10, T01-T08, N01-N06 and current N023 F01-F08 remain NOT_EXECUTED. Owner removed only the 8766 exception; actual tool still denied. Preview stopped, no bypass or new attempt. Settings images are not functional acceptance.",
+          "scope": "All original 32 W/T/N/F cases and six new FO cases (38 total) remain NOT_EXECUTED. Original permission rejection unchanged; no new attempt, listener or bypass.",
           "evidence": [
             "docs/evidence/n018-2026-10-15.json",
             "docs/plans/N-018-ACCEPTANCE.md",
@@ -171,13 +173,14 @@
             "web/tests/BROWSER_ACCEPTANCE.md",
             "docs/evidence/n021-2026-10-15.json",
             "docs/evidence/n011-acceptance-recovery-2026-10-16.json",
-            "docs/plans/N-023-ACCEPTANCE.md"
+            "docs/plans/N-023-ACCEPTANCE.md",
+            "docs/plans/N-024-ACCEPTANCE.md"
           ]
         },
         {
           "id": "SYS-01.directory_page_browser_acceptance",
           "status": "NOT_STARTED",
-          "scope": "All W01-W10, T01-T08, N01-N06 and current N023 F01-F08 remain NOT_EXECUTED. Owner removed only the 8766 exception; actual tool still denied. Preview stopped, no bypass or new attempt. Settings images are not functional acceptance.",
+          "scope": "All original 32 W/T/N/F cases and six new FO cases (38 total) remain NOT_EXECUTED. Original permission rejection unchanged; no new attempt, listener or bypass.",
           "evidence": [
             "docs/evidence/n020-2026-10-15.json",
             "docs/plans/N-020-ACCEPTANCE.md",
@@ -185,7 +188,8 @@
             "web/tests/BROWSER_ACCEPTANCE.md",
             "docs/evidence/n021-2026-10-15.json",
             "docs/evidence/n011-acceptance-recovery-2026-10-16.json",
-            "docs/plans/N-023-ACCEPTANCE.md"
+            "docs/plans/N-023-ACCEPTANCE.md",
+            "docs/plans/N-024-ACCEPTANCE.md"
           ]
         },
         {
@@ -1909,6 +1913,47 @@
             "docs/plans/N-023-ACCEPTANCE.md",
             "docs/decisions/ADR-017-continuous-file-browser.md",
             "web/tests/BROWSER_ACCEPTANCE.md"
+          ]
+        },
+        {
+          "id": "FIL-01.guarded_fixture_mkdir_rename",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "Create and same-directory exclusive rename in newly approved synthetic directories; separate host-only write approval, scope/source checks, no overwrite and bounded same-host receipts. Fifteen new native checks included in the fresh unfiltered 239-test pass; not production NAS or restart persistence.",
+          "evidence": [
+            "docs/evidence/n024-2026-10-16.json",
+            "docs/plans/N-024-ACCEPTANCE.md",
+            "docs/decisions/ADR-018-guarded-fixture-file-operations.md"
+          ]
+        },
+        {
+          "id": "FIL-01.file_operation_confirmation_model",
+          "status": "MOCK_PASS",
+          "scope": "Seventeen synthetic/typed/controller checks, including concurrent duplicate receipt preservation; no actual DOM or production transport.",
+          "evidence": [
+            "docs/evidence/n024-2026-10-16.json",
+            "docs/plans/N-024-ACCEPTANCE.md",
+            "docs/decisions/ADR-018-guarded-fixture-file-operations.md"
+          ]
+        },
+        {
+          "id": "FIL-01.file_operation_web_integration",
+          "status": "IN_PROGRESS",
+          "scope": "Create/rename input, conflict preview, confirmation, outcome and reread wired to explicit memory fixture; FO01-FO06 all unexecuted.",
+          "evidence": [
+            "docs/evidence/n024-2026-10-16.json",
+            "docs/plans/N-024-ACCEPTANCE.md",
+            "docs/decisions/ADR-018-guarded-fixture-file-operations.md",
+            "web/tests/BROWSER_ACCEPTANCE.md"
+          ]
+        },
+        {
+          "id": "FIL-01.durable_file_transfer_and_restart_receipts",
+          "status": "NOT_STARTED",
+          "scope": "Synchronous file-operation receipts are bounded in-memory per host. Durable external effects, transfer jobs, cross-volume movement and restart recovery remain unimplemented.",
+          "evidence": [
+            "docs/evidence/n024-2026-10-16.json",
+            "docs/plans/N-024-ACCEPTANCE.md",
+            "docs/decisions/ADR-018-guarded-fixture-file-operations.md"
           ]
         }
       ]
@@ -4836,6 +4881,16 @@
             "docs/evidence/n022-2026-10-16.json",
             "docs/plans/N-022-ACCEPTANCE.md",
             "docs/decisions/ADR-016-fixture-event-source-context.md"
+          ]
+        },
+        {
+          "id": "APP-09.file_operation_bridge_and_real_pipe",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "15th-17th fixed messages and actual Node child to an explicitly approved Swift fixture host passed in the fresh unfiltered native suite; committed reply masking, explicit result check, client and host authority-method refusal. No production authentication, approval RPC or browser transport.",
+          "evidence": [
+            "docs/evidence/n024-2026-10-16.json",
+            "docs/plans/N-024-ACCEPTANCE.md",
+            "docs/decisions/ADR-018-guarded-fixture-file-operations.md"
           ]
         }
       ]

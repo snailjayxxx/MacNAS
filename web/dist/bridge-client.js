@@ -1,7 +1,7 @@
 (function (root, factory) {
-  if (typeof module === "object" && module.exports) module.exports = factory(require("./model.js"));
-  else root.MacNASBridgeClient = Object.freeze(factory(root.MacNASModel));
-})(globalThis, function (M) {
+  if (typeof module === "object" && module.exports) module.exports = factory(require("./model.js"),require("./file-operations.js"));
+  else root.MacNASBridgeClient = Object.freeze(factory(root.MacNASModel,root.MacNASFileOperations));
+})(globalThis, function (M,O) {
   "use strict";
   const fail = code => { throw new M.ServiceError(code); };
   const check = (value, code = "invalidResponse") => { if (!value) fail(code); };
@@ -132,10 +132,11 @@
     check(typeof transport==="function" && (closeTransport===undefined || typeof closeTransport==="function"),"invalidInput");
     integer(timeoutMs,1,60000,"invalidInput");integer(maximumPending,1,128,"invalidInput");
     check(typeof AbortController!=="undefined","unavailable");
-    const adapter=M.createBridgeAdapter(transport,{requestIdPrefix:"dc-"+uuid()}),pending=new Set(),consumers=new Map(),statusQueries=new Set(),pages=new Map(),busyPages=new Set(),directories=new Map(),busyDirectories=new Set();
+    const adapter=M.createBridgeAdapter(transport,{requestIdPrefix:"dc-"+uuid()}),pending=new Set(),consumers=new Map(),statusQueries=new Set(),pages=new Map(),busyPages=new Set(),directories=new Map(),busyDirectories=new Set(),fileOperations=new Map(),operationQueries=new Set();
+    let operationHeads=0;
     let closed=false,binding,eventBinding;
     function close() {
-      if (closed) return;closed=true;binding=undefined;eventBinding=undefined;consumers.clear();statusQueries.clear();pages.clear();busyPages.clear();directories.clear();busyDirectories.clear();
+      if (closed) return;closed=true;binding=undefined;eventBinding=undefined;consumers.clear();statusQueries.clear();pages.clear();busyPages.clear();directories.clear();busyDirectories.clear();fileOperations.clear();operationQueries.clear();
       for (const entry of [...pending]) entry.cancel();
       if (closeTransport) { try { Promise.resolve(closeTransport()).catch(()=>{}); } catch {} }
     }
@@ -304,6 +305,27 @@
       discardFilePage(cursor) {
         caller();cursorToken(cursor,"invalidInput");check(!busyDirectories.has(cursor),"busy");return directories.delete(cursor);
       },
+      async previewFileOperation(params,opts) {
+        caller(true,true);const captured=O.intent(params,true);check(fileOperations.size+operationHeads<32,"budgetExceeded");operationHeads++;
+        const request={libraryID:captured.libraryID,parentPath:captured.parentPath,kind:captured.kind,name:captured.name};if(captured.sourceName!==null)request.sourceName=captured.sourceName;
+        try{return await invoke("previewFileOperation",request,value=>{
+          const p=O.preview(value,captured);check(!fileOperations.has(p.operationID));
+          if(p.state==="ready")fileOperations.set(p.operationID,{intent:captured,submitted:false});return p;
+        },opts);}finally{operationHeads--;}
+      },
+      async commitFileOperation(operationID,opts) {
+        caller(true,true);O.id(operationID,"invalidInput");const saved=fileOperations.get(operationID);
+        check(saved&&!saved.submitted,"denied");check(!operationQueries.has(operationID),"busy");
+        saved.submitted=true;operationQueries.add(operationID);
+        try{return await invoke("commitFileOperation",{operationID,confirmed:true},value=>{const p=O.result(value,operationID,saved.intent);check(["completed","failed","uncertain"].includes(p.state));return p;},opts);}
+        finally{operationQueries.delete(operationID);}
+      },
+      async fileOperationStatus(operationID,opts) {
+        caller();O.id(operationID,"invalidInput");check(!operationQueries.has(operationID),"busy");operationQueries.add(operationID);
+        try{return await invoke("fileOperationStatus",{operationID},value=>O.result(value,operationID,fileOperations.get(operationID)?.intent),opts);}
+        finally{operationQueries.delete(operationID);}
+      },
+      discardFileOperation(operationID) {O.id(operationID,"invalidInput");check(!operationQueries.has(operationID),"busy");return fileOperations.delete(operationID);},
       async previewFile(params,opts) {
         caller();const v=fields(params,["libraryID","relativePath"],["maximumBytes"],"invalidInput");
         const libraryID=text(v.libraryID,128,{code:"invalidInput"}),relativePath=path(v.relativePath,false,"invalidInput"),maximumBytes=integer(Object.hasOwn(v,"maximumBytes")?v.maximumBytes:65536,1,65536,"invalidInput");

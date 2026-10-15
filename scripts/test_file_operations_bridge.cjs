@@ -1,0 +1,34 @@
+"use strict";
+// Only the Swift harness grants a new synthetic read-write library. No host path or approval RPC exists.
+const assert=require("node:assert/strict"),{createInterface}=require("node:readline");
+const M=require("../web/dist/model.js"),C=require("../web/dist/bridge-client.js"),D=require("../web/dist/directory-view.js"),O=require("../web/dist/file-operations.js");
+const libraryID=process.argv[2],lines=createInterface({input:process.stdin,crlfDelay:Infinity});let waiting,mask=false;
+const timer=setTimeout(()=>{process.stderr.write("file-operations-pipe: timed out\n");process.exit(1);},80000);
+lines.on("line",line=>{const item=waiting;waiting=undefined;if(!item)throw Error("unexpected response");try{item.resolve(JSON.parse(line));}catch(error){item.reject(error);}});
+const transport=async request=>{const reply=await new Promise((resolve,reject)=>{assert.equal(waiting,undefined);waiting={resolve,reject};process.stdout.write(JSON.stringify(request)+"\n");});
+ if(mask&&request.method==="commitFileOperation"){mask=false;assert.equal(reply.data.state,"completed");return{apiVersion:1,requestId:request.requestId,error:{code:"budgetExceeded"}};}return reply;};
+const client=C.createDesktopClient({transport,timeoutMs:60000}),raw=M.createBridgeAdapter(transport),code=value=>error=>error instanceof M.ServiceError&&error.code===value;
+(async()=>{
+ const source=await D.createClientDirectorySource(client),controller=O.createController(source.fileOperations);
+ const unknown="44444444-0000-0000-0000-000000000000";
+ assert.equal((await client.fileOperationStatus(unknown)).state,"notVisible");await assert.rejects(client.commitFileOperation(unknown),code("denied"));
+ await controller.prepare({libraryID,kind:"createDirectory",name:"folder"});assert.equal(controller.snapshot().phase,"ready");
+ assert.deepEqual((await source.page({libraryID})).items.map(x=>x.name),["a.txt"]);
+ await controller.commit();assert.equal(controller.snapshot().phase,"completed");
+ assert.deepEqual((await source.page({libraryID,relativePath:"folder"})).items,[]);
+ await controller.prepare({libraryID,kind:"rename",sourceName:"a.txt",name:"renamed.txt"});await controller.commit();
+ assert.equal((await source.preview({libraryID,relativePath:"renamed.txt"})).text,"data");
+ await controller.prepare({libraryID,kind:"createDirectory",name:"FOLDER"});assert.equal(controller.snapshot().phase,"conflict");await assert.rejects(controller.commit(),code("denied"));
+ await controller.prepare({libraryID,kind:"createDirectory",name:"responseLost"});const operationID=controller.snapshot().preview.operationID;mask=true;
+ await assert.rejects(controller.commit(),code("budgetExceeded"));assert.equal(controller.snapshot().phase,"uncertain");
+ await controller.check();assert.equal(controller.snapshot().phase,"completed");
+ assert.equal((await raw.request("commitFileOperation",{operationID,confirmed:true})).state,"completed");
+ await assert.rejects(raw.request("previewFileOperation",{libraryID,kind:"delete",name:"a"}),code("invalidInput"));
+ await assert.rejects(raw.request("previewFileOperation",{libraryID,kind:"createDirectory",name:"a",root:"/tmp"}),code("invalidInput"));
+ await assert.rejects(raw.request("authorizeFixtureLibraryMutations",{libraryID}),code("invalidInput"));
+ const deniedApproval=await transport({apiVersion:1,requestId:"host-approval-denied-1",method:"authorizeFixtureLibraryMutations",params:{libraryID}});
+ assert.equal(deniedApproval.error.code,"unsupported");
+ assert.deepEqual((await source.page({libraryID})).items.map(x=>x.name),["folder","renamed.txt","responseLost"]);
+ controller.dispose();source.dispose();assert.equal(client.closed,false);
+ process.stderr.write("file-operations-pipe: PASS (explicit write approval, no-overwrite, real mkdir/rename, committed reply masked, explicit bounded receipt, no authority RPC)\n");
+})().catch(error=>{process.stderr.write("file-operations-pipe: FAIL "+error.stack+"\n");process.exitCode=1;}).finally(()=>{client.close();clearTimeout(timer);lines.close();process.stdin.destroy();process.stdout.end();});

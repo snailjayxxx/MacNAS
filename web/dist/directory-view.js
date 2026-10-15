@@ -1,7 +1,7 @@
 (function (root, factory) {
-  if (typeof module === "object" && module.exports) module.exports = factory(require("./model.js"));
-  else root.MacNASDirectoryView = Object.freeze(factory(root.MacNASModel));
-})(globalThis, function (M) {
+  if (typeof module === "object" && module.exports) module.exports = factory(require("./model.js"),require("./file-operations.js"));
+  else root.MacNASDirectoryView = Object.freeze(factory(root.MacNASModel,root.MacNASFileOperations));
+})(globalThis, function (M,O) {
   "use strict";
   const sources = new WeakSet(), encoder = new TextEncoder();
   const errors = new Set(["invalidInput","invalidResponse","unsupported","denied","readOnly","unavailable","budgetExceeded","replay","collision","missingVolume","unsafePath","unsafeFile","integrity","database","busy","expired","staleState","interrupted","timedOut","cancelled","pluginFailed","invalidSchema"]);
@@ -80,10 +80,11 @@
       if (!cursors.has(cursor) || busy.has(cursor)) return false;
       cursors.delete(cursor); try { return operations.discard(cursor); } catch { return false; }
     }
-    function dispose() { if (closed) return; closed = true; for (const cursor of cursors.keys()) discard(cursor); operations.dispose?.(); }
+    function dispose() { if (closed) return; closed = true; for (const cursor of cursors.keys()) discard(cursor); fileOperations?.dispose(); operations.dispose?.(); }
     const binding = context(await call(operations.overview), kind), fixture = kind === "fixture";
+    const fileOperations=operations.previewOperation ? O.createSource(binding,{preview:operations.previewOperation,commit:operations.commitOperation,status:operations.operationStatus,discard:operations.discardOperation,isClosed:()=>closed||!!operations.isClosed?.()}) : null;
     const source = Object.freeze({
-      context: binding, get closed() { return closed || !!operations.isClosed?.(); }, dispose, discardCursor: discard,
+      context: binding, fileOperations, get closed() { return closed || !!operations.isClosed?.(); }, dispose, discardCursor: discard,
       async libraries() {
         const raw = await call(operations.libraries);
         try {
@@ -140,8 +141,11 @@
   }
   async function createClientDirectorySource(client) {
     check(client?.source === "fixture-host-client" && !client.closed && ["overview", "listLibraries", "listFilesPage", "previewFile", "discardFilePage"].every(key => typeof client[key] === "function"), "unavailable");
+    const mutation= ["previewFileOperation","commitFileOperation","fileOperationStatus"].every(key=>typeof client[key]==="function") ? {
+      previewOperation:p=>client.previewFileOperation(p),commitOperation:value=>client.commitFileOperation(value),operationStatus:value=>client.fileOperationStatus(value),discardOperation:value=>client.discardFileOperation?.(value)
+    } : {};
     return makeSource("fixture-host", { overview: () => client.overview(), libraries: () => client.listLibraries(), page: p => client.listFilesPage(p),
-      preview: p => client.previewFile(p), discard: cursor => client.discardFilePage(cursor), isClosed: () => client.closed });
+      preview: p => client.previewFile(p), discard: cursor => client.discardFilePage(cursor), isClosed: () => client.closed,...mutation });
   }
   async function createFixtureDirectorySource(api, session, options = {}) {
     check(api?.source === "fixture" && typeof api.overview === "function", "unavailable");
@@ -166,10 +170,16 @@
       ["personal/Private.txt", "仅所有者的合成文字 / オーナー用のサンプル\n"],
       ["personal/Travel/List.txt", "合成旅行清单 / 旅行リストのサンプル\n"]
     ]) data.set(id, value);
-    const pending = new Map(), consumed = new Map();
+    const pending = new Map(), consumed = new Map(),revisions=new Map(),operationPreviews=new Map(),operationReceipts=new Map();
     const visible = libraryID => libraryID === "shared" || libraryID === "personal" && who.role === "administrator";
     function clock() { const time = now(); check(Number.isFinite(time) && time >= 0, "unavailable"); return time; }
     function reclaim(time) { for (const [id, item] of pending) if (time >= item.expires) { pending.delete(id); consumed.set(id, "expired"); } while (consumed.size > 64) consumed.delete(consumed.keys().next().value); }
+    async function mutationAuthorized(p) {await authorized();check(who.mode==="synthetic_development","readOnly");check(who.role==="administrator"&&visible(p.libraryID),"denied");}
+    const directoryKey=p=>p.libraryID+"/"+p.parentPath;
+    function saveOperation(value){if(operationReceipts.size>=32)operationReceipts.delete(operationReceipts.keys().next().value);operationReceipts.set(value.operationID,{value,expires:clock()+300000});return value;}
+    function reclaimOperations(){const time=clock();for(const [id,item]of operationReceipts)if(time>=item.expires)operationReceipts.delete(id);for(const [id,item]of operationPreviews)if(time>=item.expires){operationPreviews.delete(id);saveOperation({resultVersion:1,operationID:id,state:"failed",intent:item.intent,error:"expired"});}}
+    function operationResult(id,p,state,error=null){return {resultVersion:1,operationID:id,state,intent:p,error};}
+    function collision(p){const key=directoryKey(p)+(p.parentPath?"/":""),wanted=p.name.normalize("NFC").toLowerCase();return [...directories,...data.keys()].some(value=>{if(!value.startsWith(key))return false;const name=value.slice(key.length);return name&&!name.includes("/")&&name.normalize("NFC").toLowerCase()===wanted;});}
     return makeSource("fixture", {
       overview: authorized,
       async libraries() { await authorized(); return ["shared", "personal"].filter(visible).map(libraryID => ({ libraryID, state: "synthetic", estimatedBytes: null })); },
@@ -177,7 +187,7 @@
         await authorized(); check(visible(p.libraryID), "denied");
         const directory = p.libraryID + "/" + p.relativePath; check(directories.has(directory), "denied");
         const time = clock(); reclaim(time); let after, expires = time + 60000;
-        if (p.cursor !== undefined) { const saved = pending.get(p.cursor); check(saved, consumed.get(p.cursor) || "denied"); check(sameLocation(saved, p), "denied"); after = saved.after; expires = saved.expires; }
+        if (p.cursor !== undefined) { const saved = pending.get(p.cursor); check(saved, consumed.get(p.cursor) || "denied"); check(sameLocation(saved, p), "denied");check(saved.revision===(revisions.get(directory)||0),"staleState"); after = saved.after; expires = saved.expires; }
         const prefix = directory + (p.relativePath ? "/" : ""), items = [];
         for (const id of [...directories, ...data.keys()]) {
           if (!id.startsWith(prefix)) continue;
@@ -191,7 +201,7 @@
         if (remaining.length > p.pageSize) { check(pending.size - (p.cursor ? 1 : 0) < 64, "budgetExceeded"); nextCursor = crypto.randomUUID(); }
         await authorized(); check(clock() < expires, "expired");
         if (p.cursor !== undefined) { pending.delete(p.cursor); consumed.set(p.cursor, "replay"); }
-        if (nextCursor) pending.set(nextCursor, { ...p, after: page.at(-1).name, expires });
+        if (nextCursor) pending.set(nextCursor, { ...p, after: page.at(-1).name, expires,revision:revisions.get(directory)||0 });
         reclaim(clock());
         return { pageVersion: 1, order: "name-utf8", consistency: "synthetic-fixed-directory", libraryID: p.libraryID, relativePath: p.relativePath, pageSize: p.pageSize, items: page, nextCursor };
       },
@@ -201,7 +211,35 @@
         check(encoder.encode(value).length <= p.maximumBytes, "budgetExceeded"); await authorized();
         return { libraryID: p.libraryID, relativePath: p.relativePath, text: value, utf8Bytes: encoder.encode(value).length };
       },
-      discard: cursor => pending.delete(cursor), dispose: () => { pending.clear(); consumed.clear(); }
+      async previewOperation(p){
+        await mutationAuthorized(p);reclaimOperations();check(directories.has(directoryKey(p)),"staleState");
+        const prefix=directoryKey(p)+(p.parentPath?"/":""),old=p.sourceName===null?null:prefix+p.sourceName;
+        if(old!==null)check(directories.has(old)||data.has(old),"staleState");
+        const state=p.sourceName===p.name?"unchanged":collision(p)?"conflict":"ready",operationID=crypto.randomUUID();
+        if(state==="ready"){check(operationPreviews.size<32,"budgetExceeded");operationPreviews.set(operationID,{intent:p,revision:revisions.get(directoryKey(p))||0,expires:clock()+30000});}
+        return {previewVersion:1,operationID,intent:p,state,expiresInSeconds:state==="ready"?30:0};
+      },
+      async commitOperation(id){
+        await authorized();reclaimOperations();const cached=operationReceipts.get(id);if(cached){await mutationAuthorized(cached.value.intent);return cached.value;}
+        const saved=operationPreviews.get(id);check(saved,"replay");await mutationAuthorized(saved.intent);
+        // Authorization yields. Another submission may have completed this exact operation meanwhile.
+        const completed=operationReceipts.get(id);if(completed)return completed.value;
+        check(operationPreviews.get(id)===saved,"replay");operationPreviews.delete(id);const p=saved.intent;
+        try{
+          check(clock()<saved.expires,"expired");const parent=directoryKey(p),prefix=parent+(p.parentPath?"/":""),target=prefix+p.name;
+          check(directories.has(parent)&&(revisions.get(parent)||0)===saved.revision,"staleState");check(!collision(p),"collision");
+          check(directories.size+data.size<4096,"budgetExceeded");const revision=(revisions.get(parent)||0)+1;check(Number.isSafeInteger(revision),"budgetExceeded");
+          if(p.kind==="createDirectory")directories.add(target);
+          else{
+            const old=prefix+p.sourceName;check(directories.has(old)||data.has(old),"staleState");
+            const affected=[...directories,...data.keys()].filter(value=>value===old||value.startsWith(old+"/"));
+            for(const value of affected){const next=target+value.slice(old.length);if(directories.delete(value))directories.add(next);else{const text=data.get(value);data.delete(value);data.set(next,text);}}
+          }
+          revisions.set(parent,revision);return saveOperation(operationResult(id,p,"completed"));
+        }catch(error){return saveOperation(operationResult(id,p,"failed",errorCode(error)));}
+      },
+      async operationStatus(id){await authorized();reclaimOperations();const record=operationReceipts.get(id);if(record){check(visible(record.value.intent.libraryID),"denied");return record.value;}const saved=operationPreviews.get(id);return saved?operationResult(id,saved.intent,"ready"):operationResult(id,null,"notVisible");},
+      discard: cursor => pending.delete(cursor),dispose:()=>{pending.clear();consumed.clear();operationPreviews.clear();operationReceipts.clear();}
     });
   }
   function createDirectoryPager({ source, pageSize = 50 } = {}) {

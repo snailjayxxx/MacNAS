@@ -16,7 +16,7 @@ public struct FixtureTextPreview: Codable, Equatable {
     public let utf8Bytes: Int
 }
 
-/// Read-only, descriptor-relative access. Only the typed fixture API can publish this content.
+/// Descriptor-relative fixture access. Mutation requires a separate explicit write approval and one-use plan.
 final class DescriptorLibrary: @unchecked Sendable {
     let identity = UUID()
     private let rootURL: URL
@@ -198,6 +198,73 @@ final class DescriptorLibrary: @unchecked Sendable {
         try require(now()<deadline, .timedOut)
         return DirectorySlice(entries:selected.prefix(size).map(\.entry),stamp:before,hasMore:selected.count>size)
     }
+    func prepareMutation(_ intent:FixtureFileOperationIntent) throws ->DescriptorMutation {
+        try validateRoot()
+        let fd=try Self.descend(from:descriptor,relative:intent.parentPath,device:device)
+        var retained=false;defer{if !retained {close(fd)}}
+        let scan=openat(fd,".",Self.directoryFlags)
+        guard scan>=0 else{throw NASError.unsafeFile}
+        guard let stream=fdopendir(scan) else{close(scan);throw NASError.unsafeFile}
+        defer{closedir(stream)}
+        let before=DirectoryStamp(try Self.attributes(fd)),deadline=ProcessInfo.processInfo.systemUptime+5
+        let key=intent.name.precomposedStringWithCanonicalMapping.lowercased()
+        var names=DirectoryNameBudget(),conflict=false,source:DirectoryStamp?
+        while true {
+            try require(ProcessInfo.processInfo.systemUptime<deadline,.timedOut)
+            errno=0;guard let record=readdir(stream) else{try require(errno==0,.unsafeFile);break}
+            let count=Int(record.pointee.d_namlen)+1
+            let raw=withUnsafePointer(to:&record.pointee.d_name){$0.withMemoryRebound(to:CChar.self,capacity:count){String(validatingCString:$0)}}
+            guard let name=raw else{throw NASError.unsafeFile}
+            if name=="." || name==".." {continue}
+            try names.add(name,budget:DirectoryScanBudget())
+            var info=stat();try require(fstatat(fd,name,&info,AT_SYMLINK_NOFOLLOW)==0,.staleState)
+            let kind=info.st_mode & S_IFMT
+            try require(info.st_dev==device && (kind==S_IFDIR || kind==S_IFREG && info.st_nlink==1),.unsafeFile)
+            if name.precomposedStringWithCanonicalMapping.lowercased()==key {conflict=true}
+            if let wanted=intent.sourceName,Data(name.utf8)==Data(wanted.utf8) {source=DirectoryStamp(info)}
+        }
+        if intent.kind == .rename {try require(source != nil,.staleState)}
+        try require(DirectoryStamp(try Self.attributes(fd))==before,.staleState)
+        try validateDirectory(fd,relative:intent.parentPath)
+        let unchanged=intent.sourceName.map{Data($0.utf8)==Data(intent.name.utf8)} ?? false
+        retained=true
+        return DescriptorMutation(readerID:identity,descriptor:fd,parent:before,source:source,intent:intent,state:unchanged ? "unchanged":conflict ? "conflict":"ready")
+    }
+    func validateMutation(_ plan:DescriptorMutation) throws {
+        try require(plan.readerID==identity,.denied)
+        try validateDirectory(plan.descriptor,relative:plan.intent.parentPath)
+        try require(DirectoryStamp(try Self.attributes(plan.descriptor))==plan.parent,.staleState)
+        if let name=plan.intent.sourceName,let expected=plan.source {
+            var info=stat();try require(fstatat(plan.descriptor,name,&info,AT_SYMLINK_NOFOLLOW)==0 && DirectoryStamp(info)==expected,.staleState)
+        }
+    }
+    func applyMutation(_ plan:DescriptorMutation,beforeMutation:()throws->Void={},afterMutation:()throws->Void={}) throws {
+        var applied=false
+        do {
+            try require(plan.state=="ready",.collision)
+            try beforeMutation();try validateMutation(plan)
+            let fd=plan.descriptor,intent=plan.intent
+            let result:Int32
+            if intent.kind == .createDirectory {result=mkdirat(fd,intent.name,0o700)}
+            else {result=renameatx_np(fd,intent.sourceName!,fd,intent.name,UInt32(RENAME_EXCL))}
+            if result != 0 {
+                if errno==EEXIST || errno==ENOTEMPTY {throw NASError.collision}
+                if errno==ENOTSUP {throw NASError.unsupported}
+                throw NASError.unsafeFile
+            }
+            applied=true
+            try afterMutation()
+            try validateDirectory(fd,relative:intent.parentPath)
+            var info=stat();try require(fstatat(fd,intent.name,&info,AT_SYMLINK_NOFOLLOW)==0,.staleState)
+            if intent.kind == .createDirectory {try require(info.st_dev==device && (info.st_mode & S_IFMT)==S_IFDIR && (info.st_mode & 0o077)==0,.staleState)}
+            else if let expected=plan.source {
+                try require(info.st_dev==expected.device && info.st_ino==expected.inode && info.st_mode==expected.mode && info.st_nlink==expected.links,.staleState)
+                var absent=stat();errno=0
+                try require(fstatat(fd,intent.sourceName!,&absent,AT_SYMLINK_NOFOLLOW) != 0 && errno==ENOENT,.staleState)
+            }
+            try require(fsync(fd)==0,.unsafeFile)
+        } catch {throw FileMutationFailure(code:error as? NASError ?? .unsafeFile,applied:applied)}
+    }
     /// The hook is internal and used only to deterministically exercise filesystem races in tests.
     func read(relative: String, maximumBytes: Int = 65536, afterOpen: (() throws -> Void)? = nil) throws -> Data {
         try require((1...1_048_576).contains(maximumBytes), .budgetExceeded)
@@ -228,9 +295,11 @@ final class DescriptorLibrary: @unchecked Sendable {
 final class FixtureContentRegistry: @unchecked Sendable {
     private let lock = NSLock()
     private var readers: [String: (UUID, DescriptorLibrary)] = [:]
+    private var writers:[String:(UUID,UUID,UUID)]=[:]
     func register(_ reader: DescriptorLibrary, permit: FixtureVolumePermit) {
         lock.lock(); defer { lock.unlock() }
         readers[permit.reference.libraryID] = (permit.approvalID, reader)
+        writers.removeValue(forKey:permit.reference.libraryID)
     }
     func reader(_ permit: FixtureVolumePermit) throws -> DescriptorLibrary {
         lock.lock(); defer { lock.unlock() }
@@ -238,6 +307,17 @@ final class FixtureContentRegistry: @unchecked Sendable {
         return value.1
     }
     func revoke(_ libraryID: String) {
-        lock.lock(); defer { lock.unlock() }; readers.removeValue(forKey: libraryID)
+        lock.lock(); defer { lock.unlock() }; readers.removeValue(forKey: libraryID);writers.removeValue(forKey:libraryID)
+    }
+    func approveMutations(_ permit:FixtureVolumePermit) throws {
+        lock.lock();defer{lock.unlock()}
+        guard let value=readers[permit.reference.libraryID],value.0==permit.approvalID else{throw NASError.denied}
+        writers[permit.reference.libraryID]=(permit.approvalID,value.1.identity,UUID())
+    }
+    func mutationReader(_ permit:FixtureVolumePermit) throws ->(UUID,DescriptorLibrary) {
+        lock.lock();defer{lock.unlock()}
+        guard let reader=readers[permit.reference.libraryID],let writer=writers[permit.reference.libraryID],
+              reader.0==permit.approvalID && writer.0==permit.approvalID && writer.1==reader.1.identity else{throw NASError.denied}
+        return (writer.2,reader.1)
     }
 }

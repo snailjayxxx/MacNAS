@@ -1,4 +1,4 @@
-# 网页桌面适配契约（N-011至N-023，v1）
+# 网页桌面适配契约（N-011至N-024，v1）
 
 页面当前使用model.js的createFixtureAdapter。业务内容为合成数据、刷新重置；管理员/读者/只读恢复选择器是演示场景，不是登录。不连接Swift、PostgreSQL、NAS文件、系统账户或真实存储池。
 
@@ -50,6 +50,9 @@ DesktopBridge绑定宿主已有的Schema 3 API和会话；createBridgeAdapter(tr
 |listFiles|libraryID；可选relativePath、maximumEntries|路径默认空，最多4096字节；条目默认1000、范围1至1000；仍需显式卷和内容批准|
 |listFilesPage|libraryID；可选relativePath、pageSize、cursor|第12个方法；默认空路径及50项，1至100，目录标记/授权绑定继续；见N-019|
 |previewFile|libraryID、relativePath；可选maximumBytes|默认65536、范围1至65536；仅已批准合成文件的UTF-8纯文本|
+|previewFileOperation|libraryID、kind、name；可选parentPath、sourceName|第15个方法；只预览createDirectory/rename，需独立宿主写批准|
+|commitFileOperation|operationID、confirmed=true|第16个方法；只应用已登记预览，同宿主回执有界，不覆盖目标|
+|fileOperationStatus|operationID|第17个方法；只读查询本会话短时预览/结果，不授予提交权限|
 
 除已列可选字段外，未知/缺失/错类型一律拒绝。所有字符串拒绝NUL；consumerID/libraryID/id/key最多128字节。协议整数不接受布尔、负数、小数或指数形式。SQL、shell、根URL、用户、角色、模式、数据库选择、会话创建、卷清单/绑定、目录批准、读者变更和套件执行不进入消息白名单。
 
@@ -189,6 +192,24 @@ snapshot新增visibleItems、selectedItems、selectedPaths、activePath、导航
 preview仅限当前目录已加载且可预览文件，可预览前页已加载条目；直接使用同一受控source而非绕过授权。上限仍64KiB纯文本，未知类型只可选择/看详情。导航、选择变化、过滤或dispose丢弃迟到预览。窗口/身份切换清理状态；资料库授权集合变化重建浏览器，避免保留已撤销库历史。
 
 窗口接入位置侧栏、面包屑、导航、列表/图标、多选与详情、键盘和已加载范围提示。共享根8项首次全部显示；基础页模型的小页单元测试不决定产品加载量。connect-src仍none，网页仍仅合成fixture；真实DOM/键盘/窄屏与F01–F08继续未执行。服务端全目录排序、真实NAS连接、上传/下载/改名/复制/移动/回收站及生产认证均需后续实现。见[阶段计划](../plans/N-023-FINDER-STYLE-FILE-BROWSING.md)和[DSM控制面板/网络对照](../plans/DSM-CONTROL-PANEL-NETWORK-REFERENCE.md)。
+
+## N-024文件操作预览与结果
+
+原生authorizeFixtureLibraryMutations是宿主专用批准，不在消息白名单。须开发模式管理员、readWrite绑定和已有内容批准；只读根批准不自动获得写入。预览绑定会话、实例/generation、数据库配置、卷/介质/挂载/清单修订、读/写批准及父目录/源标记，重批或上下文改变失效。
+
+previewFileOperation的kind只接受createDirectory/rename；parentPath默认空，最多127段且总4096字节，名称为单分量、最多255 UTF-8字节，完整目标也不超过4096字节/128段。rename须sourceName，创建时wire省略sourceName（不接受null）。只允许同父目录改名，不允许任意根、覆盖、移动或删除。结果精确为{previewVersion:1,operationID,intent,state,expiresInSeconds}，intent精确为{libraryID,parentPath,kind,sourceName,name}，创建的sourceName在响应中显式null。state为ready/conflict/unchanged；只有ready登记30秒预览，其余expiresInSeconds=0且无提交能力。
+
+commitFileOperation要求真正的JSON布尔true，不能以1或字符串替代。operationID是小写UUID；提交不再接受可修改的意图。原生用mkdirat 0700、renameatx_np RENAME_EXCL，不退回普通覆盖式rename。结果精确为{resultVersion:1,operationID,state,intent,error}；completed时error=null，failed/uncertain时为固定错误，notVisible时intent/error均null。status还可返回ready；ready/notVisible都不证明操作成功或没发生。
+
+每API最多32个预览/30秒、32个回执/300秒，单调时钟。相同ID在本宿主内重复提交只回已有结果；同会话且当前批准/身份一致才可读取。系统调用成功后的验证/fsync失败为uncertain，不能称为回滚；同ID丢失/退出/重启不重新执行，回执不是持久队列。预览编码失败不登记，提交响应编码失败可能已应用，显式查询原ID核对，禁止自动重复新意图。
+
+具名客户端增加previewFileOperation、commitFileOperation、fileOperationStatus与本地discardFileOperation。仅本客户端获得的ready预览可提交一次，查询不创建该权限；同ID提交/查询串行，32个本地预览限额与在途预留。输入在await前复制，响应严格校验精确字段、意图与状态。普通传输失败/超时仍关闭客户端，不自动新建连接；固定业务错误遮蔽成功响应时，存活连接可显式只读核对。
+
+file-operations.js提供校验、显式来源和createController。prepare/commit/check保留原预览ID/意图，异常进入uncertain并禁止重复提交；只显式check查询，notVisible/ready继续未解决。dispose丢弃迟到响应，不关闭借用来源、不撤销已应用动作。directory-view来源可带fileOperations；旧只读测试提供者缺少相关方法时为null，不自动创建写入源。目录来源dispose清理其操作源；窗口控制器dispose不关闭共享目录/客户端。
+
+静态fixture的操作确实修改同一内存目录树，目录改名保留子树、父修订使旧续页和旧预览stale；并发同ID在异步授权返回后再检查已完成回执，避免后到提交覆盖成功结果。界面新建/重命名经输入、预览、确认，冲突可编辑，成功后重读；失败与不确定结果分别显示，读者/恢复禁用。HTML在directory-view之前加载file-operations.js，白名单仅增该静态模块；CSP connect-src仍none，主机客户端/授权入口仍不加载或提供。
+
+原生真实落盘与网页内存演示分别验证。新增FO01–FO06全部待实际浏览器验收；没有真实NAS/生产认证、系统helper/ACL/SMB、持久文件任务、跨Mac/断电或规模承诺。详见[ADR-018](../decisions/ADR-018-guarded-fixture-file-operations.md)。
 
 ## 状态与恢复
 

@@ -91,4 +91,12 @@ class WebStaticTests(unittest.TestCase):
         self.assertNotIn('notification-reconciliation.js',scripts)
         for path in ['/notification-reconciliation.js','/bridge-client.js','/requirements/user-additions.json','/docs/plans/FUTURE-WEB-MAC-REMOTE-CONTROL.md']:
             with self.subTest(path=path):self.assertEqual(exchange(path)[0],404)
+    def test_file_operation_presentation_loads_before_sources_without_exposing_host_approval(self):
+        scripts=re.findall(r'<script defer src="([^"]+)"',(ROOT/'web/dist/index.html').read_text())
+        self.assertLess(scripts.index('model.js'),scripts.index('file-operations.js'))
+        self.assertLess(scripts.index('file-operations.js'),scripts.index('directory-view.js'))
+        self.assertEqual(exchange('/file-operations.js')[0],200)
+        js=(ROOT/'web/dist/desktop.js').read_text()
+        self.assertNotIn('authorizeFixtureLibraryMutations',js)
+        self.assertIn('win.fileOperation?.dispose()',js)
 if __name__=='__main__':unittest.main()

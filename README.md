@@ -3,7 +3,7 @@ Mac上使用的NAS系统
 
 Swift 原生核心与中文/日文静态网页桌面开发原型，数据库采用 PostgreSQL 18。桌面暂用合成数据，尚未提供可部署 NAS 服务。
 
-当前N-023已补连续文件浏览基础：导航/路径、位置侧栏、列表/图标、多选、排序与详情，默认每次50项、最多加载1000项；搜索/排序仅限已加载项。224项原生、15项实际CLI管道及176项前端模型通过，实际网页交互仍待正规浏览器权限恢复，不能作为完整Finder/File Station替代品。
+当前N-024已接入建文件夹与同目录重命名的输入、冲突预览、确认、结果及目录重读；原生仅在单独批准的合成目录执行，网页只修改内存样例。新未过滤239项原生、15项独立CLI管道及193项前端模型通过，[证据与限制](docs/evidence/n024-2026-10-16.json)分别记录。连续浏览默认每次50项、最多加载1000项，搜索/排序仅限已加载项。38项实际网页检查仍待正规浏览器权限恢复，不能作为完整Finder/File Station替代品。
 
 - [DSM整体功能差距](docs/plans/DSM-FUNCTIONAL-BASELINE.md) / [控制面板与网络详细对照](docs/plans/DSM-CONTROL-PANEL-NETWORK-REFERENCE.md)
 - [用户补充需求账目](requirements/user-additions.json)：新增SYS-09网页远控Mac，按用户要求**很后期、未开始**；原111项基线不变，当前有效112项。
@@ -60,7 +60,7 @@ N-015加入[具名业务客户端](web/dist/bridge-client.js)：完整展示数�
 
 N-016加入[有界任务页及统计](docs/decisions/ADR-010-bounded-job-pages.md)：固定UTF-8字节顺序、每页最多100条、60秒会话绑定的一次性游标；overview在数据库聚合，旧数组超过4096条明确拒绝。页为实时读取，不能当作一致性快照。静态网页及回家窗口验收状态保持不变。
 
-**网页窗口尚未实测。** 用户已回到Mac mini并完成正规设置排查，工具仍拒绝内容观察。[启动步骤与W/T/N/F清单](web/tests/BROWSER_ACCEPTANCE.md)覆盖窗口、任务、通知及当前文件浏览交互，32项全部保留待测；手动看到页面及自动测试不代替功能验收。
+**网页窗口尚未实测。** 用户已回到Mac mini并完成正规设置排查，工具仍拒绝内容观察。[启动步骤与W/T/N/F/FO清单](web/tests/BROWSER_ACCEPTANCE.md)覆盖窗口、任务、通知、文件浏览及新建/改名交互，38项全部保留待测；手动看到页面及自动测试不代替功能验收。
 
 N-017加入[当前页任务展示](docs/decisions/ADR-011-task-page-presentation.md)：每页3条、下一页/重新读取、本页搜索范围、独立统计及关闭后的迟到结果丢弃。真实客户端展示适配只通过Node/管道验证，静态页仍是fixture；[W01–W10与T01–T08](web/tests/BROWSER_ACCEPTANCE.md)全部等待回家实测。
 
@@ -73,3 +73,5 @@ N-020加入[目录当前页展示](docs/decisions/ADR-014-directory-page-present
 N-021加入[通知消费位置只读查询](docs/decisions/ADR-015-read-only-event-consumer-status.md)：第13个固定方法返回当前受众的ack/delivered位置，不创建消费者或推进游标；不可见与他人占用同样返回null，恢复只读可查但仍拒绝poll/ACK。客户端只观察，不据此清除旧通知批或获得ACK权限；静态网页未接入新查询。新的完整回归与实际管道结果见[验收记录](docs/plans/N-021-ACCEPTANCE.md)，后续为[来源上下文与显式核对模型](docs/plans/N-022-NOTIFICATION-SOURCE-CONTEXT.md)。
 
 N-022实现[可信合成管道来源上下文与显式核对](docs/decisions/ADR-016-fixture-event-source-context.md)：第14个观察消息、固定事件来源、捕获原库的事件操作，显式新客户端只读核对原批目标；不清旧批、不接管连接，也不是生产认证。N-023实现[连续浏览模型与窗口基础](docs/decisions/ADR-017-continuous-file-browser.md)，[证据](docs/evidence/n023-2026-10-16.json)分别记录模型、原生基线与网页待测。接续[N-024文件操作流程](docs/plans/N-024-FILE-OPERATIONS-WORKFLOW.md)，控制面板/网络业务按详细对照落实；SYS-09远控不提前开发。
+
+N-024的[文件操作契约与边界](docs/decisions/ADR-018-guarded-fixture-file-operations.md)包括独立写批准、父目录/源身份复查、不覆盖发布、短期同宿主回执和结果未知时禁止重提。原生消息不接收根路径或授权指令；这两类短同步操作尚无重启后的持久结果。接续[N-025有界文件传输](docs/plans/N-025-BOUNDED-FILE-TRANSFERS.md)，仍采用PostgreSQL18，远控按用户要求留在很后期。

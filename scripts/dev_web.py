@@ -20,12 +20,12 @@ def run(name,command):
     print(name+(': PASS' if result.returncode==0 else ': FAIL'),flush=True)
     if result.returncode:print(result.stdout);raise RuntimeError(name)
 try:
-    for name in ['model.js','bridge-client.js','task-pages.js','notification-view.js','notification-reconciliation.js','directory-view.js','file-browser.js','i18n.js','desktop.js']:run('syntax-'+name,[node,'--check','web/dist/'+name])
-    run('model-tests',[node,'--test','web/tests/model.test.cjs','web/tests/bridge.test.cjs','web/tests/client.test.cjs','web/tests/task-pages.test.cjs','web/tests/notification-view.test.cjs','web/tests/directory-pages.test.cjs','web/tests/directory-view.test.cjs','web/tests/event-consumer-status.test.cjs','web/tests/notification-reconciliation.test.cjs','web/tests/file-browser.test.cjs'])
+    for name in ['model.js','bridge-client.js','task-pages.js','notification-view.js','notification-reconciliation.js','directory-view.js','file-browser.js','file-operations.js','i18n.js','desktop.js']:run('syntax-'+name,[node,'--check','web/dist/'+name])
+    run('model-tests',[node,'--test','web/tests/model.test.cjs','web/tests/bridge.test.cjs','web/tests/client.test.cjs','web/tests/task-pages.test.cjs','web/tests/notification-view.test.cjs','web/tests/directory-pages.test.cjs','web/tests/directory-view.test.cjs','web/tests/event-consumer-status.test.cjs','web/tests/notification-reconciliation.test.cjs','web/tests/file-browser.test.cjs','web/tests/file-operations.test.cjs'])
     run('static-http-policy-tests',['/usr/bin/python3','scripts/test_web.py'])
     run('requirements',['/usr/bin/python3','scripts/verify_requirements.py'])
     run('requirements-negative-tests',['/usr/bin/python3','scripts/test_requirements.py'])
-    baseline_path=next(path for path in [ROOT/'docs/evidence/n022-2026-10-16.json',ROOT/'docs/evidence/n021-2026-10-15.json',ROOT/'docs/evidence/n020-2026-10-15.json',ROOT/'docs/evidence/n019-2026-10-15.json',ROOT/'docs/evidence/n016-2026-10-15.json',ROOT/'docs/evidence/n015-2026-10-15.json',ROOT/'docs/evidence/n014-2026-10-15.json',ROOT/'docs/evidence/n012-n013-2026-10-15.json',ROOT/'docs/evidence/n010-2026-10-15.json'] if path.exists())
+    baseline_path=next(path for path in [ROOT/'docs/evidence/n024-2026-10-16.json',ROOT/'docs/evidence/n022-2026-10-16.json',ROOT/'docs/evidence/n021-2026-10-15.json',ROOT/'docs/evidence/n020-2026-10-15.json',ROOT/'docs/evidence/n019-2026-10-15.json',ROOT/'docs/evidence/n016-2026-10-15.json',ROOT/'docs/evidence/n015-2026-10-15.json',ROOT/'docs/evidence/n014-2026-10-15.json',ROOT/'docs/evidence/n012-n013-2026-10-15.json',ROOT/'docs/evidence/n010-2026-10-15.json'] if path.exists())
     baseline_report=json.loads(baseline_path.read_text())
     baseline=baseline_report['source_sha256']
     core={name:digest for name,digest in baseline.items() if name=='Package.swift' or name.startswith(('Sources/','Tests/','database/'))}
@@ -51,6 +51,10 @@ try:
         assert set(dependencies)=={'web/dist/model.js','web/dist/bridge-client.js','web/dist/directory-view.js','scripts/test_directory_bridge.cjs'},'Complete embedded pipe dependency receipt is required'
         regression=baseline_report['core_full_regression']
         assert regression['unfiltered'] is True and regression['new_unfiltered_execution'] is True and regression['reused_prior_suite'] is False and regression['swift_tests']==224,'A new complete source-context regression is required'
+    if baseline_report.get('task')=='N-024':
+        assert set(dependencies)=={'web/dist/model.js','web/dist/bridge-client.js','web/dist/directory-view.js','web/dist/file-operations.js','scripts/test_directory_bridge.cjs','scripts/test_file_operations_bridge.cjs'},'Both embedded pipe scenarios and all transitive file-operation dependencies are required'
+        regression=baseline_report['core_full_regression']
+        assert regression['unfiltered'] is True and regression['new_unfiltered_execution'] is True and regression['reused_prior_suite'] is False and regression['swift_tests']==239,'A fresh complete file-operation regression is required'
     assert all(hashlib.sha256((ROOT/name).read_bytes()).hexdigest()==digest for name,digest in dependencies.items()),'Embedded Node/Swift pipe dependencies changed; rerun that scenario and reconcile the full baseline before reuse'
 except Exception as error:outcome='FAILED';print(str(error),flush=True)
 unchanged=all(hashlib.sha256((ROOT/name).read_bytes()).hexdigest()==digest for name,digest in hashes.items())

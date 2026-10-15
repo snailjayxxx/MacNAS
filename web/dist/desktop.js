@@ -1,6 +1,6 @@
 (function () {
   "use strict";
-  const M = window.MacNASModel, I = window.MacNASI18n, P = window.MacNASTaskPages, N = window.MacNASNotifications, F = window.MacNASDirectoryView, B = window.MacNASFileBrowser;
+  const M = window.MacNASModel, I = window.MacNASI18n, P = window.MacNASTaskPages, N = window.MacNASNotifications, F = window.MacNASDirectoryView, B = window.MacNASFileBrowser, O = window.MacNASFileOperations;
   const api = M.createFixtureAdapter();
   const $ = (query, root = document) => root.querySelector(query);
   const paths = {
@@ -79,6 +79,7 @@
     const win = state.windows.get(id); if (!win) return;
     win.pager?.dispose();
     win.filePager?.dispose(); win.previewRequest = (win.previewRequest || 0) + 1;
+    win.fileOperation?.dispose();
     if (win.fileModal && state.modal === win.fileModal) closeModal(false);
     saveGeometry(win); win.element.remove(); state.windows.delete(id);
     if (state.active === id) state.active = [...state.windows.values()].filter(w => !w.minimized).at(-1)?.id || null;
@@ -353,6 +354,7 @@
     win.content.replaceChildren(); win.content.classList.add("file-browser-window");
     win.previewRequest = (win.previewRequest || 0) + 1;
     if (!win.filePager) { win.filePager = B.createFileBrowser({ source: state.directorySource }); win.libraryPhase = "idle"; win.libraries = []; }
+    if (!win.fileOperation && state.directorySource.fileOperations) win.fileOperation = O.createController(state.directorySource.fileOperations);
     const view = win.filePager.snapshot(), shell = el("div", "file-browser-shell"), side = el("aside", "file-browser-sidebar");
     side.setAttribute("aria-label", t("fileLocations")); side.append(el("h2", "", t("fileLocations")));
     win.libraryReload = button(t("reloadLibraries"), "text-button", () => loadFileLibraries(win), "refresh"); side.append(win.libraryReload);
@@ -381,6 +383,11 @@
     win.fileDirection = button(t(view.settings.direction === "ascending" ? "fileAscending" : "fileDescending"), "text-button", () => configureFiles(win, { direction: win.filePager.snapshot().settings.direction === "ascending" ? "descending" : "ascending" }));
     const grid = namedIconButton("fileView", win.view.grid ? "list" : "apps", () => { win.view.grid = !win.view.grid; renderFiles(win); }); grid.setAttribute("aria-pressed", String(win.view.grid));
     toolbar.append(search, filter, sort, win.fileDirection, grid); header.append(toolbar);
+    const operations = el("div", "file-operation-tools");
+    win.fileCreate = button(t("fileCreateDirectory"), "secondary-button", () => fileOperationDraft(win, "createDirectory"), "plus"); win.fileCreate.dataset.fileCreate = "";
+    win.fileRename = button(t("fileRename"), "secondary-button", () => fileOperationDraft(win, "rename"), "file"); win.fileRename.dataset.fileRename = "";
+    win.fileOperationPermission = el("span", "file-operation-hint"); operations.append(win.fileCreate, win.fileRename, win.fileOperationPermission); header.append(operations);
+    win.fileOperationNotice = el("div", "file-operation-notice"); win.fileOperationNotice.setAttribute("role", "status"); win.fileOperationNotice.setAttribute("aria-live", "polite"); header.append(win.fileOperationNotice);
     header.append(el("p", "file-scope", t("fileLoadedScope")));
     win.fileFailure = el("p", "readonly-note"); win.fileFailure.setAttribute("role", "alert"); header.append(win.fileFailure); main.append(header);
     const workspace = el("div", "file-workspace"), listing = el("div", "file-listing");
@@ -424,6 +431,7 @@
       win.libraries = libraries; win.libraryPhase = "ready";
       if (changed) {
         win.filePager.dispose(); win.filePager = B.createFileBrowser({ source }); win.previewRequest = (win.previewRequest || 0) + 1;
+        win.fileOperation?.dispose(); win.fileOperation = source.fileOperations ? O.createController(source.fileOperations) : null;
         if (win.fileModal && state.modal === win.fileModal) closeModal(false);
       }
       const current = win.filePager.snapshot().libraryID;
@@ -523,6 +531,88 @@
     win.fileList.tabIndex = actionable && rows.length ? -1 : 0;
     if (view.phase !== "loading" && view.previewPhase !== "loading") win.fileCount.textContent = t("fileLoadedCount", { count: view.items.length, matches: view.visibleItems.length, selected: view.selectedPaths.length });
     renderFileDetails(win, view, actionable);
+    renderFileOperationControls(win, view, actionable);
+  }
+  function renderFileOperationControls(win, view, actionable) {
+    const operation = win.fileOperation?.snapshot(), busy = operation && ["previewing", "committing", "checking"].includes(operation.phase);
+    const allowed = actionable && win.fileOperation?.canWrite && !busy && operation?.phase !== "uncertain";
+    win.fileCreate.disabled = !allowed; win.fileRename.disabled = !allowed || view.selectedItems.length !== 1;
+    win.fileOperationPermission.textContent = win.fileOperation?.canWrite ? t("fileOperationShortHint") : t("fileOperationReadOnly");
+    win.fileOperationNotice.replaceChildren();
+    const phase = operation?.phase; win.fileOperationNotice.hidden = !["committing", "checking", "completed", "failed", "uncertain"].includes(phase);
+    if (win.fileOperationNotice.hidden) return;
+    const key = { committing: "fileOperationApplying", checking: "fileOperationChecking", completed: "fileOperationCompleted", failed: "fileOperationFailed", uncertain: "fileOperationUncertain" }[phase];
+    win.fileOperationNotice.append(el("span", "", t(key)));
+    if (["completed", "failed", "uncertain"].includes(phase)) win.fileOperationNotice.append(button(t("fileOperationViewResult"), "text-button", () => fileOperationResult(win)));
+  }
+  function fileOperationDraft(win, kind, previousName) {
+    if (!currentWindow(win) || !win.fileOperation?.canWrite) return;
+    const view = win.filePager.snapshot(), operation = win.fileOperation.snapshot();
+    if (win.libraryPhase !== "ready" || view.phase !== "ready" || view.requiresReload || ["previewing", "committing", "checking", "uncertain"].includes(operation.phase)) return;
+    const selected = view.selectedItems[0]; if (kind === "rename" && view.selectedItems.length !== 1) return;
+    const captured = Object.freeze({ libraryID: view.libraryID, parentPath: view.relativePath, kind, ...(kind === "rename" ? { sourceName: selected.name } : {}) });
+    fileOperationInput(win, captured, previousName ?? (kind === "rename" ? selected.name : t("fileNewDirectoryName")));
+  }
+  function fileOperationInput(win, captured, name) {
+    const content = el("div"), label = el("label", "", t("fileOperationName")), input = el("input"); label.htmlFor = "file-operation-name"; input.id = label.htmlFor; input.value = name; input.maxLength = 255;
+    const path = fileLibraryName(captured.libraryID) + (captured.parentPath ? "/" + captured.parentPath : "");
+    content.append(el("p", "", path), label, input, el("p", "", t("fileOperationPreviewHint")));
+    const epoch = state.epoch, controller = win.fileOperation;
+    showModal(t(captured.kind === "createDirectory" ? "fileCreateDirectory" : "fileRename"), content, [
+      { key: "cancel", style: "secondary-button", action: closeModal },
+      { key: "fileOperationPreview", style: "primary-button", action: async ({ isCurrent }) => {
+        const request = O.intent({ ...captured, name: input.value }, true); input.readOnly = true;
+        const pending = controller.prepare(request); renderFileRows(win);
+        try { await pending; } finally { input.readOnly = false; if (epoch === state.epoch && currentWindow(win) && controller === win.fileOperation) renderFileRows(win); }
+        if (epoch !== state.epoch || !currentWindow(win) || controller !== win.fileOperation || !isCurrent()) return;
+        fileOperationPreview(win, controller.snapshot().preview);
+      }}
+    ]); win.fileModal = state.modal; input.focus(); input.select();
+  }
+  function fileOperationPreview(win, preview) {
+    if (!preview) return;
+    const content = el("div"), intent = preview.intent, details = el("dl", "detail-grid");
+    for (const [key, value] of [["fileCurrentPath", fileLibraryName(intent.libraryID) + (intent.parentPath ? "/" + intent.parentPath : "")], ...(intent.sourceName === null ? [] : [["fileOperationOriginalName", intent.sourceName]]), ["fileOperationName", intent.name]]) details.append(el("dt", "", t(key)), el("dd", "", value));
+    content.append(el("p", "", t(preview.state === "ready" ? "fileOperationConfirmHint" : preview.state === "conflict" ? "fileOperationConflict" : "fileOperationUnchanged")), details);
+    const actions = [
+      { key: "cancel", style: "secondary-button", action: closeModal },
+      { key: "fileOperationEditName", style: "secondary-button", action: () => fileOperationInput(win, { libraryID: intent.libraryID, parentPath: intent.parentPath, kind: intent.kind, ...(intent.sourceName === null ? {} : { sourceName: intent.sourceName }) }, intent.name) }
+    ];
+    if (preview.state === "ready") actions.push({ key: "fileOperationApply", style: "primary-button", action: current => applyFileOperation(win, current) });
+    showModal(t("fileOperationPreview"), content, actions); win.fileModal = state.modal;
+  }
+  async function applyFileOperation(win, { isCurrent }) {
+    const epoch = state.epoch, controller = win.fileOperation, preview = controller.snapshot().preview, pager = win.filePager, location = pager.snapshot();
+    if (!preview || location.libraryID !== preview.intent.libraryID || location.relativePath !== preview.intent.parentPath) throw new M.ServiceError("staleState");
+    const pending = controller.commit(); renderFileRows(win);
+    try { await pending; } catch { /* A fixed error remains uncertain until explicitly observed. */ }
+    if (epoch !== state.epoch || !currentWindow(win) || controller !== win.fileOperation) return;
+    renderFileRows(win); const outcome = controller.snapshot();
+    if (outcome.phase === "completed") {
+      if (isCurrent()) closeModal(false);
+      const current = pager.snapshot();
+      if (pager === win.filePager && current.libraryID === preview.intent.libraryID && current.relativePath === preview.intent.parentPath && current.phase !== "loading") await moveFilePage(win, "reload", undefined, false);
+      if (epoch === state.epoch && currentWindow(win)) toast(t(win.filePager.snapshot().phase === "ready" ? "fileOperationCompleted" : "fileOperationReloadFailed"));
+    } else if (isCurrent()) fileOperationResult(win);
+  }
+  function fileOperationResult(win) {
+    const controller = win.fileOperation, view = controller?.snapshot(); if (!view) return;
+    const content = el("div"), intent = view.preview?.intent;
+    content.append(el("p", "", t(view.phase === "completed" ? "fileOperationCompleted" : view.phase === "failed" ? "fileOperationFailed" : "fileOperationUncertain")));
+    if (intent) content.append(el("p", "", fileLibraryName(intent.libraryID) + "/" + (intent.parentPath ? intent.parentPath + "/" : "") + intent.name));
+    if (view.error) content.append(el("p", "", view.error === "expired" ? t("fileOperationExpired") : view.error === "collision" ? t("fileOperationConflict") : fileError(view.error)));
+    if (view.phase === "uncertain") content.append(el("p", "", t("fileOperationNoRepeat")));
+    const actions = [{ key: "done", style: "secondary-button", action: closeModal }];
+    if (view.phase === "uncertain") actions.unshift({ key: "fileOperationCheck", style: "primary-button", action: async ({ isCurrent }) => {
+      const epoch = state.epoch, pending = controller.check(); renderFileRows(win);
+      try { await pending; } finally { if (epoch === state.epoch && currentWindow(win) && controller === win.fileOperation) renderFileRows(win); }
+      if (epoch !== state.epoch || !currentWindow(win) || controller !== win.fileOperation || !isCurrent()) return;
+      const observed = controller.snapshot(), location = win.filePager.snapshot(), intent = observed.preview?.intent;
+      if (observed.phase === "completed" && intent && location.libraryID === intent.libraryID && location.relativePath === intent.parentPath && location.phase !== "loading") await moveFilePage(win, "reload", undefined, false);
+      if (epoch !== state.epoch || !currentWindow(win) || controller !== win.fileOperation || !isCurrent()) return;
+      fileOperationResult(win);
+    }});
+    showModal(t("fileOperationViewResult"), content, actions); win.fileModal = state.modal;
   }
   function renderFileDetails(win, view, actionable) {
     const pane = win.fileDetails; pane.replaceChildren(); pane.append(el("h2", "", t("fileDetails")));
@@ -731,7 +821,7 @@
   async function switchScenario(scenario, showPreferences = false) {
     const epoch = ++state.epoch, old = state.session;
     document.body.dataset.ready = "false"; closeModal(false); hidePanels();
-    for (const win of state.windows.values()) { win.pager?.dispose(); win.filePager?.dispose(); win.element.remove(); }
+    for (const win of state.windows.values()) { win.pager?.dispose(); win.filePager?.dispose(); win.fileOperation?.dispose(); win.element.remove(); }
     const oldSource = state.taskSource; state.notifications?.dispose();
     state.directorySource?.dispose();
     state.windows.clear(); state.active = null; state.previewJobs = []; state.notifications = null; state.overview = null; state.taskSource = null; state.directorySource = null; state.session = null;
