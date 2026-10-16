@@ -60,7 +60,7 @@
   function libraries(value) { return unique(array(value,1024).map(library),v=>v.libraryID); }
   function overview(value) {
     const v=fields(value,["apiVersion","source","userID","role","mode","languages","databaseSchema","active","completed","logicalReferenceBytes","physicalPool","taskTimestampsAvailable","libraries"]);
-    check(v.apiVersion===1 && v.source==="fixture-host" && v.databaseSchema===3 && v.physicalPool==="unbound" && v.taskTimestampsAvailable===false);
+    check(v.apiVersion===1 && v.source==="fixture-host" && [3,4].includes(v.databaseSchema) && v.physicalPool==="unbound" && v.taskTimestampsAvailable===false);
     text(v.userID);check(["administrator","reader"].includes(v.role) && modes.includes(v.mode));
     check(Array.isArray(v.languages) && v.languages.length>=1 && v.languages.length<=2 && v.languages.every(x=>["zh-CN","ja-JP"].includes(x)) && new Set(v.languages).size===v.languages.length);
     integer(v.active);integer(v.completed);integer(v.logicalReferenceBytes);
@@ -196,8 +196,8 @@
       async overview(opts) {
         return invoke("overview",{},value=>{
           overview(value);
-          if (binding) check(["userID","role","mode"].every(key=>binding[key]===value[key]),"denied");
-          else binding=Object.freeze({userID:value.userID,role:value.role,mode:value.mode});
+          if (binding) check(["userID","role","mode","databaseSchema"].every(key=>binding[key]===value[key]),"denied");
+          else binding=Object.freeze({userID:value.userID,role:value.role,mode:value.mode,databaseSchema:value.databaseSchema});
           return value;
         },opts);
       },

@@ -2059,6 +2059,16 @@
             "docs/decisions/ADR-020-bounded-file-copy.md",
             "web/tests/BROWSER_ACCEPTANCE.md"
           ]
+        },
+        {
+          "id": "FIL-01.durable_recycle_journal_foundation",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "Database-only Schema4 recycle/restore journal foundation in synthetic fixtures; no vault, file move, filesystem approval, recovery executor or browser feature.",
+          "evidence": [
+            "docs/plans/N-029-A-ACCEPTANCE.md",
+            "docs/decisions/ADR-022-schema4-file-effect-foundation.md",
+            "docs/evidence/n029-a-2026-10-16.json"
+          ]
         }
       ]
     },
@@ -3366,6 +3376,16 @@
             "docs/decisions/ADR-004-durable-jobs-outbox.md"
           ],
           "scope": "Synthetic fixture on current Mac only; parent acceptance remains incomplete"
+        },
+        {
+          "id": "BAK-10.schema4_all_table_freeze_and_digest",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "Schema4 twelve-table SQL freeze and complete UTC digest with old-version projection compatibility; no external recycle payload backup claim.",
+          "evidence": [
+            "docs/plans/N-029-A-ACCEPTANCE.md",
+            "docs/decisions/ADR-022-schema4-file-effect-foundation.md",
+            "docs/evidence/n029-a-2026-10-16.json"
+          ]
         }
       ]
     },
@@ -6436,6 +6456,16 @@
             "docs/evidence/n012-n013-2026-10-15.json",
             "docs/plans/N-012-013-ACCEPTANCE.md",
             "docs/contracts/FIXTURE_STORAGE_API.md"
+          ]
+        },
+        {
+          "id": "MIG-05.schema4_isolated_upgrade_and_portable_guard",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "Isolated Schema3-to-4 candidate upgrade and empty-journal portability, unknown-host/nonempty-history refusal, default read-only restoration, existing typed readers; current synthetic Mac only.",
+          "evidence": [
+            "docs/plans/N-029-A-ACCEPTANCE.md",
+            "docs/decisions/ADR-022-schema4-file-effect-foundation.md",
+            "docs/evidence/n029-a-2026-10-16.json"
           ]
         }
       ]

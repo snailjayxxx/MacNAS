@@ -33,7 +33,9 @@ def run(name,command,input=None,check=True,expected_exit=0):
     print(name+': running',flush=True)
     with log.open('w') as output:
         process=subprocess.Popen([str(c) for c in command],cwd=ROOT,env=env,stdin=subprocess.PIPE if input is not None else subprocess.DEVNULL,text=True,stdout=output,stderr=subprocess.STDOUT,start_new_session=True)
-        try:process.communicate(input=input,timeout=2400 if name=='swift-tests' else 300)
+        # Schema4 adds real migration/isolation scenarios to the unfiltered suite.
+        # Keep one bounded run and its cleanup, without truncating it at the earlier 40-minute budget.
+        try:process.communicate(input=input,timeout=4800 if name=='swift-tests' else 420)
         except subprocess.TimeoutExpired:
             os.killpg(process.pid,signal.SIGTERM)
             try:process.communicate(timeout=5)
@@ -86,6 +88,19 @@ try:
     run('demo-rollback',[binary/'macnas','migrate','rollback','--dest',upgraded,'--confirm'])
     upgraded3=demo/'Schema3-readonly'
     run('demo-schema3-upgrade',[binary/'macnas','migrate','upgrade','--source',upgraded,'--dest',upgraded3,'--target-schema','3','--confirm-create','--host-id','mock-schema3'])
+    upgraded4=demo/'Schema4-readonly'
+    run('demo-schema4-upgrade',[binary/'macnas','migrate','upgrade','--source',upgraded3,'--dest',upgraded4,'--target-schema','4','--confirm-create','--host-id','mock-schema4'])
+    run('demo-schema4-doctor',[binary/'macnas','doctor','--portable',upgraded4])
+    run('demo-schema4-retry',[binary/'macnas','migrate','upgrade','--source',upgraded3,'--dest',upgraded4,'--target-schema','4','--confirm-create','--host-id','mock-schema4'])
+    run('demo-schema4-rollback',[binary/'macnas','migrate','rollback','--dest',upgraded4,'--confirm'])
+    jobs4=demo/'schema4-durable-jobs'
+    run('demo-schema4-create',[binary/'macnas','fixture','create','--dest',jobs4,'--schema','4'])
+    run('demo-schema4-jobs',[binary/'macnas','jobs','demo','--source',jobs4])
+    jobs4_export=demo/'schema4-jobs-export';jobs4_restore=demo/'schema4-jobs-restore'
+    run('demo-schema4-export',[binary/'macnas','migrate','export','--source',jobs4,'--dest',jobs4_export])
+    run('demo-schema4-restore',[binary/'macnas','migrate','restore','--source',jobs4_export,'--dest',jobs4_restore,'--confirm-create','--host-id','mock-schema4-restore'])
+    denied_worker4=run('schema4-readonly-worker-refusal',[binary/'macnas','jobs','work-once','--source',jobs4_restore],expected_exit=1)
+    assert 'denied' in denied_worker4,'restored Schema4 worker should refuse'
     jobs=demo/'durable-jobs'
     run('demo-jobs-create',[binary/'macnas','fixture','create','--dest',jobs,'--schema','3'])
     run('demo-jobs-work-and-ack',[binary/'macnas','jobs','demo','--source',jobs])

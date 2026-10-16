@@ -11,18 +11,18 @@ func path(_ value: String) -> URL { URL(fileURLWithPath: value, isDirectory: tru
 let usage = """
 MacNAS 0.1 synthetic prototype (no listener or system services)
   macnas capabilities [--mock-os 15|26]
-  macnas fixture create --dest PATH [--schema 1|2|3]
+  macnas fixture create --dest PATH [--schema 1|2|3|4]
   macnas doctor --portable PATH                 verifies exported fixture, read only
   macnas migrate preview --source PATH          live synthetic fixture, read only
   macnas migrate export --source PATH --dest PATH
   macnas migrate restore --source PATH --dest PATH [--confirm-create --host-id LOGICAL-ID]
-  macnas migrate upgrade --source PATH --dest PATH [--target-schema 2|3 --confirm-create --host-id ID]
+  macnas migrate upgrade --source PATH --dest PATH [--target-schema 2|3|4 --confirm-create --host-id ID]
   macnas migrate status --dest PATH
   macnas migrate rollback --dest PATH [--confirm]
   macnas migrate cutover                        unavailable, always refuses
-  macnas jobs demo --source PATH               fixture sessions only; schema 3
+  macnas jobs demo --source PATH               fixture sessions only; schema 3/4
   macnas jobs work-once --source PATH          trusted synthetic jobs only
-  macnas bridge fixture --source PATH --user LOGICAL-ID    schema 3, stdin/stdout JSON only
+  macnas bridge fixture --source PATH --user LOGICAL-ID    schema 3/4, stdin/stdout JSON only
   macnas storage demo --source PATH            creates and reads synthetic files only
   macnas photo-smoke --dest NEW-DIRECTORY        generates synthetic images only
 """
@@ -125,7 +125,7 @@ do {
         case "upgrade":
             try checkOptions(prefix:2,valued:["--source","--dest","--host-id","--target-schema"],flags:["--confirm-create"])
             let version = args.contains("--target-schema") ? Int(try option("--target-schema")) : 2
-            guard let version,[2,3].contains(version) else { throw NASError.unsupported }
+            guard let version,[2,3,4].contains(version) else { throw NASError.unsupported }
             let source = path(try option("--source")), destination = path(try option("--dest"))
             if args.contains("--confirm-create") {
                 let host = args.contains("--host-id") ? try option("--host-id") : "mock-upgrade-host"

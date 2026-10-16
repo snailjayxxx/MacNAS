@@ -1,12 +1,14 @@
-# MacNAS 原型架构（N-028设计；运行基线N-027）
+# MacNAS 原型架构（N-029 A：Schema4持久日志基础）
 
 Swift 6 / macOS 15部署目标，PostgreSQL 18。当前为非root CLI、无监听的业务API和两个自研可信样例；没有生产HTTP登录、系统Helper或正式接管。
 
-N-028确定回收站的独立批准、同卷私有vault、prepared→armed→observed→completed外部效果日志、缺post证据的保留式uncertain和只读观察/写结算分离。设计要求新0004、全表摘要/停写和非空vault普通可携阻断；当前尚未新增迁移/表/API或移动文件，仍Schema3。有限抽象模型不代表APFS/PG/真实SIGKILL或网页验收；详见[ADR-021](docs/decisions/ADR-021-recoverable-recycle-journal.md)和[N-029分步实现](docs/plans/N-029-RECYCLE-JOURNAL-IMPLEMENTATION.md)。
+N-029 A新增0004、recycle_entries与file_effect_operations，以及宿主内部数据库日志。支持Schema1→2→3→4，原0001–0003不变；精确校验表/约束/函数/权限，12表统一停写，完整UTC摘要保留旧Schema投影。原始UTF8主体、幂等/CAS和容量准入在SQL事务内处理；没有vault注册、文件移动、回收RPC或网页入口。当前实现正在完成回归，结果以[阶段证据](docs/evidence/n029-a-2026-10-16.json)为准；设计与实现边界见[ADR-021](docs/decisions/ADR-021-recoverable-recycle-journal.md)、[ADR-022](docs/decisions/ADR-022-schema4-file-effect-foundation.md)和[N-029分步实现](docs/plans/N-029-RECYCLE-JOURNAL-IMPLEMENTATION.md)。
+
+普通Schema4可携流程拒绝任何新日志历史及未知/payload宿主布局，空日志恢复仍默认只读；诊断数据库快照只保存元数据。摘要和新日志准入有4,000,000字节预算，旧任务/事件仍可后续增长，尚无整库容量fencing。B接入真实效果前必须审核批准、vault与跨进程锁、最坏后置证据和prepared取消证明。数据库行、SQL完成夹具及N-028有限模型均不能证明文件已移动或真实SIGKILL恢复。
 
 N-027增加单常规文件复制：独立目标复制批准、固定两端、32KiB宿主分块、私有暂存/SHA256/RENAME_EXCL、短期结果及原目标重读，来源始终保留。16MiB单文件，同设备合成目录；跨设备、目录、批量、移动和持久恢复未实现。共享发布原语在rename后记录完整标记，检查发布后同长度改写并恢复mtime的情况，异常为uncertain并保留目标；不声称敌对本机进程强fencing。详见[ADR-020](docs/decisions/ADR-020-bounded-file-copy.md)。
 
-网页合成树的初始UTF8、已发布二进制及全部上传/复制预留共享64MiB上限，发布原子转换计量，取消/失败/到期/会话结束释放。客户端窗口和来源中断需回收迟到预览头，不以关闭共享连接或重连扩预算代替清理。复制目标选择器按现有目录来源每页50项读取；实际浏览器仍与模型/元素替身/真实管道分开验收。数据库Schema3不变，网页仍不连接Swift/NAS。
+网页合成树的初始UTF8、已发布二进制及全部上传/复制预留共享64MiB上限，发布原子转换计量，取消/失败/到期仅释放未发布预留，已发布字节继续计量；会话结束或目录source.dispose清树。客户端窗口和来源中断需回收迟到预览头，不以关闭共享连接或重连扩预算代替清理。复制目标选择器按现有目录来源每页50项读取；实际浏览器仍与模型/元素替身/真实管道分开验收。静态fixture继续Schema3，具名宿主客户端接受3/4并固定连接内版本，网页仍不连接Swift/NAS。
 
 N-024补齐建文件夹和同目录重命名：独立宿主写批准、绑定目录与源身份的预览、不覆盖执行、同宿主结果查询及成功后重读。短操作同步完成，32条/300秒内存回执不作为持久任务或数据库替代；Schema 3不变。网页只修改显式合成树，原生测试另在新建批准目录验证真实文件系统，二者不等同于浏览器已连接NAS。见[ADR-018](docs/decisions/ADR-018-guarded-fixture-file-operations.md)。
 
@@ -32,7 +34,7 @@ flowchart LR
 ```
 
 - SafeFS拒绝路径越界、现存符号链接/硬链接和名称碰撞。完整目录描述符竞态防护尚未实现，不能作为不可信多用户文件服务的生产边界。
-- StateStore支持内置版本化Schema1→2→3迁移，每个版本使用独立DDL事务。应用使用每实例独立角色，只能访问自己的Schema/表；核心、另一套件和其他实例的越权分别负测。
+- StateStore支持内置版本化Schema1→2→3→4迁移，每个版本使用独立DDL事务。应用使用每实例独立角色，只能访问自己的Schema/表；核心、另一套件和其他实例的越权分别负测。Schema4验证两套件对新核心表的全部8项权限、核心Schema权限和验证函数EXECUTE；隔离导入仅在bootstrap阶段收紧pg_restore重建的PUBLIC函数默认权限，普通验证不自动修复权限。
 - 受控配置/数据库写入持有实例共享锁。导出获取排他锁，再以PostgreSQL SHARE锁等待旧写事务并冻结所有已知持久表，SELECT与pg_dump继续。取消只针对本次随机会话；配置被外部程序绕过API直接修改不在一致性保证内。
 - MigrationCoordinator保存签名宿主日志、源指纹、已核对文件、候选库身份及阶段。识别导入/升级/发布先于日志推进的情况，复用经过证明的步骤；身份不明的空库保留后重新分配，非空或不同身份拒绝接管。
 - 升级先保留签名源快照，在独立新库执行事务SQL，验证语义数据摘要后重新快照/签名。默认恢复为只读，回退保留源库、候选和快照；没有生产服务切换或跨Mac强fencing。

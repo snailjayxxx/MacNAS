@@ -72,7 +72,8 @@ public struct DurableJobSlice: Sendable {
 public final class DurableJobQueue {
     let store:StateStore
     public init(store:StateStore) throws {
-        try store.validate(expectedVersion:3);self.store=store
+        let version=try store.schemaVersion();try require([3,4].contains(version),.unsupported)
+        try store.validate(expectedVersion:version);self.store=store
     }
     private static let viewColumns="id,idempotency_key,kind,owner_user,app_id,payload,state,attempts,max_attempts,effects,revision,checkpoint,last_error"
     private static let eventColumns="sequence,job_id,revision,type,state"

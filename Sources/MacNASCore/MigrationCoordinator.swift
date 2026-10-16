@@ -73,7 +73,7 @@ enum JournalStore {
         try require(try PortableInstance.trustedKey().isValidSignature(signature, for: encoded(envelope.transaction)), .integrity)
         let r = envelope.transaction
         try require(r.schemaVersion == 1 && r.destinationName == destination.lastPathComponent, .integrity)
-        try require([1,2,3].contains(r.sourceVersion) && [1,2,3].contains(r.targetVersion) && r.targetVersion >= r.sourceVersion, .invalidSchema)
+        try require([1,2,3,4].contains(r.sourceVersion) && [1,2,3,4].contains(r.targetVersion) && r.targetVersion >= r.sourceVersion, .invalidSchema)
         try require(r.resumeCount <= 1000 && !r.history.isEmpty && r.history.count < 10000, .integrity)
         try require(r.history.enumerated().allSatisfy { $0.offset == $0.element.sequence } && r.history.last?.phase == r.phase, .integrity)
         try require(!r.history.contains { $0.phase == .readyForCutover } && r.phase != .readyForCutover, .denied)
@@ -97,7 +97,7 @@ public enum MigrationCoordinator {
         try perform(kind: .restore, source: source, destination: destination, hostID: hostID, targetVersion: PortableInstance.databaseDescriptor(source).version(), fault: fault, checkpoint: checkpoint)
     }
     @discardableResult public static func upgrade(from source: URL, to destination: URL, hostID: String, targetVersion: Int = 2, fault: MigrationFault? = nil, checkpoint: ((MigrationCheckpoint) -> Void)? = nil) throws -> MigrationTransaction {
-        try require([2,3].contains(targetVersion), .unsupported)
+        try require([2,3,4].contains(targetVersion), .unsupported)
         return try perform(kind: .schemaUpgrade, source: source, destination: destination, hostID: hostID, targetVersion: targetVersion, fault: fault, checkpoint: checkpoint)
     }
     static func perform(kind: MigrationKind, source: URL, destination: URL, hostID: String, targetVersion: Int, fault: MigrationFault?, checkpoint: ((MigrationCheckpoint) -> Void)?) throws -> MigrationTransaction {
@@ -113,10 +113,12 @@ public enum MigrationCoordinator {
                 identity = try PortableInstance.strictRead(InstanceIdentity.self, SafeFS.resolve(source, "instance.json")); sourceDatabase = nil
             } else {
                 identity = try PortableInstance.validateLayout(source, exported: false)
-                sourceDatabase = try PortableInstance.store(source).databaseName
+                let sourceStore = try PortableInstance.store(source)
+                try PortableInstance.requirePortableFileEffectsDisabled(source, store: sourceStore)
+                sourceDatabase = sourceStore.databaseName
             }
             let sourceVersion = try PortableInstance.databaseDescriptor(source).version()
-            try require([1,2,3].contains(sourceVersion) && targetVersion >= sourceVersion && targetVersion <= 3, .invalidSchema)
+            try require([1,2,3,4].contains(sourceVersion) && targetVersion >= sourceVersion && targetVersion <= 4, .invalidSchema)
             let journalURL = try JournalStore.url(destination)
             var record: MigrationTransaction
             if FileManager.default.fileExists(atPath: journalURL.path) {
@@ -205,22 +207,39 @@ public enum MigrationCoordinator {
                 if record.phase == .databasePlanned {
                     try hit(.afterDatabaseCreated)
                     if try candidate.tableCount() == 0 { try candidate.importArchive(SafeFS.resolve(package, "state/platform.pgdump")) }
+                    else {
+                        // pg_restore may have committed before import ACL hardening or journal advance.
+                        // Only this attested import phase may tighten its known restored function ACLs.
+                        try candidate.hardenImportedSchema4FunctionPrivileges()
+                    }
+                    try candidate.requirePortableRecycleEmpty()
                     try candidate.validate(expectedVersion: record.sourceVersion)
                     if let digest = descriptor.contentSHA256 { try require(try candidate.contentDigest() == digest, .integrity) }
                     try hit(.afterImportCommit)
                     try record.advance(.imported); try JournalStore.save(record, to: journalURL)
                 }
                 if record.phase == .imported {
+                    try candidate.requirePortableRecycleEmpty()
+                    // The complete source projection includes Schema 3 jobs, events and cursors.
+                    // Base labels/app values alone cannot attest the preserved source contents.
+                    if let digest = descriptor.contentSHA256 { try require(try candidate.contentDigest(asVersion: record.sourceVersion) == digest, .integrity) }
                     if let digest = descriptor.baseDataSHA256 { try require(try candidate.baseDataDigest() == digest, .integrity) }
                     if record.targetVersion > record.sourceVersion {
                         let failure: Bool; if case .failSchemaSQL = fault { failure = true } else { failure = false }
                         try candidate.migrate(toVersion:record.targetVersion,injectFailure:failure)
                     }
                     try candidate.validate(expectedVersion: record.targetVersion)
+                    try candidate.requirePortableRecycleEmpty()
+                    if let digest = descriptor.contentSHA256 { try require(try candidate.contentDigest(asVersion: record.sourceVersion) == digest, .integrity) }
+                    if record.targetVersion > record.sourceVersion { try candidate.validateUpgradeDefaults(from: record.sourceVersion) }
                     if let digest = descriptor.baseDataSHA256 { try require(try candidate.baseDataDigest() == digest, .integrity) }
                     try hit(.afterSchemaCommit)
                     try record.advance(.schemaMigrated); try JournalStore.save(record, to: journalURL)
                 }
+                let candidateBarrier = try DatabaseSnapshotBarrier(store: candidate)
+                defer { withExtendedLifetime(candidateBarrier) {} }
+                try candidate.requirePortableRecycleEmpty()
+                _ = try PortableInstance.validateFileEffectHostBoundary(stage, version: candidate.schemaVersion(), store: candidate)
                 if record.phase == .schemaMigrated {
                     try candidate.validate(expectedVersion:record.targetVersion)
                     if let digest=descriptor.baseDataSHA256 { try require(try candidate.baseDataDigest()==digest,.integrity) }
@@ -255,6 +274,9 @@ public enum MigrationCoordinator {
                 try require(record.phase == .needsAuth, .staleState)
                 try validatePublished(stage,record:record)
                 try hit(.beforePublish)
+                try candidateBarrier.check()
+                try PortableInstance.requirePortableFileEffectsDisabled(stage, store: candidate)
+                if kind == .schemaUpgrade { try PortableInstance.requirePortableFileEffectsDisabled(source, store: PortableInstance.store(source)) }
                 try PortableInstance.publish(stage,destination)
                 try hit(.afterPublish)
                 try record.advance(.publishedReadOnly); try JournalStore.save(record,to:journalURL)
@@ -275,6 +297,9 @@ public enum MigrationCoordinator {
         let store = try StateStore(databaseName: record.databaseName)
         try require(try store.attestation() == record.databaseAttestation, .integrity)
         try store.validate(expectedVersion:record.targetVersion)
+        let barrier = try DatabaseSnapshotBarrier(store: store)
+        defer { withExtendedLifetime(barrier) {} }
+        try PortableInstance.requirePortableFileEffectsDisabled(root, store: store)
         try require(try store.rows("SHOW default_transaction_read_only;") == [["on"]],.denied)
         let descriptor = try PortableInstance.databaseDescriptor(root)
         if let digest = descriptor.contentSHA256 { try require(try store.contentDigest() == digest,.integrity) }
@@ -290,8 +315,19 @@ public enum MigrationCoordinator {
             var record = try JournalStore.load(destination)
             guard confirm else { return record }
             let candidate = try StateStore(databaseName:record.databaseName)
+            var recycleBarrier: DatabaseSnapshotBarrier?
+            defer { withExtendedLifetime(recycleBarrier) {} }
             if try candidate.exists() {
                 try require(try candidate.attestation() == record.databaseAttestation,.integrity)
+                if try candidate.tableCount() > 0 {
+                    // Validate the actual complete schema before treating an older version
+                    // marker as legacy; a damaged marker must not hide newer persistent tables.
+                    try candidate.validate()
+                    if try candidate.schemaVersion() >= 4 { recycleBarrier = try DatabaseSnapshotBarrier(store: candidate) }
+                    try candidate.requirePortableRecycleEmpty()
+                    let root = FileManager.default.fileExists(atPath: destination.path) ? destination : try SafeFS.resolve(destination.deletingLastPathComponent(), record.stagingName)
+                    if FileManager.default.fileExists(atPath: root.path) { try PortableInstance.requirePortableFileEffectsDisabled(root, store: candidate) }
+                }
                 try candidate.setDefaultReadOnly()
             }
             if record.phase != .rolledBack { try record.advance(.rolledBack); try JournalStore.save(record,to:JournalStore.url(destination)) }

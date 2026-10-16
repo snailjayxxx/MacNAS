@@ -52,7 +52,7 @@
     return x.length - y.length;
   }
   function context(info, kind) {
-    check(info && info.source === kind && info.apiVersion === 1 && info.databaseSchema === 3 && info.physicalPool === "unbound");
+    check(info && info.source === kind && info.apiVersion === 1 && (kind === "fixture" ? info.databaseSchema === 3 : [3,4].includes(info.databaseSchema)) && info.physicalPool === "unbound");
     text(info.userID); check(["administrator", "reader"].includes(info.role) && ["synthetic_development", "read_only_recovery", "rolled_back_recovery"].includes(info.mode));
     return freeze({ source: kind, userID: info.userID, role: info.role, mode: info.mode });
   }

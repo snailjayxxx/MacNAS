@@ -60,6 +60,40 @@ before(()=>{
 });
 after(async()=>{await Promise.all([...hosts].map(async host=>{host.child.kill("SIGKILL");await host.exit;}));});
 
+test("Schema4 keeps typed jobs, reader views and read-only restoration through real Swift pipes",async()=>{
+  const source=root+"-schema4",portable=root+"-schema4-export",restored=root+"-schema4-restored";
+  function cli(args){
+    const result=spawnSync(binary,args,{encoding:"utf8",timeout:60000,maxBuffer:1048576});
+    assert.equal(result.status,0,result.stdout||result.stderr);return result;
+  }
+  cli(["fixture","create","--dest",source,"--schema","4"]);
+  const host=new PipeHost(source),client=host.typed();
+  try{
+    assert.equal((await client.overview()).databaseSchema,4);
+    const created=await client.submitLabelJob({id:"schema4-pipe-job",key:"schema4-pipe-key",value:"Schema4 合成"});
+    assert.equal(created.state,"queued");
+    const tasks=await P.createClientTaskSource(client),directory=await F.createClientDirectorySource(client);
+    const notifications=await N.createClientNotificationView(client,{consumerID:"schema4-pipe"});
+    assert.equal((await tasks.page()).tasks[0].id,created.id);
+    assert.equal((await directory.libraries())[0].state,"missing");
+    await notifications.poll();assert.ok(notifications.snapshot().items.length>0);
+    assert.equal((await client.cancelJob(created.id)).state,"cancelled");
+    assert.equal(client.previewRecycleFile,undefined);assert.equal(client.confirmRestoreFile,undefined);
+    notifications.dispose();directory.dispose();assert.equal(client.closed,false);
+  }finally{client.close();await host.finish();}
+  cli(["migrate","export","--source",source,"--dest",portable]);
+  cli(["migrate","restore","--source",portable,"--dest",restored,"--confirm-create","--host-id","schema4-pipe-restored"]);
+  const recovery=new PipeHost(restored),readonlyClient=recovery.typed();
+  try{
+    const overview=await readonlyClient.overview();assert.equal(overview.databaseSchema,4);assert.equal(overview.mode,"read_only_recovery");
+    assert.equal((await readonlyClient.listJobs())[0].state,"cancelled");
+    await assert.rejects(readonlyClient.submitLabelJob({id:"blocked",key:"blocked",value:"blocked"}),errorCode("readOnly"));
+    const tasks=await P.createClientTaskSource(readonlyClient);assert.equal((await tasks.page()).tasks[0].id,"schema4-pipe-job");
+    const notifications=await N.createClientNotificationView(readonlyClient,{consumerID:"schema4-recovery"});
+    await assert.rejects(notifications.poll(),errorCode("readOnly"));notifications.dispose();
+  }finally{readonlyClient.close();await recovery.finish();}
+});
+
 test("JavaScript client reaches real durable jobs, replay/ACK and persisted restart through Swift pipes",async()=>{
   const host=new PipeHost(root);
   try {

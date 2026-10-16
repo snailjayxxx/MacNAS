@@ -49,7 +49,8 @@ public final class DatabaseSnapshotBarrier {
         do {
             try process.run()
             let marker = "MACNAS_BARRIER_READY_" + UUID().uuidString.replacingOccurrences(of: "-", with: "")
-            let tables = ["macnas.schema_migrations","macnas.labels","macnas.jobs","app_hello_diagnostics.state","app_sample_file_index.state"] + ((try store.schemaVersion())>=3 ? ["macnas.job_steps","macnas.event_clock","macnas.job_events","macnas.event_consumers","macnas.event_receipts"] : [])
+            let version = try store.schemaVersion()
+            let tables = ["macnas.schema_migrations","macnas.labels","macnas.jobs","app_hello_diagnostics.state","app_sample_file_index.state"] + (version>=3 ? ["macnas.job_steps","macnas.event_clock","macnas.job_events","macnas.event_consumers","macnas.event_receipts"] : []) + (version>=4 ? ["macnas.recycle_entries","macnas.file_effect_operations"] : [])
             let sql = "BEGIN READ WRITE; SET LOCAL lock_timeout='\(Int(timeout * 1000))ms'; SET LOCAL idle_in_transaction_session_timeout='60000ms'; LOCK TABLE \(tables.joined(separator:", ")) IN SHARE MODE;\n\\echo \(marker)\n"
             try inputHandle?.write(contentsOf: Data(sql.utf8))
             let deadline = ProcessInfo.processInfo.systemUptime + timeout + 0.1

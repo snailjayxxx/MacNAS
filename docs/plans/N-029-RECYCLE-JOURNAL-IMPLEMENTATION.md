@@ -1,8 +1,8 @@
 # N-029：分步实现回收站持久基础与同卷效果
 
-接续[N-028设计](N-028-RECYCLE-BIN-DESIGN.md)和[ADR-021](../decisions/ADR-021-recoverable-recycle-journal.md)。N-028是设计与抽象模型证据，当前运行仍Schema3，没有回收/恢复按钮或RPC。以下是编码交付顺序，不以计划替代实现；每个独立步骤相关验证/文档齐全后可按长期授权中文提交并正常推送dev/bootstrap。
+接续[N-028设计](N-028-RECYCLE-BIN-DESIGN.md)和[ADR-021](../decisions/ADR-021-recoverable-recycle-journal.md)。N-028阶段只有设计与抽象模型、运行Schema3；N-029 A现已实现Schema4与内部数据库日志并通过新完整自动回归，完整验收结果见[A矩阵](N-029-A-ACCEPTANCE.md)、[ADR-022](../decisions/ADR-022-schema4-file-effect-foundation.md)和[阶段证据](../evidence/n029-a-2026-10-16.json)。仍没有文件回收/恢复效果、按钮或RPC。以下保留编码交付顺序，不以计划替代实现；每个独立步骤相关验证/文档齐全后可按长期授权中文提交并正常推送dev/bootstrap。
 
-## 先做 A：Schema4与日志基础（下一项可交付）
+## A：Schema4与日志基础
 
 1. 核对开发APFS UUID C1755FBB-FCA8-4EA4-BEE2-AA6BF3258B6C、Git用户改动、N-027完整原生/前端源码收据；工程仍在MacNAS-Dev，不用Gen 8。
 2. 新增0004和内置顺序迁移；两核心表按主设计封闭字段/约束，未知表仍拒绝；旧0001–0003字节不变。保留旧1/2/3覆盖，不机械改所有schemaVersion=1。

@@ -1,6 +1,26 @@
 # MacNAS
 
-## 当前：N-028回收站设计与抽象故障验证完成（2026-10-16）
+## 当前：N-029 A持久日志基础与自动验证完成（2026-10-16）
+
+按用户“先继续开发”新增0004/Schema4、recycle_entries与file_effect_operations，以及内部DurableFileEffectJournal。原始UTF8主体/幂等键、不可变意图、revision/CAS、prepared取消和64MiB/64entry历史/256operation历史/8未解决配额在单事务处理；0字节、到期及uncertain仍计量。没有vault、文件回收/恢复效果、回收RPC/UI或永久清理；observed/completed仅由封闭SQL测试夹具构造，不证明文件已移动。
+
+两新表进入12表停写/完整UTC摘要、精确Schema/权限验证；保留旧0001–0003及完整Schema3投影。摘要在同一repeatable-read快照先检查实际规范行大小及保守预留，4,000,000字节/10秒后才聚合并在PG内SHA256。旧写者仍可继续增长，不是整库容量fencing；B真实rename前必须审核最坏后置证据、批准/锁和取消证明。普通Schema4可携拒绝所有新表历史及未知/payload宿主布局，空4默认只读恢复；非空DB诊断快照仅保存元数据。
+
+隔离候选升级和导入恢复保留源/签名快照；pg_restore默认函数PUBLIC EXECUTE只在认证bootstrap阶段收紧，后续误授严格拒绝。现有jobs/套件/Bridge/CLI接受3/4；具名客户端固定连接内版本，静态fixture仍3，不增加回收能力。
+
+最终未过滤20261016T152343-61e5e23c通过323项Swift（3252.431秒，含4项内嵌Node→Swift）、16项独立CLI管道（332.192秒）及全部CLI，测试库正常关闭。前端20261016T163726-d71f6e06通过273 Node/15静态策略/16语法/9需求负测。83份运行收据、60份完整核心、12内嵌/4独立依赖和联合108份源码一致，需求输入前后字节冻结通过。 新完整结果替代旧定向版本，见[阶段证据](docs/evidence/n029-a-2026-10-16.json)。
+
+实际失败保留：JSON提取运算优先级导致初始化拒绝；套件真实TRUNCATE误授未被拦截；导入默认函数权限导致严格验证拒绝；锁文件与非法长路径测试输入预期；新测试缺try编译错误。二次复核实际复现损坏版本记录掩盖新历史的错误回退、恢复CHECK函数后旧坏行仍通过及超4MB聚合，已分别加完整候选验证、逐行函数校验和独立实际大小门槛。所有失败库均正常关闭，原始日志不删。
+
+首次未过滤20261016T142030-3786d5e7执行323项，1项宽行测试意外database错误（3422.531秒），未作为通过。服务器连接丢失日志不能关联具体SQL，根因未定；加六个固定阶段标签后单例20261016T152026-668def78全部通过（12.983秒），两个拒绝和数据保全均执行。随后主动终止已核实自有CLI子进程组39140，诊断整轮记FAILED、库正常关闭；剩余CLI由新完整回归覆盖。不调整断言/超时，也不宣称未知原因已修复。
+
+新增3条仅限当前合成Mac的子记录，基线893、含SYS-09为900；父项112/97-14-1、29规划/5来源原字节不变。下一项B先做独立批准的单向同卷合成回收、真实中断及observe/settle，恢复后续、C接桥接/界面。Intel以后、SYS-09很后期。
+
+Chrome155.0.8059.85本轮52个复合项为45 PASS、7 PARTIAL，无剩余文件访问阻断。首轮CUA DOM/截图实测1440/390/320、中日文、两主题及原生200%，T05修正后中日分别等待69/79秒复测。用户自行开启扩展文件网址权限后，文本/70001字节/空文件/16MiB/超限上传、真实多块及空文件保存和逐字节/SHA256比对完成；上传/下载/复制的进行中取消、上传导航/切语言/最小化恢复/关窗/身份切换已补测。工具连接重置后续用Chrome原生控件，未改安全控制或注入模型。 7项PARTIAL为N06（慢响应/迟到错误）、FO04（模态仍开时切身份）、FT05（关窗/身份后URL回收未分别独立验；已测下载中取消及一个替换旧Blob实际ERR_FILE_NOT_FOUND）、FT08（已补200%完整上传，精确320/390中日全流程仍缺；调试连接未附加导致重设viewport失败）、FC03（三种大小复制/中途取消已测，普通UI无法准备超限复制来源）、FC04（进行中复制关窗/导航/身份未全验）、FC05（无普通UI的uncertain核对入口）。 第四次预览13926正常退出0，8766无监听，任务标签已关闭、缩放恢复默认；首轮viewport已重置，补测重设未成功应用。首轮final-console.json=[]仅限首轮，补测DevTools截图报告8条错误，含runtime.lastError、favicon.ico404及DevTools探测被CSP拒绝；见resumed-native-console-observation.json，不称整轮控制台完全干净。网页仍为Schema3内存fixture，不连接Swift/PostgreSQL/NAS或证明Schema4回收效果。 详见[清单](web/tests/BROWSER_ACCEPTANCE.md)和[逐项收据](/Volumes/MacNAS-Dev/MacNAS-Workspace/Evidence/browser-n029-2026-10-16/cases.json)；历史记录保留。
+
+[验收矩阵](docs/plans/N-029-A-ACCEPTANCE.md) · [ADR-022](docs/decisions/ADR-022-schema4-file-effect-foundation.md) · [分步计划](docs/plans/N-029-RECYCLE-JOURNAL-IMPLEMENTATION.md)。沿用中文阶段提交及正常推送dev/bootstrap授权，不合并main；发布收据位于仓库外Evidence。
+
+## 历史：N-028回收站设计与抽象故障验证完成（2026-10-16）
 
 按用户“继续下一项”完成可恢复回收站的设计、文件系统/持久化/交互三份独立审查与可运行有限状态模型。确定独立回收/恢复批准、同设备私有vault、prepared→armed→observed→completed、完整post-stamp/双父目录同步、缺证据保留uncertain、prepared取消和容量不丢失。只读观察不写DB/容量，补同步/CAS终结另需新readWrite批准，旧ID不再rename。当前仍Schema3，没有新增迁移、运行API、文件移动或回收网页。
 

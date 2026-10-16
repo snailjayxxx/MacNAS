@@ -17,7 +17,7 @@ public enum PortableInstance {
         return value
     }
     public static func createSynthetic(at root: URL, hostID: String = "mock-source", databaseVersion:Int=1) throws {
-        try require([1,2,3].contains(databaseVersion),.invalidSchema)
+        try require([1,2,3,4].contains(databaseVersion),.invalidSchema)
         try SafeFS.freshDirectory(root)
         for dir in ["config", "state", "logical-storage", "host-binding", "apps", "app-data"] {
             try FileManager.default.createDirectory(at: root.appendingPathComponent(dir), withIntermediateDirectories: false)
@@ -89,8 +89,41 @@ public enum PortableInstance {
 
         return identity
     }
+    /// A has no vault registration or file executor. This gate proves only the
+    /// explicitly disabled/unregistered host layout; B must replace it with a vault registry.
+    enum FileEffectPortableBoundary { case legacy, unboundPackage, disabledUnregistered }
+    @discardableResult static func validateFileEffectHostBoundary(_ root: URL, version: Int, store: StateStore? = nil) throws -> FileEffectPortableBoundary {
+        if version < 4 { return .legacy }
+        let host = try SafeFS.resolve(root, "host-binding")
+        guard FileManager.default.fileExists(atPath: host.path) else { return .unboundPackage }
+        let attributes = try FileManager.default.attributesOfItem(atPath: host.path)
+        try require(attributes[.type] as? FileAttributeType == .typeDirectory, .unsafeFile)
+        let names = try FileManager.default.contentsOfDirectory(atPath: host.path)
+        let allowed: Set<String> = ["binding.json", "configuration.lock", "file-operations.lock"]
+        try require(Set(names).isSubset(of: allowed) && names.contains("binding.json"), .unsupported)
+        for name in names {
+            let file = try SafeFS.resolve(host, name)
+            let info = try FileManager.default.attributesOfItem(atPath: file.path)
+            try require(info[.type] as? FileAttributeType == .typeRegular, .unsafeFile)
+        }
+        // strictRead rejects unknown JSON fields, including future vault registrations.
+        let binding = try strictRead(HostBinding.self, SafeFS.resolve(host, "binding.json"))
+        try require(!binding.hostID.isEmpty && binding.hostID.utf8.count <= 256 && !binding.hostID.contains("\0"), .invalidSchema)
+        try require(["synthetic_development", "read_only_recovery", "rolled_back_recovery"].contains(binding.mode), .unsupported)
+        try PostgreSQLTools.fixtureName(binding.databaseName)
+        if let store { try require(binding.databaseName == store.databaseName, .staleState) }
+        return .disabledUnregistered
+    }
+    static func requirePortableFileEffectsDisabled(_ root: URL, store: StateStore) throws {
+        let version = try store.schemaVersion()
+        if version < 4 { return }
+        try store.requirePortableRecycleEmpty()
+        _ = try validateFileEffectHostBoundary(root, version: version, store: store)
+    }
     public static func preview(_ root: URL, exported: Bool = false) throws -> MigrationPreview {
         let identity = try validateLayout(root, exported: exported)
+        if exported { _ = try validateFileEffectHostBoundary(root, version: databaseDescriptor(root).version()) }
+        else { try requirePortableFileEffectsDisabled(root, store: store(root)) }
         let refs = try strictRead([VolumeReference].self, SafeFS.resolve(root, "logical-storage/references.json"))
         var total: Int64 = 0
         for ref in refs {
@@ -116,6 +149,7 @@ public enum PortableInstance {
             try require(try SafeFS.digest(file) == record.sha256, .integrity)
         }
         let identity = try validateLayout(root, exported: true)
+        _ = try validateFileEffectHostBoundary(root, version: databaseDescriptor(root).version())
         try require(identity.instanceID == manifest.instanceID && identity.generation == manifest.generation, .integrity)
         return manifest
     }
@@ -178,12 +212,14 @@ public enum PortableInstance {
             let databaseBarrier = try DatabaseSnapshotBarrier(store: state, timeout: max(0.1,timeout), cancellation: cancellation)
             return try withExtendedLifetime(databaseBarrier) {
                 try cancellation?.check()
+                try requirePortableFileEffectsDisabled(source, store: state)
                 let stage = try prepareDestination(dest, source: source)
                 try copyFiles(from: source, to: stage, snapshot: true, interruptAfter: interruptAfter)
                 try writeDatabaseDescriptor(stage, store: state)
                 try cancellation?.check(); try databaseBarrier.check()
                 let manifest = try seal(stage)
-                try databaseBarrier.check(); try publish(stage, dest)
+                try databaseBarrier.check(); try requirePortableFileEffectsDisabled(source, store: state)
+                try publish(stage, dest)
                 return manifest
             }
         }
