@@ -1,8 +1,8 @@
-# MacNAS 原型架构（N-029 B：持久合成回收与核对）
+# MacNAS 原型架构（N-029 B2：持久合成回收、恢复与核对）
 
 Swift 6 / macOS 15部署目标，PostgreSQL 18。当前为非root CLI、无监听的业务API和两个自研可信样例；没有生产HTTP登录、系统Helper或正式接管。
 
-N-029 A新增0004、recycle_entries与file_effect_operations，以及宿主内部数据库日志。支持Schema1→2→3→4，原0001–0003不变；精确校验表/约束/函数/权限，12表统一停写，完整UTC摘要保留旧Schema投影。原始UTF8主体、幂等/CAS和容量准入在SQL事务内处理；A没有vault注册、文件移动、回收RPC或网页入口。A完整自动回归已通过，结果以[A证据](docs/evidence/n029-a-2026-10-16.json)为准；[B第一段的独立宿主批准、私有回收区和单向效果](docs/plans/N-029-B-ACCEPTANCE.md)已通过355项Swift及新前端完整自动验证，见[B证据](docs/evidence/n029-b-2026-10-16.json)；恢复执行者下一步，C再接桥接/界面。设计边界见[ADR-021](docs/decisions/ADR-021-recoverable-recycle-journal.md)、[ADR-022](docs/decisions/ADR-022-schema4-file-effect-foundation.md)、[ADR-023](docs/decisions/ADR-023-synthetic-recycle-executor.md)和[N-029分步实现](docs/plans/N-029-RECYCLE-JOURNAL-IMPLEMENTATION.md)。
+N-029 A新增0004、recycle_entries与file_effect_operations，以及宿主内部数据库日志。支持Schema1→2→3→4，原0001–0003不变；精确校验表/约束/函数/权限，12表统一停写，完整UTC摘要保留旧Schema投影。原始UTF8主体、幂等/CAS和容量准入在SQL事务内处理；A没有vault注册、文件移动、回收RPC或网页入口。A完整自动回归已通过，结果以[A证据](docs/evidence/n029-a-2026-10-16.json)为准；[B第一段的独立宿主批准、私有回收区和单向效果](docs/plans/N-029-B-ACCEPTANCE.md)已通过355项Swift及新前端完整自动验证，见[B证据](docs/evidence/n029-b-2026-10-16.json)；B2恢复执行者亦已通过新未过滤374项及新前端，见[B2证据](docs/evidence/n029-b2-2026-10-16.json)；独立目标批准、原entry结算见[ADR-024](docs/decisions/ADR-024-synthetic-restore-executor.md)，C再接桥接/共享fixture/界面。设计边界见[ADR-021](docs/decisions/ADR-021-recoverable-recycle-journal.md)、[ADR-022](docs/decisions/ADR-022-schema4-file-effect-foundation.md)、[ADR-023](docs/decisions/ADR-023-synthetic-recycle-executor.md)和[N-029分步实现](docs/plans/N-029-RECYCLE-JOURNAL-IMPLEMENTATION.md)。
 
 普通Schema4可携流程拒绝任何新日志历史及未知/payload宿主布局，空日志恢复仍默认只读；诊断数据库快照只保存元数据。摘要和新日志准入有4,000,000字节预算，旧任务/事件仍可后续增长，尚无整库容量fencing。B第一段已在新建合成实例验证批准、vault跨进程锁、预留后置记录和prepared取消证明；后置CAS不受旧元数据后续增长的全局聚合预算阻断，但数据库错误仍可能保留不确定效果。数据库行、SQL完成夹具及N-028有限模型均不能证明文件已移动或真实SIGKILL恢复。
 

@@ -2089,6 +2089,26 @@
             "docs/decisions/ADR-023-synthetic-recycle-executor.md",
             "docs/evidence/n029-b-2026-10-16.json"
           ]
+        },
+        {
+          "id": "FIL-01.same_volume_restore_executor",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "Guarded TestLab-only0..16MiB single-file same-device restore; independent physical target approval, one rename and original retained-entry settlement. No RPC/UI or production NAS.",
+          "evidence": [
+            "docs/evidence/n029-b2-2026-10-16.json",
+            "docs/plans/N-029-B2-ACCEPTANCE.md",
+            "docs/decisions/ADR-024-synthetic-restore-executor.md"
+          ]
+        },
+        {
+          "id": "FIL-01.restore_sigkill_observation_settlement",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "Three actual restore SIGKILL checkpoints; readonly digest unchanged, missing post refuses release and observed matching post settles original entry under fresh independent approvals. Current Mac only.",
+          "evidence": [
+            "docs/evidence/n029-b2-2026-10-16.json",
+            "docs/plans/N-029-B2-ACCEPTANCE.md",
+            "docs/decisions/ADR-024-synthetic-restore-executor.md"
+          ]
         }
       ]
     },

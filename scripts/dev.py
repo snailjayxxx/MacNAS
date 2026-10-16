@@ -33,9 +33,9 @@ def run(name,command,input=None,check=True,expected_exit=0):
     print(name+': running',flush=True)
     with log.open('w') as output:
         process=subprocess.Popen([str(c) for c in command],cwd=ROOT,env=env,stdin=subprocess.PIPE if input is not None else subprocess.DEVNULL,text=True,stdout=output,stderr=subprocess.STDOUT,start_new_session=True)
-        # Schema4 adds real migration/isolation scenarios to the unfiltered suite.
-        # Keep one bounded run and its cleanup, without truncating it at the earlier 40-minute budget.
-        try:process.communicate(input=input,timeout=4800 if name=='swift-tests' else 420)
+        # B1 measured4259s for355 tests; restore adds19 effect/crash cases.
+        # Reserve a bounded100 minutes for the expanded full suite, retaining group cleanup.
+        try:process.communicate(input=input,timeout=6000 if name=='swift-tests' else 420)
         except subprocess.TimeoutExpired:
             os.killpg(process.pid,signal.SIGTERM)
             try:process.communicate(timeout=5)

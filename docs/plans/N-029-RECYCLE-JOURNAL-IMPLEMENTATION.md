@@ -1,6 +1,6 @@
 # N-029：分步实现回收站持久基础与同卷效果
 
-接续[N-028设计](N-028-RECYCLE-BIN-DESIGN.md)和[ADR-021](../decisions/ADR-021-recoverable-recycle-journal.md)。N-028阶段只有设计与抽象模型、运行Schema3；N-029 A现已实现Schema4与内部数据库日志并通过新完整自动回归，完整验收结果见[A矩阵](N-029-A-ACCEPTANCE.md)、[ADR-022](../decisions/ADR-022-schema4-file-effect-foundation.md)和[阶段证据](../evidence/n029-a-2026-10-16.json)。B第一段已实现并验证[单向合成回收](N-029-B-ACCEPTANCE.md)，恢复接续，按钮和RPC仍待C。以下保留编码交付顺序，不以计划替代实现；每个独立步骤相关验证/文档齐全后可按长期授权中文提交并正常推送dev/bootstrap。
+接续[N-028设计](N-028-RECYCLE-BIN-DESIGN.md)和[ADR-021](../decisions/ADR-021-recoverable-recycle-journal.md)。N-028阶段只有设计与抽象模型、运行Schema3；N-029 A现已实现Schema4与内部数据库日志并通过新完整自动回归，完整验收结果见[A矩阵](N-029-A-ACCEPTANCE.md)、[ADR-022](../decisions/ADR-022-schema4-file-effect-foundation.md)和[阶段证据](../evidence/n029-a-2026-10-16.json)。B第一段已实现并验证[单向合成回收](N-029-B-ACCEPTANCE.md)，[恢复B2](N-029-B2-ACCEPTANCE.md)亦已通过新完整回归，按钮和执行RPC仍待C。以下保留编码交付顺序，不以计划替代实现；每个独立步骤相关验证/文档齐全后可按长期授权中文提交并正常推送dev/bootstrap。
 
 ## A：Schema4与日志基础
 

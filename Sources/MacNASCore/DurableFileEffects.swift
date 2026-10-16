@@ -35,7 +35,7 @@ struct FileEffectIntent: Codable, Sendable {
     }
 }
 
-struct FileEffectStamp: Codable, Sendable {
+struct FileEffectStamp: Codable, Equatable, Sendable {
     var device: String
     var inode: String
     var mode: Int64
@@ -135,7 +135,8 @@ struct FileEffectJournalRecord: Codable, Equatable, Sendable {
     let intentSHA256: String
 }
 
-/// A-stage journal: no observed/completed setter, no vault creation, no filesystem effect or production authentication.
+/// Persistent metadata only. Registered execution needs live permits and coordinator-only filesystem witnesses.
+/// Unregistered A paths remain SQL-only; this class does not create vaults or move files.
 final class DurableFileEffectJournal {
     static let fileBytes: Int64 = 16 * 1024 * 1024
     static let retainedBytes: Int64 = 64 * 1024 * 1024
@@ -260,12 +261,18 @@ final class DurableFileEffectJournal {
     }
     @discardableResult
     func prepareRestore(entryID: UUID, expectedEntryRevision: Int64, key: Data, intent: FileEffectIntent, evidence: FileEffectEvidence,
-                        operationID: UUID = UUID()) throws -> FileEffectJournalRecord {
-        try require(!FileManager.default.fileExists(atPath: root.appendingPathComponent(RecycleVault.registrationPath).path), .unsupported)
+                        operationID: UUID = UUID(), executorPermit: FileEffectExecutionPermit? = nil) throws -> FileEffectJournalRecord {
+        if FileManager.default.fileExists(atPath: root.appendingPathComponent(RecycleVault.registrationPath).path) {
+            guard let executorPermit else { throw NASError.unsupported }
+            try requireExecutor(executorPermit, action: .restore)
+            try require(Data(intent.libraryID.utf8) == Data(executorPermit.registration.libraryID.utf8)
+                        && Data(intent.targetParentPath.utf8) == executorPermit.destinationParentPath
+                        && scope.originScopeSHA256 == executorPermit.originScopeSHA256, .denied)
+        }
         try require(intent.kind == .restore && expectedEntryRevision > 0, .invalidSchema)
         let (intentSQL, intentHash, evidenceSQL) = try input(key, intent, evidence, bytes: evidence.object.bytes)
         let entrySQL = FileEffectMetadata.uuidSQL(entryID), operationSQL = FileEffectMetadata.uuidSQL(operationID), keySQL = FileEffectMetadata.bytesSQL(key)
-        return try mutation("""
+        let result = try mutation("""
         SELECT * INTO o FROM macnas.file_effect_operations WHERE instance_id=\(instanceSQL) AND actor_user_utf8=\(actorSQL) AND kind='restore' AND idempotency_key_utf8=\(keySQL);
         IF FOUND THEN
           IF o.entry_id<>\(entrySQL) OR o.intent<>\(intentSQL) OR o.intent_sha256<>\(intentHash) OR o.pre_evidence<>\(evidenceSQL) THEN \(Self.reject(.collision)) END IF;
@@ -274,6 +281,7 @@ final class DurableFileEffectJournal {
         END IF;
         SELECT * INTO e FROM macnas.recycle_entries WHERE entry_id=\(entrySQL) AND instance_id=\(instanceSQL) AND owner_user_utf8=\(actorSQL) FOR UPDATE;
         IF NOT FOUND THEN \(Self.reject(.denied)) END IF;
+        \(executorPermit.map { p in "IF e.vault_id<>\(FileEffectMetadata.uuidSQL(p.registration.vaultID)) OR e.volume_id<>\(FileEffectMetadata.uuidSQL(p.registration.volumeID)) OR e.payload_id NOT IN (\(p.registration.slots.map { FileEffectMetadata.uuidSQL($0.id) }.joined(separator: ","))) THEN \(Self.reject(.denied)) END IF;" } ?? "")
         IF e.revision<>\(expectedEntryRevision) OR e.charge_state<>'retained' OR e.active_operation_id IS NOT NULL THEN \(Self.reject(.staleState)) END IF;
         IF e.origin_generation<>\(scope.generation) OR e.library_id_utf8<>\(FileEffectMetadata.bytesSQL(Data(intent.libraryID.utf8))) OR e.original_path_utf8<>\(FileEffectMetadata.bytesSQL(Data(intent.sourcePath.utf8))) OR e.byte_count<>\(evidence.object.bytes) OR e.sha256<>'\(evidence.sha256)' THEN \(Self.reject(.staleState)) END IF;
         IF EXISTS(SELECT 1 FROM macnas.file_effect_operations WHERE operation_id=\(operationSQL)) THEN \(Self.reject(.collision)) END IF;
@@ -285,6 +293,8 @@ final class DurableFileEffectJournal {
         INSERT INTO macnas.file_effect_operations SELECT o.*; UPDATE macnas.recycle_entries SET active_operation_id=e.active_operation_id,revision=e.revision WHERE entry_id=e.entry_id;
         INSERT INTO effect_result VALUES(jsonb_build_object('record',\(Self.resultSQL)));
         """)
+        if let executorPermit { try requireExecutor(executorPermit, action: .restore) }
+        return result
     }
     func record(operationID: UUID) throws -> FileEffectJournalRecord? {
         try validateScope(write: false)
@@ -340,6 +350,7 @@ struct FileEffectExecutionSnapshot: Codable {
     let vaultID: UUID
     let payloadID: UUID
     let originScopeSHA256: String
+    let activeOperationID: UUID?
 }
 
 extension DurableFileEffectJournal {
@@ -349,7 +360,7 @@ extension DurableFileEffectJournal {
         BEGIN READ ONLY; SET LOCAL statement_timeout='10000ms';
         SELECT jsonb_build_object('snapshot',(SELECT jsonb_build_object('record',\(Self.resultSQL),
           'intent',o.intent,'preEvidence',o.pre_evidence,'postEvidence',o.post_evidence,
-          'volumeID',e.volume_id,'vaultID',e.vault_id,'payloadID',e.payload_id,'originScopeSHA256',o.origin_scope_sha256)
+          'volumeID',e.volume_id,'vaultID',e.vault_id,'payloadID',e.payload_id,'originScopeSHA256',o.origin_scope_sha256,'activeOperationID',e.active_operation_id)
           FROM macnas.file_effect_operations o JOIN macnas.recycle_entries e USING(entry_id)
           WHERE o.operation_id=\(FileEffectMetadata.uuidSQL(operationID)) AND \(ownerPredicate)))::text; COMMIT;
         """
@@ -359,11 +370,21 @@ extension DurableFileEffectJournal {
         let snapshot = try JSONDecoder().decode(Reply.self, from: Data(output.utf8)).snapshot
         if let snapshot {
             try snapshot.intent.validate(); try snapshot.preEvidence.validate(bytes: snapshot.preEvidence.object.bytes)
+            try require(snapshot.intent.kind == snapshot.record.kind, .invalidSchema)
             try snapshot.postEvidence?.validate(bytes: snapshot.preEvidence.object.bytes)
             try FileEffectMetadata.hash(snapshot.originScopeSHA256)
             try require(snapshot.record.ownerUserHex == FileEffectMetadata.hex(scope.userID), .denied)
         }
         try validateScope(write: false); return snapshot
+    }
+    func retainedEntry(entryID: UUID) throws -> FileEffectExecutionSnapshot? {
+        try validateScope(write: false)
+        let rows = try store.rows("SELECT o.operation_id::text FROM macnas.file_effect_operations o JOIN macnas.recycle_entries e USING(entry_id) WHERE e.entry_id=\(FileEffectMetadata.uuidSQL(entryID)) AND \(ownerPredicate) AND e.charge_state='retained' AND e.active_operation_id IS NULL AND o.kind='recycle' AND o.phase='completed' LIMIT 2;")
+        try require(rows.count <= 1, .integrity)
+        guard let id = rows.first?.first.flatMap(UUID.init(uuidString:)) else { return nil }
+        let result = try executionSnapshot(operationID: id)
+        try require(result?.record.chargeState == .retained && result?.activeOperationID == nil, .staleState)
+        return result
     }
     private func requireExecutor(_ permit: FileEffectExecutionPermit, action: RecycleHostAction,
                                  snapshot: FileEffectExecutionSnapshot? = nil) throws {
@@ -372,16 +393,24 @@ extension DurableFileEffectJournal {
         try require(registered.instanceID == scope.instanceID && registered.generation == scope.generation
                     && registered.databaseName == store.databaseName && permit.userID == scope.userID, .denied)
         if let snapshot {
-            try require(snapshot.record.kind == .recycle && snapshot.vaultID == registered.vaultID
+            let direction: RecycleHostAction = snapshot.record.kind == .recycle ? .recycle : .restore
+            if action == .recycle || action == .restore { try require(action == direction, .denied) }
+            if snapshot.record.kind == .restore && [RecycleHostAction.restore, .settle].contains(action) {
+                try require(Data(snapshot.intent.targetParentPath.utf8) == permit.destinationParentPath, .denied)
+                guard let target = permit.destinationParentStamp else { throw NASError.denied }
+                try require(RecycleDirectory.sameIdentity(target, snapshot.preEvidence.targetParent), .staleState)
+            }
+            try require(snapshot.vaultID == registered.vaultID
                         && snapshot.volumeID == registered.volumeID
                         && Data(snapshot.intent.libraryID.utf8) == Data(registered.libraryID.utf8), .denied)
         }
     }
     func armForExecutor(_ permit: FileEffectExecutionPermit, snapshot: FileEffectExecutionSnapshot) throws -> FileEffectJournalRecord {
-        try requireExecutor(permit, action: .recycle, snapshot: snapshot)
+        let action: RecycleHostAction = snapshot.record.kind == .recycle ? .recycle : .restore
+        try requireExecutor(permit, action: action, snapshot: snapshot)
         try require(snapshot.originScopeSHA256 == permit.originScopeSHA256, .staleState)
         let result = try transition(operationID: snapshot.record.operationID, expectedRevision: snapshot.record.revision, phase: .armed)
-        try requireExecutor(permit, action: .recycle, snapshot: snapshot); return result
+        try requireExecutor(permit, action: action, snapshot: snapshot); return result
     }
     /// Unlike new admission, these bounded writes do not aggregate growing legacy metadata.
     /// prepared reserved3072 bytes for evidence/timestamps/reconciler; the exact final rows are rechecked here.
@@ -389,12 +418,12 @@ extension DurableFileEffectJournal {
     private func executorTransition(_ permit: FileEffectExecutionPermit, snapshot: FileEffectExecutionSnapshot,
                                     target: FileEffectPhase, post: FileEffectEvidence? = nil, error: NASError? = nil) throws -> FileEffectJournalRecord {
         let action = permit.action
-        try require([RecycleHostAction.recycle, .settle, .cancelPrepared].contains(action), .denied)
+        try require([RecycleHostAction.recycle, .restore, .settle, .cancelPrepared].contains(action), .denied)
         try requireExecutor(permit, action: action, snapshot: snapshot)
         let allowed: String, change: String, entryChange: String
         switch target {
         case .observed:
-            try require(action == .recycle && snapshot.originScopeSHA256 == permit.originScopeSHA256, .denied)
+            try require(action == (snapshot.record.kind == .recycle ? .recycle : .restore) && snapshot.originScopeSHA256 == permit.originScopeSHA256, .denied)
             guard let post else { throw NASError.invalidSchema }; try post.validate(bytes: snapshot.preEvidence.object.bytes)
             try require(post.sha256 == snapshot.preEvidence.sha256
                         && RecycleDirectory.sameStamp(post.object, snapshot.preEvidence.object, allowingRenameCTime: true)
@@ -404,19 +433,19 @@ extension DurableFileEffectJournal {
             change = "o.phase:='observed'; o.post_evidence:=\(try FileEffectMetadata.jsonSQL(post)); o.observed_at:=clock_timestamp(); o.error_code:=NULL;"
             entryChange = ""
         case .completed:
-            try require(action == .recycle || action == .settle, .denied)
+            try require(action == .recycle || action == .restore || action == .settle, .denied)
             guard let evidence = snapshot.postEvidence else { throw NASError.staleState }
             allowed = "o.phase IN ('observed','uncertain') AND o.post_evidence=\(try FileEffectMetadata.jsonSQL(evidence))"
             change = "o.phase:='completed'; o.source_parent_synced_at:=clock_timestamp(); o.target_parent_synced_at:=o.source_parent_synced_at; o.completed_at:=o.source_parent_synced_at; o.error_code:=NULL;"
                 + (action == .settle ? "o.reconciler_user_utf8:=\(actorSQL); o.reconciled_at:=o.completed_at;" : "")
-            entryChange = "e.charge_state:='retained'; e.active_operation_id:=NULL; e.revision:=e.revision+1;"
+            entryChange = "e.charge_state:=CASE WHEN o.kind='recycle' THEN 'retained' ELSE 'released' END; e.active_operation_id:=NULL; e.revision:=e.revision+1;"
         case .cancelled:
             try require(action == .cancelPrepared, .denied)
             allowed = "o.phase='prepared' AND o.post_evidence IS NULL"
             change = "o.phase:='cancelled'; o.cancelled_at:=clock_timestamp(); o.error_code:=NULL;"
-            entryChange = "e.charge_state:='released'; e.active_operation_id:=NULL; e.revision:=e.revision+1;"
+            entryChange = "e.charge_state:=CASE WHEN o.kind='recycle' THEN 'released' ELSE 'retained' END; e.active_operation_id:=NULL; e.revision:=e.revision+1;"
         case .uncertain:
-            try require(action == .recycle || action == .settle, .denied)
+            try require(action == .recycle || action == .restore || action == .settle, .denied)
             guard let error, [NASError.unsafeFile,.staleState,.denied,.expired,.integrity,.database,.interrupted,.unsupported,.missingVolume,.timedOut,.collision,.budgetExceeded].contains(error) else { throw NASError.invalidSchema }
             allowed = "o.phase IN ('armed','observed','uncertain')"
             change = "o.phase:='uncertain'; o.error_code:='\(error.rawValue)';"
@@ -429,7 +458,7 @@ extension DurableFileEffectJournal {
         SELECT * INTO e FROM macnas.recycle_entries WHERE entry_id=o.entry_id AND owner_user_utf8=\(actorSQL) FOR UPDATE;
         IF NOT FOUND THEN \(Self.reject(.denied)) END IF;
         IF o.revision<>\(snapshot.record.revision) OR e.revision<>\(snapshot.record.entryRevision) OR NOT (\(allowed)) OR e.active_operation_id IS DISTINCT FROM o.operation_id
-          OR o.kind<>'recycle' OR o.origin_generation<>\(scope.generation) OR o.origin_scope_sha256<>'\(snapshot.originScopeSHA256)'
+          OR o.kind<>'\(snapshot.record.kind.rawValue)' OR o.origin_generation<>\(scope.generation) OR o.origin_scope_sha256<>'\(snapshot.originScopeSHA256)'
           OR e.vault_id<>\(FileEffectMetadata.uuidSQL(snapshot.vaultID)) OR e.volume_id<>\(FileEffectMetadata.uuidSQL(snapshot.volumeID)) OR e.payload_id<>\(FileEffectMetadata.uuidSQL(snapshot.payloadID))
           OR o.pre_evidence<>\(try FileEffectMetadata.jsonSQL(snapshot.preEvidence)) OR o.intent<>\(try FileEffectMetadata.jsonSQL(snapshot.intent)) THEN \(Self.reject(.staleState)) END IF;
         IF o.revision=9223372036854775807 OR e.revision=9223372036854775807 THEN \(Self.reject(.budgetExceeded)) END IF;

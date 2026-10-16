@@ -1,13 +1,15 @@
 import Foundation
 import CryptoKit
 
-enum RecycleHostAction: String, Codable { case recycle, observe, settle, cancelPrepared }
+enum RecycleHostAction: String, Codable { case recycle, restore, restoreDestination, observe, settle, cancelPrepared }
 
 struct RecycleHostGrant: Equatable {
     let id: UUID
     let host: UUID
     let action: RecycleHostAction
     let revision: UInt64
+    let destinationParentPath: Data?
+    let destinationParentStamp: FileEffectStamp?
 }
 
 /// Construction is confined to this file after fresh approval, instance gate and vault flock.
@@ -18,14 +20,19 @@ final class FileEffectExecutionPermit {
     let userID: Data
     let originScopeSHA256: String
     let vault: RecycleVault
+    let destinationParentPath: Data?
+    let destinationParentStamp: FileEffectStamp?
     private let instanceGate: InstanceLock
     private let vaultLock: RecycleVaultLock
     private let validateGrant: () throws -> Void
     fileprivate init(action: RecycleHostAction, registration: RecycleVaultRegistration, userID: Data,
                      originScopeSHA256: String, vault: RecycleVault, instanceGate: InstanceLock,
-                     vaultLock: RecycleVaultLock, validate: @escaping () throws -> Void) {
+                     vaultLock: RecycleVaultLock, destinationParentPath: Data? = nil, destinationParentStamp: FileEffectStamp? = nil,
+                     validate: @escaping () throws -> Void) {
         self.action = action; self.registration = registration; self.userID = userID; self.originScopeSHA256 = originScopeSHA256
         self.vault = vault; self.instanceGate = instanceGate; self.vaultLock = vaultLock; validateGrant = validate
+        self.destinationParentPath = destinationParentPath
+        self.destinationParentStamp = destinationParentStamp
     }
     func check(_ expected: RecycleHostAction) throws {
         try require(action == expected, .denied); try validateGrant(); try vault.validate(); try vaultLock.validate()
@@ -87,12 +94,29 @@ final class FixtureRecycleAuthority {
         }
     }
     func approve(_ action: RecycleHostAction, confirmed: Bool) throws -> RecycleHostGrant {
+        try require(action != .restoreDestination, .denied)
+        return try issue(action, destinationParentPath: nil, destinationParentStamp: nil, confirmed: confirmed)
+    }
+    func approveRestoreDestination(parentPath: String, confirmed: Bool) throws -> RecycleHostGrant {
+        try FileEffectMetadata.path(parentPath, empty: true)
+        try require(confirmed, .denied); _ = try context(write: true)
+        let registered = try registration(), directory = try destinationDirectory(parentPath, registration: registered)
+        return try issue(.restoreDestination, destinationParentPath: Data(parentPath.utf8), destinationParentStamp: directory.identity, confirmed: true)
+    }
+    private func destinationDirectory(_ path: String, registration: RecycleVaultRegistration) throws -> RecycleDirectory {
+        var directory = try RecycleDirectory(root.appendingPathComponent(RecycleVault.fixturePath + "/library"), privateMode: true)
+        try require(directory.identity.device == registration.device && directory.identity.inode == registration.libraryInode, .staleState)
+        for part in path.split(separator: "/") { directory = try directory.child(String(part)) }
+        return directory
+    }
+    private func issue(_ action: RecycleHostAction, destinationParentPath: Data?, destinationParentStamp: FileEffectStamp?, confirmed: Bool) throws -> RecycleHostGrant {
         try require(confirmed, .denied); _ = try context(write: action != .observe)
         let registered = try FileEffectMetadata.encoded(registration())
         lock.lock(); defer { lock.unlock() }
         grants = grants.filter { $0.value.1 > now() }
         try require(grants.count < 8 && revision < UInt64.max, .budgetExceeded)
-        let value = RecycleHostGrant(id: UUID(), host: host, action: action, revision: revision)
+        let value = RecycleHostGrant(id: UUID(), host: host, action: action, revision: revision,
+            destinationParentPath: destinationParentPath, destinationParentStamp: destinationParentStamp)
         grants[value.id] = (value, now() + 1800, registered)
         return value
     }
@@ -111,18 +135,35 @@ final class FixtureRecycleAuthority {
         let actual = try registration()
         try require(try FileEffectMetadata.encoded(actual) == held?.2, .staleState)
         if let expected { try require(try FileEffectMetadata.encoded(actual) == FileEffectMetadata.encoded(expected), .staleState) }
+        if action == .restoreDestination {
+            guard let path = grant.destinationParentPath, let stamp = grant.destinationParentStamp else { throw NASError.denied }
+            let current = try destinationDirectory(String(decoding: path, as: UTF8.self), registration: actual)
+            try require(RecycleDirectory.sameIdentity(stamp, current.identity), .staleState)
+        }
     }
-    func withLockedVault<T>(_ grant: RecycleHostGrant, action: RecycleHostAction,
+    func withLockedVault<T>(_ grant: RecycleHostGrant, action: RecycleHostAction, destinationGrant: RecycleHostGrant? = nil,
                             _ body: (FileEffectExecutionPermit) throws -> T) throws -> T {
+        try require(action != .restoreDestination, .denied)
+        if action == .restore { try require(destinationGrant != nil, .denied) }
         let gate = try InstanceLock(root, mode: .shared, timeout: 1)
         try validate(grant, action: action)
         let registration = try self.registration()
+        if let destinationGrant {
+            try require([RecycleHostAction.restore, .settle].contains(action) && destinationGrant.destinationParentPath != nil, .denied)
+            try validate(destinationGrant, action: .restoreDestination, registration: registration)
+        }
         // No library/vault descriptor is opened until the explicit fresh grant has passed.
         let vault = try RecycleVault(root: root, registration: registration), serial = try vault.lock()
-        let origin = try TransferEncoding.digest(FileEffectMetadata.encoded(registration) + userID + Data(grant.id.uuidString.utf8))
+        let origin = try TransferEncoding.digest(FileEffectMetadata.encoded(registration) + userID + Data(grant.id.uuidString.utf8)
+            + Data((destinationGrant?.id.uuidString ?? "").utf8) + (destinationGrant?.destinationParentPath ?? Data()))
         let permit = FileEffectExecutionPermit(action: action, registration: registration, userID: userID,
             originScopeSHA256: origin, vault: vault, instanceGate: gate, vaultLock: serial,
-            validate: { try self.validate(grant, action: action, registration: registration) })
+            destinationParentPath: destinationGrant?.destinationParentPath,
+            destinationParentStamp: destinationGrant?.destinationParentStamp,
+            validate: {
+                try self.validate(grant, action: action, registration: registration)
+                if let destinationGrant { try self.validate(destinationGrant, action: .restoreDestination, registration: registration) }
+            })
         return try withExtendedLifetime(permit) {
             try permit.check(action); let result = try body(permit); try permit.check(action); return result
         }

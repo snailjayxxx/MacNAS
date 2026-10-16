@@ -1,21 +1,21 @@
-# 接续任务：N-029 B2，独立目标批准的同卷合成恢复
+# 接续任务：C1只读核对模型，然后C2宿主批准的观察桥接
 
-B第一段已实现单向回收、私有vault/独立宿主批准、真实SIGKILL及只读观察/新批准结算；完整未过滤20261016T184142-5cba9f0d和前端20261016T200328-04a217c3均通过，见[阶段证据](docs/evidence/n029-b-2026-10-16.json)。不要复跑设计或把恢复草稿当成已发布。用户要求本轮连续开发至11点以后（暂按23:00 JST）、暂不使用浏览器；没有新的暂停指令。
+B1已发布bbbfcf8；B2完整未过滤374Swift/16独立管道及新前端273Node通过，见docs/evidence/n029-b2-2026-10-16.json。B2中文提交及正常推送后，先核对Evidence/n029-b2-publication-2026-10-16.json和干净树，再推进C1。用户要求本轮自动连续至23点以后，暂不使用浏览器；没有新暂停指令。
 
-先读AGENTS、HANDOFF、PROJECT_SPEC、ARCHITECTURE、PROGRESS、ADR-021/022/023及N-029主计划，核对开发APFS UUID C1755FBB-FCA8-4EA4-BEE2-AA6BF3258B6C和Git。B中文提交/正常推送后，核对仓库外Evidence/n029-b-publication-2026-10-16.json。
+先读AGENTS/HANDOFF/PROJECT_SPEC/ARCHITECTURE/PROGRESS、ADR-021至024及阶段证据，验证APFS UUID C1755FBB-FCA8-4EA4-BEE2-AA6BF3258B6C和Git，不使用旧Gen 8。
 
-## 恢复方向
+## C1前端数据模型
 
-只接B同一登记owner/library/vault的retained且无活动操作条目；来源恢复批准与目标目录批准分开，后者固定原始相对路径及物理父目录身份。目标必须已存在、同库同设备，名称冲突/大小写/规范化冲突拒绝，不创建祖先、不覆盖。0..16MiB单常规单链接，固定双父FD/完整stamp/SHA，仅一次RENAME_EXCL。
+外部Evidence/n029-c1-draft只有recycle-observation.js及其20项Node测试需要复制；源码SHA在n029-c1-active-state.json，文档在n029-c1-draft-docs。三项实际反例已修复并保留：finally之前返回旧busy、同operation后续更换entry、notVisible误标无需核对。严格五字段正文/十字段记录、原始主体、安全整数/计量、分类不冒充完成、不可变身份/revision及借用生命周期均有模型覆盖。
 
-在原entry追加restore operation并CAS revision；prepared/cancelled restore仍retained，completed restore才released。保留历史和费用，slot永不循环使用；到期不自动清扫。缺post的armed无论sourceOnly或candidateMoved均不采纳/续做/取消/释放。已有post且匹配时，新写结算批准及当前有效的独立目标批准只补同步/CAS原ID，不再rename；重启后两种旧批准均失效。
+C1不改原生或嵌入管道依赖，只改前端QA列表加新语法/模型测试，要求新的293Node/17语法/15静态/9需求负测、精确匹配B2核心和需求输入冻结。只新增1条有限MOCK_PASS，不称宿主DTO/桥接/DOM/浏览器通过；完成证据/文档后中文提交正常推送dev/bootstrap。
 
-外部Evidence/n029-b2-draft已编译19项新用例（15恢复协调/3实际SIGKILL定义/1CLI探针拒绝），但尚未执行恢复文件或数据库测试。应用前核对n029-b2-draft-manifest.json中的基础SHA，只复制五源/两测试；补B2矩阵/ADR-024，再跑定向及全新未过滤原生/全部CLI，最后前端无监听与需求冻结。B实测355Swift为4259.458秒，恢复新增用例后需基于实测合理调整总运行器时限，不能放宽功能内部边界或删断言。
+## C2只读真实桥接
 
-后续C先固定严格DTO/受众/Schema协商与真实合成管道、共享64MiB可见+回收保留+传输预留，再接回收确认、列表、同库目标恢复及原结果核对。C1只读观察模型草稿在Evidence/n029-c1-draft，20项纯Node定义与实际反例，不是桥接/UI/浏览器。未解决效果不能因窗口/会话退出释放，不自动重连/重交或关闭共享连接。
+Evidence/n029-c2-draft及manifest记录13文件和C1前置SHA；17项Swift定义编译、5纯数据和305Node通过，12真实API/内嵌管道未执行。只接独立宿主observe批准与operationID查询，固定原始会话/主体、API实例/代次/DB/宿主和注册。C1正文外包不透明来源context，客户端拒绝另一来源混进旧视图；标记仅防错等值，不是认证或强fencing。借用适配器固定客户端，dispose不关共享连接。
 
-## 权限和收尾
+B2/C1都发布后可运行Evidence/n029-c2-prepare-worktree.py：它先验证主树干净、发布报告和PG关闭，再创建同级MacNAS-C2分支dev/n029-c2-observation；不覆盖已有路径/分支。运行器以MACNAS_DEV_BUILD_NAMESPACE=n029-c2选择独立Build/swift-n029-c2，默认工程缓存路径不变。先定向17，再全新未过滤391/全部CLI/16独立管道及前端；5内嵌Node场景已包含Swift总数，完整嵌入依赖14（旧12加C1 codec及新C2脚本），另4独立依赖保留。真实管道定义覆盖0/4字节/16MiB，必须实际执行并核对原始proof，不能按编译声明通过。新完整回归若跨23点，完成必要验证后收尾，不发布未验收草稿。
 
-不使用浏览器/预览；旧52项45 PASS/7 PARTIAL仅历史，详见web/tests/BROWSER_ACCEPTANCE.md。只操作新建TestLab合成实例，不读家庭/NAS正式文件、不sudo、不改系统账户/ACL/服务/网络/公网、不引入新依赖。PostgreSQL18.6-only、Apple Silicon/macOS15+目标；当前机26.5.2不等于15运行证据，Intel以后、SYS-09很后期。
+C2完成后方可中文阶段提交并正常推进开发分支，不合并main/强推/改历史。后续执行RPC、列表、共享可见+回收保留+传输预留计量与完整回收恢复UI分别推进；正式NAS、永久清理/到期清扫不授权。
 
-0001–0004已发布、原字节不改；普通portable仍拒绝任何历史或登记vault，DB回退不逆转rename。原111父项97/13/1、895基线子项及SYS-09独立1父7子（合并112/97-14-1/902）保持；29规划及5来源只读。每个独立阶段相关验证/证据/文档齐全后，按长期授权中文commit并正常推送dev/bootstrap，无须重复确认；不合并main、强推或改历史。保留全部实际失败、完整源码/需求冻结、PG关闭及仍未验证范围。
+旧0001–0004/29规划/5来源和111父项97/13/1原字节/优先级保持；目前897基线子项，SYS-09独立1父7子（合并112/97-14-1/904），远控很后期，Intel以后。只在新建TestLab做合成测试，PG18.6-only，不读家庭/NAS正式资料，不sudo或改账户/ACL/服务/网络/公网，不加第三方依赖。旧52浏览器45 PASS/7 PARTIAL仅历史，本轮不使用浏览器/预览。保留全部失败、源码/需求冻结和PG关闭，实际OS26.5.2不算15运行/跨Mac/断电/物理盘或生产规模。
