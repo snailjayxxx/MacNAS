@@ -12,6 +12,7 @@ let usage = """
 MacNAS 0.1 synthetic prototype (no listener or system services)
   macnas capabilities [--mock-os 15|26]
   macnas fixture create --dest PATH [--schema 1|2|3|4]
+  macnas fixture recycle-crash-probe --source TESTLAB-PATH --path RELATIVE-FILE --stop-after beforeRename|afterRename|observed --confirm-synthetic-effect
   macnas doctor --portable PATH                 verifies exported fixture, read only
   macnas migrate preview --source PATH          live synthetic fixture, read only
   macnas migrate export --source PATH --dest PATH
@@ -58,6 +59,10 @@ do {
         guard let schema else { throw NASError.invalidSchema }
         try PortableInstance.createSynthetic(at: path(option("--dest")),databaseVersion:schema)
         try json(["status": "created-synthetic-fixture"])
+    } else if args.prefix(2) == ["fixture", "recycle-crash-probe"] {
+        try checkOptions(prefix: 2, valued: ["--source", "--path", "--stop-after"], flags: ["--confirm-synthetic-effect"])
+        try json(SyntheticRecycleCrashProbe.run(root: path(option("--source")), path: option("--path"),
+            stopAfter: option("--stop-after"), confirmed: args.contains("--confirm-synthetic-effect")))
     } else if args.prefix(2) == ["jobs","work-once"] {
         try checkOptions(prefix:2,valued:["--source","--lease-seconds","--synthetic-test-hold-after"])
         let root=path(try option("--source")),queue=try DurableJobQueue(store:PortableInstance.store(root))

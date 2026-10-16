@@ -2069,6 +2069,26 @@
             "docs/decisions/ADR-022-schema4-file-effect-foundation.md",
             "docs/evidence/n029-a-2026-10-16.json"
           ]
+        },
+        {
+          "id": "FIL-01.same_volume_recycle_executor",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "Host-only single regular file0..16MiB in newly registered same-device TestLab fixtures; separate approvals, private vault, one exclusive rename, durable post evidence and strict two-parent synchronization. No restore, browser, production NAS or permanent deletion.",
+          "evidence": [
+            "docs/plans/N-029-B-ACCEPTANCE.md",
+            "docs/decisions/ADR-023-synthetic-recycle-executor.md",
+            "docs/evidence/n029-b-2026-10-16.json"
+          ]
+        },
+        {
+          "id": "FIL-01.file_effect_sigkill_observation_settlement",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "Three actual owned-process SIGKILL points for synthetic recycle. Fresh read-only approval preserves DB digest; only matching persisted post evidence can settle the original ID under a new write approval. No physical power-loss, cross-Mac or hostile-process fencing claim.",
+          "evidence": [
+            "docs/plans/N-029-B-ACCEPTANCE.md",
+            "docs/decisions/ADR-023-synthetic-recycle-executor.md",
+            "docs/evidence/n029-b-2026-10-16.json"
+          ]
         }
       ]
     },

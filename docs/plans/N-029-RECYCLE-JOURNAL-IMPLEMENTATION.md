@@ -1,6 +1,6 @@
 # N-029：分步实现回收站持久基础与同卷效果
 
-接续[N-028设计](N-028-RECYCLE-BIN-DESIGN.md)和[ADR-021](../decisions/ADR-021-recoverable-recycle-journal.md)。N-028阶段只有设计与抽象模型、运行Schema3；N-029 A现已实现Schema4与内部数据库日志并通过新完整自动回归，完整验收结果见[A矩阵](N-029-A-ACCEPTANCE.md)、[ADR-022](../decisions/ADR-022-schema4-file-effect-foundation.md)和[阶段证据](../evidence/n029-a-2026-10-16.json)。仍没有文件回收/恢复效果、按钮或RPC。以下保留编码交付顺序，不以计划替代实现；每个独立步骤相关验证/文档齐全后可按长期授权中文提交并正常推送dev/bootstrap。
+接续[N-028设计](N-028-RECYCLE-BIN-DESIGN.md)和[ADR-021](../decisions/ADR-021-recoverable-recycle-journal.md)。N-028阶段只有设计与抽象模型、运行Schema3；N-029 A现已实现Schema4与内部数据库日志并通过新完整自动回归，完整验收结果见[A矩阵](N-029-A-ACCEPTANCE.md)、[ADR-022](../decisions/ADR-022-schema4-file-effect-foundation.md)和[阶段证据](../evidence/n029-a-2026-10-16.json)。B第一段已实现并验证[单向合成回收](N-029-B-ACCEPTANCE.md)，恢复接续，按钮和RPC仍待C。以下保留编码交付顺序，不以计划替代实现；每个独立步骤相关验证/文档齐全后可按长期授权中文提交并正常推送dev/bootstrap。
 
 ## A：Schema4与日志基础
 
@@ -28,4 +28,4 @@
 
 ## 沿用限制
 
-52项现有浏览器仍全待验收，站点权限状态未变，不重复请求/启动预览或换通道。独立回收UI到位后另加专项清单。不得sudo、正式NAS/家庭文件、生产数据库、系统账户/ACL/服务/网络/防火墙/公网改动或新依赖。目标仍Apple Silicon/macOS15+，当前macOS26.5.2不是15运行证据；Intel以后做、SYS-09很后期未开始。父需求/原规划字节/优先级不变。
+现有52项浏览器在A收尾为45 PASS/7 PARTIAL，见[实际清单](../../web/tests/BROWSER_ACCEPTANCE.md)；本轮用户明确暂不使用浏览器，不启动预览或补验。独立回收UI到位后另加专项清单。不得sudo、正式NAS/家庭文件、生产数据库、系统账户/ACL/服务/网络/防火墙/公网改动或新依赖。目标仍Apple Silicon/macOS15+，当前macOS26.5.2不是15运行证据；Intel以后做、SYS-09很后期未开始。父需求/原规划字节/优先级不变。

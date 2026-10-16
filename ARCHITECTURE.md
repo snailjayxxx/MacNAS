@@ -1,10 +1,10 @@
-# MacNAS 原型架构（N-029 A：Schema4持久日志基础）
+# MacNAS 原型架构（N-029 B：持久合成回收与核对）
 
 Swift 6 / macOS 15部署目标，PostgreSQL 18。当前为非root CLI、无监听的业务API和两个自研可信样例；没有生产HTTP登录、系统Helper或正式接管。
 
-N-029 A新增0004、recycle_entries与file_effect_operations，以及宿主内部数据库日志。支持Schema1→2→3→4，原0001–0003不变；精确校验表/约束/函数/权限，12表统一停写，完整UTC摘要保留旧Schema投影。原始UTF8主体、幂等/CAS和容量准入在SQL事务内处理；没有vault注册、文件移动、回收RPC或网页入口。当前实现正在完成回归，结果以[阶段证据](docs/evidence/n029-a-2026-10-16.json)为准；设计与实现边界见[ADR-021](docs/decisions/ADR-021-recoverable-recycle-journal.md)、[ADR-022](docs/decisions/ADR-022-schema4-file-effect-foundation.md)和[N-029分步实现](docs/plans/N-029-RECYCLE-JOURNAL-IMPLEMENTATION.md)。
+N-029 A新增0004、recycle_entries与file_effect_operations，以及宿主内部数据库日志。支持Schema1→2→3→4，原0001–0003不变；精确校验表/约束/函数/权限，12表统一停写，完整UTC摘要保留旧Schema投影。原始UTF8主体、幂等/CAS和容量准入在SQL事务内处理；A没有vault注册、文件移动、回收RPC或网页入口。A完整自动回归已通过，结果以[A证据](docs/evidence/n029-a-2026-10-16.json)为准；[B第一段的独立宿主批准、私有回收区和单向效果](docs/plans/N-029-B-ACCEPTANCE.md)已通过355项Swift及新前端完整自动验证，见[B证据](docs/evidence/n029-b-2026-10-16.json)；恢复执行者下一步，C再接桥接/界面。设计边界见[ADR-021](docs/decisions/ADR-021-recoverable-recycle-journal.md)、[ADR-022](docs/decisions/ADR-022-schema4-file-effect-foundation.md)、[ADR-023](docs/decisions/ADR-023-synthetic-recycle-executor.md)和[N-029分步实现](docs/plans/N-029-RECYCLE-JOURNAL-IMPLEMENTATION.md)。
 
-普通Schema4可携流程拒绝任何新日志历史及未知/payload宿主布局，空日志恢复仍默认只读；诊断数据库快照只保存元数据。摘要和新日志准入有4,000,000字节预算，旧任务/事件仍可后续增长，尚无整库容量fencing。B接入真实效果前必须审核批准、vault与跨进程锁、最坏后置证据和prepared取消证明。数据库行、SQL完成夹具及N-028有限模型均不能证明文件已移动或真实SIGKILL恢复。
+普通Schema4可携流程拒绝任何新日志历史及未知/payload宿主布局，空日志恢复仍默认只读；诊断数据库快照只保存元数据。摘要和新日志准入有4,000,000字节预算，旧任务/事件仍可后续增长，尚无整库容量fencing。B第一段已在新建合成实例验证批准、vault跨进程锁、预留后置记录和prepared取消证明；后置CAS不受旧元数据后续增长的全局聚合预算阻断，但数据库错误仍可能保留不确定效果。数据库行、SQL完成夹具及N-028有限模型均不能证明文件已移动或真实SIGKILL恢复。
 
 N-027增加单常规文件复制：独立目标复制批准、固定两端、32KiB宿主分块、私有暂存/SHA256/RENAME_EXCL、短期结果及原目标重读，来源始终保留。16MiB单文件，同设备合成目录；跨设备、目录、批量、移动和持久恢复未实现。共享发布原语在rename后记录完整标记，检查发布后同长度改写并恢复mtime的情况，异常为uncertain并保留目标；不声称敌对本机进程强fencing。详见[ADR-020](docs/decisions/ADR-020-bounded-file-copy.md)。
 
@@ -41,7 +41,7 @@ flowchart LR
 - PrototypePlatformAPI提供角色校验和实例绑定的套件票据。beginFixtureSession仅为模拟身份，不能作为生产认证。撤销/重新注册使旧epoch失效。
 - 可信样例监督器执行时间/输出预算、取消和运行中撤权，环境中剔除数据库配置和测试签名私钥，使用独立临时HOME。它不是OS沙箱，尚无CPU/内存硬限额或第三方native准入。
 - 私有Unix socket的trust认证用于合成测试，不能认证任意本机恶意进程。正式Keychain、主机认证、XPC调用方校验、签名安装和系统授权仍未实现。
-- 进程锁不是分布式fencing；目录fsync为尽力执行。SIGKILL与当前Mac测试不能替代真实断电、macOS15运行、另一台Mac或物理磁盘验证。
+- 进程锁不是分布式fencing。旧可携目录同步仍为尽力执行；B文件执行器的双父fsync失败会拒绝完成并保留不确定结果。SIGKILL与当前Mac测试不能替代真实断电、macOS15运行、另一台Mac或物理磁盘验证。
 
 细节见ADR-003与PROTOTYPE_API；结果见PROGRESS及N-009/N-010证据报告。
 
