@@ -2179,6 +2179,17 @@
             "docs/plans/N-029-C3B-ACCEPTANCE.md",
             "docs/decisions/ADR-028-schema6-physical-capacity-namespace.md"
           ]
+        },
+        {
+          "id": "FIL-01.readonly_capacity_ledger_model",
+          "status": "MOCK_PASS",
+          "scope": "Strict proposed ledgerOnly complete64-row projection, exact rawUTF8 owner and opaque source marker equality, charge totals/state progression, explicit read and disposal isolation. Mock-only: no native generator/list endpoint, approval, filesystem matching/free-space/execution, transport adapter or DOM.",
+          "evidence": [
+            "docs/evidence/n029-c3c1-2026-10-17.json",
+            "docs/contracts/CAPACITY_LEDGER_VIEW.md",
+            "docs/plans/N-029-C3C1-ACCEPTANCE.md",
+            "docs/decisions/ADR-029-bounded-capacity-ledger-view.md"
+          ]
         }
       ]
     },
