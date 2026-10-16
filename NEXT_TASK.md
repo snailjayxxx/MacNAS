@@ -1,8 +1,8 @@
-# 接续任务：N-028可恢复回收站设计
+# 接续任务：N-029 A，Schema4与回收日志基础实现
 
-2026-10-16用户已恢复本对话，N-027有限单文件复制与资源回收自动验证完成。先读[HANDOFF](HANDOFF.md)、AGENTS、PROJECT_SPEC、ARCHITECTURE、PROGRESS、[ADR-020](docs/decisions/ADR-020-bounded-file-copy.md)及[阶段证据](docs/evidence/n027-2026-10-16.json)，核对SSD、Git和最新源码收据；不要把b455056开始基线当最终提交。
+2026-10-16用户要求继续下一项，已完成[N-028回收站设计](docs/plans/N-028-RECYCLE-BIN-DESIGN.md)、三份独立审查与有限抽象模型。下一项开始编码，按[N-029](docs/plans/N-029-RECYCLE-JOURNAL-IMPLEMENTATION.md)先交付A，不重复停在设计；当前仍Schema3、无回收/恢复API。先读HANDOFF、AGENTS、PROJECT_SPEC、ARCHITECTURE、PROGRESS、[ADR-021](docs/decisions/ADR-021-recoverable-recycle-journal.md)及[N-028证据](docs/evidence/n028-2026-10-16.json)，核对SSD/Git。N-028开始提交830400a，最终以Git和仓库外publication收据为准。
 
-未过滤原生20261016T105600-bbec24e7通过271项Swift（2033.066秒）、15项独立CLI管道及全部CLI演练，测试库正常关闭；最终前端20261016T113643-c381ba86通过270项Node、15项静态策略、16项语法和9项需求负测，联合101份源码一致。
+沿用精确未变的N-027原生20261016T105600-bbec24e7（271项Swift、15独立CLI管道/全部CLI，PG已关），不是N-028新全量。N-028新前端20261016T115907-5e66060d通过270项Node、15静态策略、16语法、9需求负测；联合101份旧源码仍匹配。抽象回收/恢复各2580状态/7726转移、96分类格和1151状态配额模型通过，4错误策略有反例；不是真实文件/DB/SIGKILL证据。
 
 ## 已有边界
 
@@ -13,7 +13,9 @@
 
 ## 下一步
 
-按[N-028计划](docs/plans/N-028-RECYCLE-BIN-DESIGN.md)先确定同卷私有回收位置、原路径/主体、独立回收/恢复批准、容量/保留期及崩溃核对。若持久化，新增版本化0004迁移与外部效果协调日志，覆盖Schema3源库保留、候选升级、快照/恢复/回退、停写和语义摘要；不修改0003或把数据库内事务保证冒用为文件副作用exactly-once。只操作批准的新建合成目录，正式NAS/家庭文件、永久删除和后台清扫不自动授权。
+先做N-029 A：新增0004/两表持久日志、精确schema、UTC/Schema3兼容摘要、全12表停写/角色拒绝、事务幂等与容量/CAS，以及隔离升级/恢复/回退和非空可携门槛。保留Schema3源库、旧0001–0003原字节，解决全量摘要预算/旧硬3上下文，不接文件移动入口。A测试/证据完整后可独立中文提交并推送；随后B才接原生同卷效果/真实中断，C接严格桥接/fixture/界面，不把DB日志当文件完成。
+
+外部效果必须prepared→armed→observed→completed；只有prepared能在当前批准/锁/未移动证明下取消，armed无post证据只保留uncertain。只读观察与新批准的写结算分开，均不能重搬旧ID。普通portable在新两表任何历史或vault非空/未知时拒绝，DB回退不逆转rename。独立回收/恢复批准、16MiB/64MiB边界和30天只记录不自动清扫见主设计。正式NAS/家庭文件、永久删除和后台清扫不授权。
 
 之后分别设计跨设备移动（目标验证后另行批准来源处理）、共享权限，再推进DSM控制面板/网络的独立只读适配器。真实配置仍需生产认证/helper/秘密存储/预演及失联恢复，不改当前Mac的IP、代理、SMB、账户、ACL、防火墙或服务。Intel以后再做，网页远控很后期。
 

@@ -1,6 +1,8 @@
-# MacNAS 原型架构（N-027）
+# MacNAS 原型架构（N-028设计；运行基线N-027）
 
 Swift 6 / macOS 15部署目标，PostgreSQL 18。当前为非root CLI、无监听的业务API和两个自研可信样例；没有生产HTTP登录、系统Helper或正式接管。
+
+N-028确定回收站的独立批准、同卷私有vault、prepared→armed→observed→completed外部效果日志、缺post证据的保留式uncertain和只读观察/写结算分离。设计要求新0004、全表摘要/停写和非空vault普通可携阻断；当前尚未新增迁移/表/API或移动文件，仍Schema3。有限抽象模型不代表APFS/PG/真实SIGKILL或网页验收；详见[ADR-021](docs/decisions/ADR-021-recoverable-recycle-journal.md)和[N-029分步实现](docs/plans/N-029-RECYCLE-JOURNAL-IMPLEMENTATION.md)。
 
 N-027增加单常规文件复制：独立目标复制批准、固定两端、32KiB宿主分块、私有暂存/SHA256/RENAME_EXCL、短期结果及原目标重读，来源始终保留。16MiB单文件，同设备合成目录；跨设备、目录、批量、移动和持久恢复未实现。共享发布原语在rename后记录完整标记，检查发布后同长度改写并恢复mtime的情况，异常为uncertain并保留目标；不声称敌对本机进程强fencing。详见[ADR-020](docs/decisions/ADR-020-bounded-file-copy.md)。
 

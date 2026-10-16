@@ -1,17 +1,17 @@
 # MacNAS 新对话交接
 
-更新时间：2026-10-16，Asia/Tokyo。本对话已按用户要求恢复交接并完成N-027代码与自动验证；下一项为N-028可恢复回收站设计，尚无回收站/永久删除实现。没有新的暂停指令。
+更新时间：2026-10-16，Asia/Tokyo。已按用户“继续下一项”完成N-028回收站设计、三份独立审查及有限抽象故障模型。下一项N-029 A开始0004与持久日志编码；当前运行仍Schema3、无回收/恢复/永久删除实现。没有新的暂停指令，不重复停在设计。
 
 ## 工程和Git
 
 - 实际工程：`/Volumes/MacNAS-Dev/MacNAS-Workspace/MacNAS`。旧`/Volumes/Gen 8/AI方案/MacNAS`不再用于开发，不重新克隆覆盖。
 - 外挂APFS开发SSD：`/Volumes/MacNAS-Dev`，卷UUID `C1755FBB-FCA8-4EA4-BEE2-AA6BF3258B6C`；写入/构建/测试前核对，离线或身份不同则停止写入。
 - 同工作区Build/TestLab/DeploySandbox/Evidence仅放构建缓存、合成测试库/资料和证据，不作正式NAS数据。
-- 仓库 https://github.com/snailjayxxx/MacNAS ，分支dev/bootstrap。本轮开始提交b455056e09b95998b50fcb269d56f93d5ddcca9a。最终中文阶段提交及远端核对见`git log -1`、`git status`和`../Evidence/n027-publication-2026-10-16.json`，不要把开始基线当最终提交。
+- 仓库 https://github.com/snailjayxxx/MacNAS ，分支dev/bootstrap。N-028开始提交830400abd941ddb8ebb59bec6c073a0c0d70f0bd。最终中文阶段提交及远端核对见`git log -1`、`git status`和`../Evidence/n028-publication-2026-10-16.json`，不要把开始基线当最终提交；N-027发布收据仍保留。
 
 ## 先读
 
-完整阅读AGENTS、PROJECT_SPEC、ARCHITECTURE、PROGRESS、NEXT_TASK，然后读[ADR-020](docs/decisions/ADR-020-bounded-file-copy.md)、[N-027范围](docs/plans/N-027-ACCEPTANCE.md)、[桌面契约](docs/contracts/DESKTOP_API.md)及[N-028计划](docs/plans/N-028-RECYCLE-BIN-DESIGN.md)。原始规划docs/planning/v0.6只读保留，旧SQLite候选不是当前用户决定。
+完整阅读AGENTS、PROJECT_SPEC、ARCHITECTURE、PROGRESS、NEXT_TASK，然后读[ADR-020](docs/decisions/ADR-020-bounded-file-copy.md)、[ADR-021](docs/decisions/ADR-021-recoverable-recycle-journal.md)、[桌面契约](docs/contracts/DESKTOP_API.md)、[N-028设计](docs/plans/N-028-RECYCLE-BIN-DESIGN.md)和[N-029实现步骤](docs/plans/N-029-RECYCLE-JOURNAL-IMPLEMENTATION.md)。原始规划只读保留，旧SQLite候选不是当前用户决定。
 
 ## 当前能力与边界
 
@@ -23,7 +23,13 @@
 - 发布后同长度改写并恢复mtime的漏洞在上传/复制均已实际复现修复，rename后保存完整新标记，目录同步前后精确核对，异常uncertain且保留目标；没有回滚承诺或敌对本机进程强fencing。
 - 网页只改显式合成内存树；原生及真实Node→Swift管道另用批准的新建APFS目录。没有生产浏览器到Swift通道、NAS服务或真实登录。能力/结果不持久，不支持重启恢复；崩溃孤儿暂存保留，未来需要新迁移/协调日志。
 
-## 本轮最终验证
+## N-028设计验证
+
+三份审查确认独立批准、保留式双父移动器、prepared→armed→observed→completed、缺post证据不自动接管、只读观察/写结算分离、完整持久表摘要和非空vault可携阻断。保留期到期不清扫，DB回退不撤销文件移动。模型、文件系统、持久化和交互的反例/实施清单见主设计及[证据](docs/evidence/n028-2026-10-16.json)。
+
+抽象回收/恢复各2580状态/7726转移、96分类格、5额外边界和1151状态/1612转移配额模型通过；4错误策略获得4/6/7/6步最短反例。两项实际模型错误已修复并保留红日志，不是产品运行错误。模型只用stdlib，不调用文件效果/PG/SIGKILL。N-028新前端20261016T115907-5e66060d通过270Node/15静态/16语法/9需求负测；运行/测试/数据库/桥接依赖和联合101份源码与N-027完全一致，所以未重跑原生全量，也未宣称新271项。
+
+## N-027保留的完整验证
 
 未过滤原生20261016T105600-bbec24e7通过271项Swift（2033.066秒）、15项独立CLI管道及全部CLI演练，测试库正常关闭；最终前端20261016T113643-c381ba86通过270项Node、15项静态策略、16项语法和9项需求负测，联合101份源码一致。
 
@@ -41,7 +47,7 @@ W01–W10、T01–T08、N01–N06、F01–F08、FO01–FO06、FT01–FT08、FC01
 
 - 独立阶段完成、相关测试通过且文档证据齐全后，已长期授权自动中文commit/中文说明并正常推送dev/bootstrap；无须重复确认。不合并main、不强推、不改历史，保留用户改动。
 - 不用sudo，不擦盘，不读家庭/NAS正式文件，不连接蜗光集正式库，不擅改共享/账户/ACL/服务/IP/代理/防火墙/公网；新第三方组件另行准入。
-- Finder/DSM文件中心继续按完整流程开发。下一项先按N-028设计同卷私有回收位置、原路径/主体、独立批准、容量/保留期与崩溃协调；持久化必须新0004迁移并验证旧库保留/升级/恢复/回退，不暗改Schema3/0003，不冒用数据库事务的文件副作用exactly-once。正式删除、永久清理、后台清扫不自动授权。
+- Finder/DSM文件中心继续完整流程开发。N-028已完成设计，下一项N-029 A先新增0004/两表日志/完整验证摘要和停写/独立候选迁移及非空可携门槛，之后B原生效果、C桥接与界面。不要直接复用自动unlink的暂存对象或自动重试队列；不修改旧迁移，不将DB事务称为文件exactly-once。正式删除、永久清理、后台清扫不授权。
 - 之后移动/共享权限、控制面板/网络独立只读适配器分别推进；真实配置仍需生产身份/helper/秘密存储/预演/失联恢复。SYS-09网页控制Mac桌面明确很后期，尚未开始，不启用录屏/控制或远程服务。
 - 111原父项和97/13/1不变，基线890条；SYS-09另1父7子，当前112父/97-14-1/897子。29份规划及5份来源保留原字节，不擅调优先级。
 - 验证入口仍为系统`/usr/bin/python3 -X utf8 scripts/dev.py`、`scripts/dev_web.py`和`verify_requirements.py`，不安装新工具。原生/测试/内嵌Node依赖变化须新完整回归；只改网页也要匹配原生收据并新跑前端。保留实际失败、源码hash、库关闭与网页未验收。

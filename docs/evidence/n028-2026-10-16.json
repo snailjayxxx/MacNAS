@@ -1,0 +1,351 @@
+{
+  "task": "N-028",
+  "date": "2026-10-16",
+  "status": "DESIGN_AND_FINITE_MODEL_PASS",
+  "implementation_status": "NOT_IMPLEMENTED_RUNTIME_SCHEMA_3",
+  "baseline_commit": "830400abd941ddb8ebb59bec6c073a0c0d70f0bd",
+  "environment": {
+    "volume_uuid": "C1755FBB-FCA8-4EA4-BEE2-AA6BF3258B6C",
+    "filesystem": "apfs",
+    "no_new_dependencies": true
+  },
+  "scope": [
+    "Design/ADR, independent filesystem/persistence/interaction review, finite executable model, handoff",
+    "No runtime/Tests/database/scripts/web/Package changes, no migration or file effects"
+  ],
+  "model": {
+    "command": "/usr/bin/python3 -X utf8 docs/design-models/recycle_effect_model.py",
+    "model_version": 1,
+    "source_sha256": "58dd540832f6a0ebac7ca2ca40c2537fcd2982ecb23e23054f9ac3d4061f4b27",
+    "correct_strategies": [
+      {
+        "direction": "recycle",
+        "exploredTransitions": 7726,
+        "phases": {
+          "armed": 568,
+          "cancelled": 496,
+          "completed": 183,
+          "idle": 84,
+          "observed": 195,
+          "prepared": 224,
+          "preview": 105,
+          "uncertain": 725
+        },
+        "visitedStates": 2580,
+        "witnesses": {
+          "effect_after_admission_then_revocation_is_uncertain": 28,
+          "post_evidence_settled_after_restart_without_rename": 4,
+          "pre_only_candidate_remains_uncompleted": 28
+        }
+      },
+      {
+        "direction": "restore",
+        "exploredTransitions": 7726,
+        "phases": {
+          "armed": 568,
+          "cancelled": 496,
+          "completed": 183,
+          "idle": 84,
+          "observed": 195,
+          "prepared": 224,
+          "preview": 105,
+          "uncertain": 725
+        },
+        "visitedStates": 2580,
+        "witnesses": {
+          "effect_after_admission_then_revocation_is_uncertain": 28,
+          "post_evidence_settled_after_restart_without_rename": 4,
+          "pre_only_candidate_remains_uncompleted": 28
+        }
+      }
+    ],
+    "classification_rows": 96,
+    "additional_boundaries": 5,
+    "quota": {
+      "activeLimit": 1,
+      "boundaries": {
+        "exact_capacity_admission": 34,
+        "history_saturated_states": 726,
+        "zero_byte_still_creates_history": 34
+      },
+      "capacityUnits": 3,
+      "entrySlots": 2,
+      "exploredTransitions": 1612,
+      "note": "Two fixed slots enforce the history bound by construction; no third confirmation rejection is simulated. Atomic abstract accounting only; no PostgreSQL isolation or real byte allocation is tested.",
+      "rejections": {
+        "activeLimit": 280,
+        "byteLimit": 186
+      },
+      "sizePairs": 25,
+      "visitedStates": 1151
+    },
+    "mutants": [
+      {
+        "policy": "armed_cancel",
+        "violations": [
+          "only_prepared_persistent_operations_can_cancel",
+          "unresolved_operations_retain_full_charge"
+        ],
+        "shortest_steps": 4
+      },
+      {
+        "policy": "pre_adoption",
+        "violations": [
+          "completion_requires_durable_post_and_sync_evidence"
+        ],
+        "shortest_steps": 6
+      },
+      {
+        "policy": "restart_retry",
+        "violations": [
+          "restart_never_reexecutes_old_operation_id"
+        ],
+        "shortest_steps": 7
+      },
+      {
+        "policy": "overwrite",
+        "violations": [
+          "no_target_overwrite"
+        ],
+        "shortest_steps": 6
+      }
+    ],
+    "three_reviewed_outputs_byte_identical": true,
+    "report_sha256": "9213383b9b9b9d4945c64774ebf2ea1bc81b01278e7cf56cf860796eda966220",
+    "limitations": [
+      "Finite abstraction: one crash, one external change, one revocation and approval cycle per run.",
+      "One immutable operation ID and one entry per effect run; quota uses two slots and 0..4 units.",
+      "Commit/readback and quota transactions are assumed atomic, not validated against PostgreSQL.",
+      "Effect and quota models are checked separately, not as a product; quota with_proof transitions assume the effect proof prerequisite.",
+      "The 96 classification rows enumerate the classification function, not an independent oracle.",
+      "Object tokens abstract identity/stamp/hash evidence; no inode reuse, ABA, real locks, or strong fencing proof.",
+      "No filesystem, subprocess, SIGKILL, APFS, fsync, SQL, database, network, or browser operations are performed.",
+      "Exhaustive reachability under these transitions is not a production, durability, crash-recovery, or liveness claim."
+    ]
+  },
+  "runtime_baseline_reuse": {
+    "evidence": "docs/evidence/n027-2026-10-16.json",
+    "native_run_id": "20261016T105600-bbec24e7",
+    "new_native_execution": false,
+    "reason": "All 101 prior runtime/test/script/web hashes and the complete 54-file native inventory are unchanged.",
+    "prior_swift_tests": 271,
+    "prior_independent_cli_pipe_tests": 15,
+    "prior_pg_stopped": true,
+    "current_source_sha256": {
+      "Package.swift": "09023b72b39b31dc54575ca6925cc2513aa09a4d6f70588851be384bdc267ea5",
+      "Sources/HelloDiagnostics/main.swift": "b04a06781130b60863f86dbb24e968de3284e0f427def19da7799586d6893aa5",
+      "Sources/MacNASCLI/main.swift": "8d4d5bdea0c9007f173ec286489285893289e79e929fc7a6dbbb00a3bc685f8c",
+      "Sources/MacNASCore/BridgeJSON.swift": "324b39d7d9b259c5cbe00458a6b971d12432fcfa6418d73ef30f5680893ebc33",
+      "Sources/MacNASCore/CapabilityProbe.swift": "7deb935038d37631251e0dc6307d0ae27f02f66186ba4d6707c5671ab3ec885a",
+      "Sources/MacNASCore/DescriptorLibrary.swift": "f54338d37b3e5328095c077b1d634280d6d2cc1021f919fdf8dfb264ec600019",
+      "Sources/MacNASCore/DesktopBridge.swift": "cf6e344322757784d8cf3b52c68570cef19943980ae8f9d94ac7aa73020a66d3",
+      "Sources/MacNASCore/DirectoryPages.swift": "b8e8d1e924076da1215ebcdb9b9fa2584ae8579815d6c8df7dc55ab55c45af92",
+      "Sources/MacNASCore/DurableJobs.swift": "cc8d9b931d1e5b064b2d962b8c8386327d612f3ef00bc39e1ce264561e1b273b",
+      "Sources/MacNASCore/FileCopies.swift": "26e5eea9da729ec6b6f6b09532dd3c85bf0c5e6c79ddd1a0aefb4f6a5ce81294",
+      "Sources/MacNASCore/FileOperations.swift": "1c0a327c7a35a07a4030ce791ab7e10435ef77d0d2c3a70030f054289ed31270",
+      "Sources/MacNASCore/FileTransfers.swift": "dd3090d84344fa16f7fbb82eb80496270b2cd2bcb76ebebc2bd5fe17a148b7e5",
+      "Sources/MacNASCore/FixtureFileAPI.swift": "2de721a62016a2d398fce22950b61e11d07f464839073e24cb9f5fb8c1907745",
+      "Sources/MacNASCore/FixtureFileCopyAPI.swift": "a99015829d00a0e03a8b898b172088e177eb56cf27103cd3ec4afc7db6da09cf",
+      "Sources/MacNASCore/FixtureFileOperationAPI.swift": "11654bf227bfe2f6623c7e1988652791d23e4ef8309385ffad13481dae0ff811",
+      "Sources/MacNASCore/FixtureStorageAPI.swift": "86034cf2dee983e9b6e03e0249cd3b58882f8bf12d741e06cf7f21c9fbdae3bb",
+      "Sources/MacNASCore/FixtureStorageDemo.swift": "8c88422294cf3e52fec9c8a7d51315f67505684642bd92ca45af206ed7f53b68",
+      "Sources/MacNASCore/FixtureTransferAPI.swift": "982fbcc14b569b84fec11229be977496568d6f3b0fdb956367eca83dd868f138",
+      "Sources/MacNASCore/FixtureVolumeRegistry.swift": "dabf3e46d9c216cb1b8d1aaa04b27be601a131c12b0b3e522d9a9d843091962c",
+      "Sources/MacNASCore/JobPages.swift": "7a0bebb7064582720b26ad5e47ebf163dd49693552b43b4f8908b6a2c72641f0",
+      "Sources/MacNASCore/MigrationCoordinator.swift": "ecf5fbf4a822545ca2212985c4a7431714b4f12e5f514c6d75f400b64d62f361",
+      "Sources/MacNASCore/Models.swift": "91670ef41160705c80545f462f42101e1b611e925945b9eca584848363387051",
+      "Sources/MacNASCore/PhotoSmoke.swift": "3354d7f6a7486d35cfca548821d76e95dfa41970fb6cea686b283c43b0dbd084",
+      "Sources/MacNASCore/Plugins.swift": "5bb41154d4bd8fdc42d7f0018d8e6ff31b03df3472f5af484253b427b6085859",
+      "Sources/MacNASCore/PoolSimulation.swift": "3636d4a4e253ab360d4ddf02d8086539d9ba759b415c989e638db59b9c5e3c99",
+      "Sources/MacNASCore/PortableInstance.swift": "f4dc42a79389b27e8d5251290e221a1ed2d349ace380b71801f9eae91a6c62c6",
+      "Sources/MacNASCore/PrototypePlatformAPI.swift": "2874f5d13172dff5f0e6803a55e4744754b7513389aa1168cdb92194357e8b83",
+      "Sources/MacNASCore/SafeFS.swift": "75d9f829af31e0ecb949b81f19cc8bd00661b009605ae91ff8f59de9cfe32577",
+      "Sources/MacNASCore/SecurityGate.swift": "97b3490f8405886fb4014198bbb43e61717860115a44d4628c5bbe666c3df49f",
+      "Sources/MacNASCore/StateStore.swift": "73045457dd62c018a5046cc55c7da97d7a537e470e2fe12e13b038d3d8968e05",
+      "Sources/MacNASCore/TransferDescriptors.swift": "cfedb2790ed1cc876868c0f90c4969b779128df88ba931d192c38dbe669b39f9",
+      "Sources/MacNASCore/WriteBarrier.swift": "cbf542810c1e7ef39420ffe1f5b5842ae205f6a8b2730ffd209ecc2ddcf9b8e7",
+      "Sources/SampleFileIndex/main.swift": "4f57a1bc123eaf62baff11b6867ea8a413bbc314247cd0399f93b7874f1442ce",
+      "Tests/MacNASCoreTests/CoreTests.swift": "cbe1b6e1a92435761d43ffcdb6b8b3e9c0b629c48782270947de10574254a4d9",
+      "Tests/MacNASCoreTests/DesktopBridgeTests.swift": "b3edc4b0a4879b6c94117fe386dc0d67040bb86bea33b7c365d4f5395b76c782",
+      "Tests/MacNASCoreTests/DirectoryPageTests.swift": "f6284c89ea2c57357e5d2abeb8088953aaef83831bc2633ae39fb0d9ef636701",
+      "Tests/MacNASCoreTests/DurableIntegrationTests.swift": "b6adcf9623d7d4d5074c05fa65dcb7e9a81499bd9c48ab3ff6c6380ca8f47bbc",
+      "Tests/MacNASCoreTests/DurableJobTests.swift": "f496ffd39256e4e898c0c0da1c4835e0d16c87919931371e953522e139d2135e",
+      "Tests/MacNASCoreTests/EventConsumerStatusTests.swift": "3a319304b6959b2c47145219755fb516420783f986e3efb5ca6871d140670cfe",
+      "Tests/MacNASCoreTests/EventSourceContextTests.swift": "6da8badc79f9870fa056495d2b5ddfa07e3cb76f9dc713d1925a38a3af64a3b9",
+      "Tests/MacNASCoreTests/FileCopyPipeTests.swift": "7988d07a10239a3205f014bc90834a9210a8ac27596f84f0639d9540cc12f91c",
+      "Tests/MacNASCoreTests/FileCopyTests.swift": "152c2b43b0bc1c6c791c237e3e3546c8a1f63ca8034f3d1365e814ab109a6720",
+      "Tests/MacNASCoreTests/FileOperationTests.swift": "d5a28a2becb34507b9fef306c464061b30f7d71c7bcf19bce10c209bf43c6188",
+      "Tests/MacNASCoreTests/FileTransferPipeTests.swift": "c42ef48d3e4a22746e7cd67b0e1101fc659c0bcfba88b4961e305813dfbee9d6",
+      "Tests/MacNASCoreTests/FileTransferTests.swift": "82045b5f31785d63861a1072c6e73c8bd666e3a3990e38e718db7d98885f8f99",
+      "Tests/MacNASCoreTests/FixtureFileTests.swift": "721318bf1b9f6733f3360c5760c6d2231eaaec50f3660dfe4af67838eb1b5ac2",
+      "Tests/MacNASCoreTests/FixtureStorageTests.swift": "66dfa46e8718e320dca8f59adf5101ccd7d57023419402c4942b46da7df9aa93",
+      "Tests/MacNASCoreTests/JobPageTests.swift": "9b634346f1914e99ceb52c3be0b90f0c6ff166b468432d3f48be4dd9a62ea8f5",
+      "Tests/MacNASCoreTests/MigrationRecoveryTests.swift": "a01084c7ae0de34fd02e92e370b920825fabebf8055d5f4a2859682ca9e6e766",
+      "Tests/MacNASCoreTests/PrototypeAPITests.swift": "0e349d6c8707eba3b5ae4775c963aa808c2caf447f84555ed86355865e69b8e9",
+      "Tests/MacNASCoreTests/SmokeTests.swift": "9f808a70612068f05bfbdcd3cbb11f432467e1adc65795b2241c9898ec2a07dd",
+      "database/migrations/0001_initial.sql": "f609f4b3417afeb86aeb6bb37905da97cb58b681316ac7875e6d8184fa12628f",
+      "database/migrations/0002_app_state_revision.sql": "d77b2576f62543b30d529e1e2858bd51d49b2df3768adee5a74a461549cf23ed",
+      "database/migrations/0003_durable_jobs_outbox.sql": "300c433bd8aac1e27f6cfad341b78a5db83b72e9d902dd647c1ae31086401ccc",
+      "scripts/build_postgresql.py": "e7f17fed45e2ab393e4dc3ca99304fc0f3ae6ee2a6c0316f504f26911f35f311",
+      "scripts/dev.py": "db5af7f4e2f299cb4203ce081cd3e8f2b3d771a6f6dc0fb3f198b819dce1f025",
+      "scripts/dev_web.py": "3629b8b71be558aea897162dc9d1866147e00509f76bf73577a6878e11e5dd1c",
+      "scripts/preview_web.py": "65acf8174f04ff2a2d34aa34574c1f95b1861b6c32dc5e873cba08f7e12a3d6c",
+      "scripts/test_desktop_bridge.cjs": "051c683cd4de811c2818770a565ef3878595cf51f985d744979fb69e18471341",
+      "scripts/test_directory_bridge.cjs": "8bdc20e6d00bdb0a6ea3c1e7e8749ec253796596f3ceb1f1f2340d6a63a397a6",
+      "scripts/test_file_copy_bridge.cjs": "afebe610b1bed5c664141064326a781b894847414fdf0e9ebddb905d80a4a88b",
+      "scripts/test_file_operations_bridge.cjs": "a97fa0b7f234d48b78a0153b3701a1b3c6f8e03e2b2306c8c8b3f9fa272ad15c",
+      "scripts/test_file_transfers_bridge.cjs": "347b95fcba788cd58747720652f0cbea90dd898756c03e77378f94c4e9dcdfc8",
+      "scripts/test_requirements.py": "8f406c3a5415523b44eaa44c2ee66eef30b977c19059381062bf5691cb51e470",
+      "scripts/test_web.py": "e1e48c14465064f84730f69aa23b497f3ce26bf9959e027b6363f8c6ca7204f3",
+      "scripts/verify_requirements.py": "41126f01329998966e2e642528dbee5abfd5f033195e99a04d17a8acac18b6c6",
+      "web/dist/bridge-client.js": "26f22229526a3864b6189bd65ee17ec997cf89d492b732841c5b02b759955cf2",
+      "web/dist/directory-view.js": "528466fc126a10d9cf699d3c6c31bc1113485b52a4074bcd75982b671ac826ab",
+      "web/dist/file-copies.js": "9f218398bfb1336f358158b3077f8ae2ecddbc2dc63d47fc10ccb7eb22eed6e6",
+      "web/dist/file-copy-fixture.js": "c4fe1fcd4549a84c1691be7ba47eee81f5fd15990782e6f01cfb54db4b9a9de1",
+      "web/dist/file-operations.js": "d9b33de0512ba6216a94d49436702fdf8b57739171ec7934b1fffac765c18f0a",
+      "web/dist/file-transfers.js": "f48db144afb9113c5cd9088639db8f72c13436ee67af53aacee806757d596e50",
+      "web/dist/model.js": "6a4c46cc95dfe213fa2aa70333c80dd5597436cde3c2ba346235b3287a3a2809",
+      "web/dist/notification-reconciliation.js": "07be8e899a93fbe294ea3a3af81c677575d2dbbd0aeb6800b8f2a452ae25e34f",
+      "web/dist/notification-view.js": "19d511b9669c104919603c7e76291bd1cb860a7a7f8a489982c9d1b1ae100d12",
+      "web/dist/sha256.js": "1ab09fc0e06bc594095068f0ebe93c75562bafbf89d63d93ef8831698ee3f235",
+      "web/dist/task-pages.js": "2a8247eba37092c3a85782a9db817bf2b179ed4d2f3f71219bbc0425775efa70",
+      "web/dist/desktop.css": "fbf71aad23b5eddbbc88e28a4e5cb598b66276e27a8a3ece0fecdf9bfdd25385",
+      "web/dist/desktop.js": "a37d2062bb31f70d7099af5bbf02b0b38c2c3459d6f6fb1205718701fc1c4901",
+      "web/dist/file-browser.js": "2b9decdd7a17e64a3517d9a604e03fa9cc662f0ca76bef0eea24309c56f71393",
+      "web/dist/file-copy-view.js": "d1d4b2a37af06064028c04564989b77c87677bb770ab79775d6ac588679ca3fa",
+      "web/dist/file-transfer-view.js": "dbadd893495ba39ec4d8ba3e5d32f1423d82f645dcf480bd30c980c668705d8c",
+      "web/dist/i18n.js": "94c765bbe7e8a2b27d45e020a101302cee801e7f2692feed61438a4704bcd2a1",
+      "web/dist/icon.svg": "5d4e5d90ccd33021afc98eb0386a45aefc975b51b8cedd69336a5ecac623b951",
+      "web/dist/index.html": "e94eba959f3aedd9eebaf52ddacdd171c399d9f2572fb24cf048bbfdccc81075",
+      "web/tests/bridge.test.cjs": "1d6c7fd10c73a54ab44f19cd3fada262d2f0b83409e079a6fc158c93ffe8c33e",
+      "web/tests/client.test.cjs": "623e5ae920f1bef0951efe79a53c5b9478f116888c186ce5355f30a77465671f",
+      "web/tests/directory-pages.test.cjs": "26cd0d7a04f53142449a7e944a481dd2bec09dc890622b6f67cf22f6ffa8d104",
+      "web/tests/directory-view.test.cjs": "8fbe9bb84a46f546533e52d0ac4618e41b2e3212e0fc1a52f47279fae80aaec7",
+      "web/tests/event-consumer-status.test.cjs": "1265ec1c0fb2cc7e6289d6c37f798d2ffe1a4e05067c5ddab77d3bb19a45ab51",
+      "web/tests/file-browser.test.cjs": "1e882f305f9766fdce840ff1d568c636fefa5ef979407f64201ec3c02efc07ec",
+      "web/tests/file-copies.test.cjs": "a83e5a7384ce1dec60be19fffdb25d463a273647d0211444404832a18428d1d7",
+      "web/tests/file-copy-model.test.cjs": "88d26913150ca42d9930db8916e11e13d885df690806ca595a92898f4b1bbc6e",
+      "web/tests/file-copy-view.test.cjs": "a3bd6efa7d1a206128d152528c1714489aee105fa487634074be4227c5ad44b5",
+      "web/tests/file-operations.test.cjs": "eb80476a34dcb286e2ad08f6e37a88f81bca77bb77547211661688a0adf39e65",
+      "web/tests/file-transfer-view.test.cjs": "02d473ea02d43dee4e4d98f04b3a6536f7941c73457d31bfa24432f3835027ac",
+      "web/tests/file-transfers.test.cjs": "692c220ca5a2fe4e19a5b223da06aee4026bb87446c16d7f18a8a26d4de9e4a9",
+      "web/tests/model.test.cjs": "bf0414239c0eba43134a2b7111caece6f979bd5c5327a9de29c15c4af93d666d",
+      "web/tests/notification-reconciliation.test.cjs": "7ef061e20b80627fef6ee9ca1811a6afd6638eb77761fa0f61c3960f6e3b89b4",
+      "web/tests/notification-view.test.cjs": "50d32c94a6f1f55323158901d52a14dc048c00942f67eebef8831051bf5fa55b",
+      "web/tests/task-pages.test.cjs": "a17013cc7ece58a6111b4cf66e962e5843a01a111b9e89597458431fd5cac043"
+    }
+  },
+  "new_web_checks": {
+    "run_id": "20261016T115907-5e66060d",
+    "status": "PASS",
+    "node_tests": 270,
+    "static_policy_tests": 15,
+    "syntax_checks": 16,
+    "requirements_negative_tests": 9,
+    "source_count": 40,
+    "sources_unchanged": true
+  },
+  "requirements": {
+    "status": "PASS",
+    "original_files_verified": 29,
+    "original_sources_verified": 5,
+    "parent_count": 111,
+    "priority_counts": {
+      "首版需要": 97,
+      "后续需要": 13,
+      "暂不需要": 1
+    },
+    "child_count": 890,
+    "additional_parent_count": 1,
+    "effective_parent_count": 112,
+    "effective_priority_counts": {
+      "首版需要": 97,
+      "后续需要": 14,
+      "暂不需要": 1
+    },
+    "additional_child_count": 7,
+    "database": "PostgreSQL 18, no fallback"
+  },
+  "browser": {
+    "status": "NOT_EXECUTED_PERMISSION_STATE_UNCHANGED",
+    "case_count": 52,
+    "new_attempts": 0,
+    "preview_started": false,
+    "port_8766_listener_absent": true
+  },
+  "database": {
+    "runtime_schema": 3,
+    "migration_0004_created": false,
+    "new_cluster_started": false,
+    "owned_postgres_processes_found": 0
+  },
+  "failures_and_review_corrections": [
+    {
+      "kind": "actual_model_red_run",
+      "failure": "Crash before operation creation was misclassified as replay of an old operation ID.",
+      "log": "Evidence/n028-effect-model-first.stderr.log",
+      "repair": "Track whether the operation predates restart."
+    },
+    {
+      "kind": "actual_model_red_run",
+      "failure": "Restore confirmation omitted the active-operation quota guard.",
+      "log": "Evidence/n028-quota-active-red.stderr.log",
+      "repair": "Guard restore admission and assert active quota."
+    },
+    {
+      "kind": "independent_model_review",
+      "failure": "Unreachable history-admission branch and misleading third-confirm rejection counter.",
+      "repair": "Remove branch; report 726 history-saturated states. Fixed slots guarantee the bound; third confirmation rejection is not simulated. Preserve prereview outputs."
+    },
+    {
+      "kind": "design_review",
+      "failure": "Read-only observation was conflated with write settlement and release of restored entry charge.",
+      "repair": "Separate observe and independently authorized readWrite settlement; neither moves again."
+    },
+    {
+      "kind": "tool_edit_failure",
+      "failure": "First apply_patch rejected duplicate delete/add targets before writes.",
+      "raw_log": null,
+      "record_kind": "Observed tool result in this chat",
+      "repair": "Use a single Update operation."
+    },
+    {
+      "kind": "review_tool_usage",
+      "details": "Persistence reviewer recorded nonseekable plist stdin and guessed missing source/ADR filenames; corrected before writes. See persistence review execution notes; no product failure claimed."
+    }
+  ],
+  "design_source_sha256": {
+    "AGENTS.md": "2c131d038f6e9cba855097b3d55aa5bdd9e491c4b8431c7ae36a7b245b879c76",
+    "ARCHITECTURE.md": "041f176bff5263fbd6e7fb9a56eb806b367e6bb72f7ca3391bdfd5d6e3c7e6bd",
+    "HANDOFF.md": "358e081988c73dee34078dc0cf67d3d0b4597015c060edf037f84177614b7675",
+    "NEXT_TASK.md": "2b8af9005ba7f662f9514f7bcf7e416f75bfb61a51dfa760be26dc6ff3f9ab22",
+    "PROGRESS.md": "17f584d06f3ce19c124b54b7dbe21ee8132ba3413d4a715fa7687a8afbd4ab16",
+    "PROJECT_SPEC.md": "bc51454f50a860acd1be151be818a6a2413f9592202b1739cf62367d2d759b14",
+    "docs/decisions/ADR-021-recoverable-recycle-journal.md": "ad4dfb64d9153d2e33772090581b011a7bfadcaff19f7e71f55a82870f95665b",
+    "docs/design-models/recycle_effect_model.py": "58dd540832f6a0ebac7ca2ca40c2537fcd2982ecb23e23054f9ac3d4061f4b27",
+    "docs/plans/N-028-FILESYSTEM-REVIEW.md": "e1eebb8addd2987c46f42d3e4498426f4fbaa9c573d823cd4c21ab3ce8bd1bca",
+    "docs/plans/N-028-INTERACTION-REVIEW.md": "139204b8e2bf48af7f7223c21e93e930e34e5ab823a48b082402b56e57536373",
+    "docs/plans/N-028-PERSISTENCE-REVIEW.md": "2617e3517ee473ba0d6cdeb97bcb690e40a86a9c2293ebec7b0772f00238c664",
+    "docs/plans/N-028-RECYCLE-BIN-DESIGN.md": "b6d27406da85d39077d76d99d587df3549bccdb8966a4f7ec9061f7676a8c705",
+    "docs/plans/N-029-RECYCLE-JOURNAL-IMPLEMENTATION.md": "d90fea8aa0d7e654dfd14e2c3be9c10d9524eac4d595ad88892598f908f276c7"
+  },
+  "raw_artifact_sha256": {
+    "Evidence/n028-effect-model-first.stderr.log": "de872cb44d493ac1b3d199041e67bafeb1c6d866f91aeb8d9d266b7d979452a6",
+    "Evidence/n028-quota-active-red.stderr.log": "72cdd4e08a7688ea2edf463830091981dd615a5d8d8048a6315e3ab5e996ceb5",
+    "Evidence/n028-effect-model-final.json": "94f3e937ce8783609af8d153dc39e76e4f27af1152077eca16566f805607e6ee",
+    "Evidence/n028-effect-model-repeat.json": "94f3e937ce8783609af8d153dc39e76e4f27af1152077eca16566f805607e6ee",
+    "Evidence/n028-effect-model-reviewed-final.json": "9213383b9b9b9d4945c64774ebf2ea1bc81b01278e7cf56cf860796eda966220",
+    "Evidence/n028-effect-model-reviewed-repeat.json": "9213383b9b9b9d4945c64774ebf2ea1bc81b01278e7cf56cf860796eda966220",
+    "Evidence/n028-root-reviewed-model-verification.json": "9213383b9b9b9d4945c64774ebf2ea1bc81b01278e7cf56cf860796eda966220"
+  },
+  "web_receipt_sha256": {
+    "Evidence/web-runs/20261016T115907-5e66060d/summary.json": "9b6b1f659abe8f5a28c1139b579a4cd095eb6b5b164dfbae441dc420e34c394d",
+    "Evidence/web-runs/20261016T115907-5e66060d/source-sha256.json": "9e9583a135d3f4fc85ad05931504499ed5df9ec25ffba94083a61faec07dbbe2",
+    "Evidence/web-runs/20261016T115907-5e66060d/model-tests.log": "74a31bd26791154a2344659dd37a986ba0a0b4c0f334c52691044798e2ae3253",
+    "Evidence/web-runs/20261016T115907-5e66060d/static-http-policy-tests.log": "4cf7f1d1a01e0a87de085e4e4242cda3c66c0ff89e95a7b50cce948ed3d375cf",
+    "Evidence/web-runs/20261016T115907-5e66060d/requirements.log": "cb28e393744075b0fe2e65df5628d341ee586e109992b9fe2a7ede4d6a4e8de7",
+    "Evidence/web-runs/20261016T115907-5e66060d/requirements-negative-tests.log": "f1d3cbb20f163ae5e2fff4defbe5e5555b64befbe115d13f5522afb4216ccf1a"
+  },
+  "next_task": "docs/plans/N-029-RECYCLE-JOURNAL-IMPLEMENTATION.md",
+  "next_deliverable": "N-029 A: versioned Schema4 and durable journal foundation before filesystem effect integration"
+}
