@@ -1,7 +1,7 @@
 "use strict";
 const assert=require("node:assert/strict"),readline=require("node:readline");
 const C=require("../web/dist/bridge-client.js"),R=require("../web/dist/recycle-observation.js");
-const [mode,operationID,entryID,totalText]=process.argv.slice(2),totalBytes=Number(totalText),waiting=new Map();
+const [mode,operationID,entryID,totalText,schemaText="4"]=process.argv.slice(2),totalBytes=Number(totalText),waiting=new Map();
 const input=readline.createInterface({input:process.stdin});
 input.on("line",line=>{const value=JSON.parse(line),resolve=waiting.get(value.requestId);assert.ok(resolve);waiting.delete(value.requestId);resolve(value);});
 const transport=request=>new Promise(resolve=>{waiting.set(request.requestId,resolve);process.stdout.write(JSON.stringify(request)+"\n");});
@@ -9,7 +9,7 @@ const transport=request=>new Promise(resolve=>{waiting.set(request.requestId,res
   assert.ok(Number.isSafeInteger(totalBytes)&&totalBytes>=0&&totalBytes<=16*1024*1024);
   const client=C.createDesktopClient({transport,timeoutMs:30000});
   try{
-    const who=await client.overview();assert.equal(who.databaseSchema,4);assert.equal(who.userID,"fixture-owner");
+    const who=await client.overview();assert.equal(who.databaseSchema,Number(schemaText));assert.equal(who.userID,"fixture-owner");
     assert.equal(client.authorizeFixtureRecycleObservation,undefined);assert.equal(client.settleRecycleOperation,undefined);
     if(mode==="denied"){
       await assert.rejects(client.observeRecycleOperation(operationID),error=>error.code==="denied");assert.equal(client.closed,false);

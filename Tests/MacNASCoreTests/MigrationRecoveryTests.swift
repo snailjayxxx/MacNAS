@@ -166,15 +166,34 @@ final class MigrationRecoveryTests: LabTest {
             let d=child("kill-"+point.rawValue),marker=child(".kill-\(point.rawValue).macnas-test-checkpoint")
             let process=Process();process.executableURL=URL(fileURLWithPath:bin).appendingPathComponent("macnas")
             process.arguments=["migrate","restore","--source",e.path,"--dest",d.path,"--host-id","new","--confirm-create","--synthetic-test-hold-after",point.rawValue]
-            process.standardOutput=FileHandle.nullDevice;process.standardError=FileHandle.nullDevice
+            let errors=child("migration-probe-"+point.rawValue+".log")
+            XCTAssertTrue(FileManager.default.createFile(atPath:errors.path,contents:nil))
+            let errorLog=try FileHandle(forWritingTo:errors);defer { try? errorLog.close() }
+            process.standardOutput=errorLog;process.standardError=errorLog
+            let started=ProcessInfo.processInfo.systemUptime
             try process.run()
             defer { if process.isRunning { ChildControl.stop(process) } }
-            let deadline=ProcessInfo.processInfo.systemUptime+10
+            // This bounds test-worker checkpoint readiness, not a migration API deadline.
+            // The measured afterPublish handshake took8.09s in isolation and the full
+            // run missed10s; align with the existing recycle/restore SIGKILL probes.
+            let deadline=ProcessInfo.processInfo.systemUptime+90
             while !FileManager.default.fileExists(atPath:marker.path) && process.isRunning && ProcessInfo.processInfo.systemUptime<deadline { Thread.sleep(forTimeInterval:0.01) }
-            XCTAssertTrue(FileManager.default.fileExists(atPath:marker.path))
+            let reached=FileManager.default.fileExists(atPath:marker.path)
+            let elapsed=ProcessInfo.processInfo.systemUptime-started
+            let phase=(try? MigrationCoordinator.status(destination:d).phase.rawValue) ?? "no-journal"
+            let diagnostics=["point":point.rawValue,"markerReached":String(reached),"elapsedSeconds":String(elapsed),
+                "running":String(process.isRunning),"phase":phase,"pid":String(process.processIdentifier),
+                "childOutput":String(decoding:try Data(contentsOf:errors).prefix(8192),as:UTF8.self)]
+            print("Migration crash handshake: "+String(decoding:try JSONSerialization.data(withJSONObject:diagnostics,options:[.sortedKeys]),as:UTF8.self))
+            guard reached else {
+                if process.isRunning { ChildControl.stop(process) }
+                XCTFail("Migration probe did not reach the exact "+point.rawValue+" checkpoint within 90 seconds")
+                return
+            }
             let prior=try MigrationCoordinator.status(destination:d)
             kill(process.processIdentifier,SIGKILL);process.waitUntilExit()
             XCTAssertEqual(process.terminationReason,.uncaughtSignal)
+            XCTAssertEqual(process.terminationStatus,SIGKILL)
             let resumed=try MigrationCoordinator.restore(from:e,to:d,hostID:"new")
             XCTAssertEqual(resumed.databaseName,prior.databaseName);XCTAssertEqual(resumed.phase,.publishedReadOnly)
         }

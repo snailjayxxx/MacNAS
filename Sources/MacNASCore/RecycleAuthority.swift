@@ -45,6 +45,7 @@ final class FixtureRecycleAuthority {
     let root: URL
     let store: StateStore
     let userID: Data
+    private let databaseVersion: Int
     private let host = UUID()
     private let lock = NSLock()
     private var revision: UInt64 = 0
@@ -56,8 +57,10 @@ final class FixtureRecycleAuthority {
          additionalContextCheck: @escaping () throws -> Void = {}) throws {
         try RecycleVault.requireLabRoot(root); try FileEffectMetadata.subject(userID)
         self.root = root; self.userID = userID; self.now = now; self.additionalContextCheck = additionalContextCheck; store = try PortableInstance.store(root)
+        databaseVersion = try PortableInstance.databaseDescriptor(root).version()
+        try require([4,5].contains(databaseVersion), .unsupported)
         _ = try context(write: false)
-        try store.validate(expectedVersion: 4)
+        try store.validate(expectedVersion: databaseVersion)
     }
     private func context(write: Bool) throws -> (InstanceIdentity, HostBinding) {
         try additionalContextCheck()
@@ -70,7 +73,7 @@ final class FixtureRecycleAuthority {
                     && config.users.filter({ Data($0.id.utf8) == userID }).map(\.role) == ["administrator"], .denied)
         try require(["synthetic_development", "read_only_recovery", "rolled_back_recovery"].contains(binding.mode), .denied)
         if write { try require(binding.mode == "synthetic_development", .denied) }
-        try require(try PortableInstance.databaseDescriptor(root).version() == 4, .invalidSchema)
+        try require(try PortableInstance.databaseDescriptor(root).version() == databaseVersion, .invalidSchema)
         return (identity, binding)
     }
     func registration() throws -> RecycleVaultRegistration {

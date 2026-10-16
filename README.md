@@ -3,9 +3,11 @@ Mac上使用的NAS系统
 
 Swift 原生核心与中文/日文静态网页桌面开发原型，数据库采用 PostgreSQL 18。桌面暂用合成数据，尚未提供可部署 NAS 服务。
 
-当前N-025/N-026已接入单文件上传/下载的独立批准、确认、32KiB分块/摘要、不覆盖发布、进度/取消、校验后保存及目录重读；原生只操作新建批准的合成目录，网页仍是同一内存样例树。单文件16MiB是原型预算，没有持久进度/重启恢复或生产大文件通道。新的完整253项Swift、15项独立CLI管道及221项Node回归通过，详见[证据](docs/evidence/n025-n026-2026-10-16.json)与[PROGRESS](PROGRESS.md)。连续浏览每次50项、最多加载1000项，搜索/排序仅限已加载项。46项实际网页检查仍待正规浏览器权限恢复，不能作为完整Finder/File Station替代品。
+文件中心已实现连续浏览、新建/改名、有界上传/下载和复制。原生回收/恢复及真实中断核对另在私有合成资料库实现；网页仍使用内存样例树。单文件16MiB是当前原型预算，完整回收恢复界面、持久大文件传输和正式NAS接入仍待后续阶段。
 
-按用户要求，本轮收尾后暂停并准备新对话；实际工程位于后来添加的外挂SSD，完整路径与接续步骤见[HANDOFF.md](HANDOFF.md)。Intel Mac/macOS14支持留待以后，当前Apple Silicon/macOS15+目标不变。
+C2已发布，C3A持久容量元数据基础完成新422项Swift、16项独立管道及307项Node验证，见[C3A证据](docs/evidence/n029-c3a-2026-10-17.json)。下一步接单物理合成树；完整回收恢复界面及NAS生产接入仍待开发。历史网页52项为45通过/7部分覆盖，本阶段没有浏览器验收。
+
+用户2026-10-17要求自动连续开发、按阶段中文提交推送，并暂不使用浏览器。实际工程位于外挂SSD，路径与接续步骤见[HANDOFF.md](HANDOFF.md)。Intel Mac/macOS14支持留待以后，当前Apple Silicon/macOS15+目标不变。
 
 - [DSM整体功能差距](docs/plans/DSM-FUNCTIONAL-BASELINE.md) / [控制面板与网络详细对照](docs/plans/DSM-CONTROL-PANEL-NETWORK-REFERENCE.md)
 - [用户补充需求账目](requirements/user-additions.json)：新增SYS-09网页远控Mac，按用户要求**很后期、未开始**；原111项基线不变，当前有效112项。

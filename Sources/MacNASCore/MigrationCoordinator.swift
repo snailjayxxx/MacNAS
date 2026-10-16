@@ -73,7 +73,7 @@ enum JournalStore {
         try require(try PortableInstance.trustedKey().isValidSignature(signature, for: encoded(envelope.transaction)), .integrity)
         let r = envelope.transaction
         try require(r.schemaVersion == 1 && r.destinationName == destination.lastPathComponent, .integrity)
-        try require([1,2,3,4].contains(r.sourceVersion) && [1,2,3,4].contains(r.targetVersion) && r.targetVersion >= r.sourceVersion, .invalidSchema)
+        try require([1,2,3,4,5].contains(r.sourceVersion) && [1,2,3,4,5].contains(r.targetVersion) && r.targetVersion >= r.sourceVersion, .invalidSchema)
         try require(r.resumeCount <= 1000 && !r.history.isEmpty && r.history.count < 10000, .integrity)
         try require(r.history.enumerated().allSatisfy { $0.offset == $0.element.sequence } && r.history.last?.phase == r.phase, .integrity)
         try require(!r.history.contains { $0.phase == .readyForCutover } && r.phase != .readyForCutover, .denied)
@@ -97,7 +97,7 @@ public enum MigrationCoordinator {
         try perform(kind: .restore, source: source, destination: destination, hostID: hostID, targetVersion: PortableInstance.databaseDescriptor(source).version(), fault: fault, checkpoint: checkpoint)
     }
     @discardableResult public static func upgrade(from source: URL, to destination: URL, hostID: String, targetVersion: Int = 2, fault: MigrationFault? = nil, checkpoint: ((MigrationCheckpoint) -> Void)? = nil) throws -> MigrationTransaction {
-        try require([2,3,4].contains(targetVersion), .unsupported)
+        try require([2,3,4,5].contains(targetVersion), .unsupported)
         return try perform(kind: .schemaUpgrade, source: source, destination: destination, hostID: hostID, targetVersion: targetVersion, fault: fault, checkpoint: checkpoint)
     }
     static func perform(kind: MigrationKind, source: URL, destination: URL, hostID: String, targetVersion: Int, fault: MigrationFault?, checkpoint: ((MigrationCheckpoint) -> Void)?) throws -> MigrationTransaction {
@@ -118,7 +118,7 @@ public enum MigrationCoordinator {
                 sourceDatabase = sourceStore.databaseName
             }
             let sourceVersion = try PortableInstance.databaseDescriptor(source).version()
-            try require([1,2,3,4].contains(sourceVersion) && targetVersion >= sourceVersion && targetVersion <= 4, .invalidSchema)
+            try require([1,2,3,4,5].contains(sourceVersion) && targetVersion >= sourceVersion && targetVersion <= 5, .invalidSchema)
             let journalURL = try JournalStore.url(destination)
             var record: MigrationTransaction
             if FileManager.default.fileExists(atPath: journalURL.path) {

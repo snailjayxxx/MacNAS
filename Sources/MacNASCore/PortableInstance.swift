@@ -17,7 +17,7 @@ public enum PortableInstance {
         return value
     }
     public static func createSynthetic(at root: URL, hostID: String = "mock-source", databaseVersion:Int=1) throws {
-        try require([1,2,3,4].contains(databaseVersion),.invalidSchema)
+        try require([1,2,3,4,5].contains(databaseVersion),.invalidSchema)
         try SafeFS.freshDirectory(root)
         for dir in ["config", "state", "logical-storage", "host-binding", "apps", "app-data"] {
             try FileManager.default.createDirectory(at: root.appendingPathComponent(dir), withIntermediateDirectories: false)

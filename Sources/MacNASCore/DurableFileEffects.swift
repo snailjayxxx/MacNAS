@@ -143,9 +143,11 @@ final class DurableFileEffectJournal {
     private let store: StateStore
     private let scope: FileEffectJournalScope
     private let root: URL
+    private let databaseVersion: Int
 
     init(store: StateStore, scope: FileEffectJournalScope) throws {
-        try store.validate(expectedVersion: 4)
+        databaseVersion = try store.schemaVersion()
+        try require([4,5].contains(databaseVersion), .unsupported); try store.validate(expectedVersion: databaseVersion)
         try require(scope.generation >= 0, .invalidSchema); try FileEffectMetadata.subject(scope.userID); try FileEffectMetadata.hash(scope.originScopeSHA256)
         guard let root = store.instanceRoot else { throw NASError.denied }
         self.store = store; self.scope = scope; self.root = root
@@ -159,7 +161,7 @@ final class DurableFileEffectJournal {
         let binding = try PortableInstance.strictRead(HostBinding.self, SafeFS.resolve(root, "host-binding/binding.json"))
         try require(binding.databaseName == store.databaseName && !binding.hostID.isEmpty && binding.hostID.utf8.count <= 256 && !binding.hostID.contains("\0"), .denied)
         try require(["administrator", "reader"].contains(user.role) && ["synthetic_development", "read_only_recovery", "rolled_back_recovery"].contains(binding.mode), .denied)
-        try require(try PortableInstance.databaseDescriptor(root).version() == 4 && store.schemaVersion() == 4, .invalidSchema)
+        try require(try PortableInstance.databaseDescriptor(root).version() == databaseVersion && store.schemaVersion() == databaseVersion, .invalidSchema)
         if write { try require(user.role == "administrator" && binding.mode == "synthetic_development", .denied) }
     }
     private var instanceSQL: String { FileEffectMetadata.uuidSQL(scope.instanceID) }
@@ -172,10 +174,13 @@ final class DurableFileEffectJournal {
         if let error = reply.error { throw error }; return reply.record
     }
     private static func reject(_ error: NASError) -> String { "INSERT INTO effect_result VALUES(jsonb_build_object('error','\(error.rawValue)')); RETURN;" }
+    private var capacityMetadataReserve: String {
+        databaseVersion >= 5 ? "+(SELECT count(*)*3072 FROM macnas.capacity_scopes)+(SELECT count(*)*2048 FROM macnas.capacity_allocations)" : ""
+    }
     private var budgetGuard: String {
         """
         IF (SELECT count(*) FROM macnas.recycle_entries)>64 OR (SELECT count(*) FROM macnas.file_effect_operations)>256 OR
-          ((\(StateStore.legacyMetadataBytesSQL)) + (SELECT count(*)*4096 FROM macnas.recycle_entries) + (SELECT count(*)*8192 FROM macnas.file_effect_operations) + 4096)>4000000
+          ((\(StateStore.legacyMetadataBytesSQL)) + (SELECT count(*)*4096 FROM macnas.recycle_entries) + (SELECT count(*)*8192 FROM macnas.file_effect_operations) + 4096\(capacityMetadataReserve))>4000000
         THEN \(Self.reject(.budgetExceeded)) END IF;
         """
     }
@@ -238,7 +243,7 @@ final class DurableFileEffectJournal {
         IF EXISTS(SELECT 1 FROM macnas.recycle_entries WHERE instance_id=\(instanceSQL) AND volume_id=\(FileEffectMetadata.uuidSQL(volumeID)) AND vault_id=\(FileEffectMetadata.uuidSQL(vaultID)) AND payload_id=\(FileEffectMetadata.uuidSQL(payloadID))) THEN \(Self.reject(.collision)) END IF;
         IF (SELECT count(*) FROM macnas.recycle_entries)>=64 OR (SELECT count(*) FROM macnas.file_effect_operations)>=256 OR (SELECT count(*) FROM macnas.file_effect_operations WHERE phase NOT IN ('completed','cancelled'))>=8 OR
            (SELECT coalesce(sum(byte_count) FILTER(WHERE charge_state<>'released'),0) FROM macnas.recycle_entries)+\(byteCount)>\(Self.retainedBytes) THEN \(Self.reject(.budgetExceeded)) END IF;
-        IF ((\(StateStore.legacyMetadataBytesSQL))+(SELECT count(*)*4096 FROM macnas.recycle_entries)+4096+(SELECT count(*)*8192 FROM macnas.file_effect_operations)+8192+4096)>4000000 THEN \(Self.reject(.budgetExceeded)) END IF;
+        IF ((\(StateStore.legacyMetadataBytesSQL))+(SELECT count(*)*4096 FROM macnas.recycle_entries)+4096+(SELECT count(*)*8192 FROM macnas.file_effect_operations)+8192+4096\(capacityMetadataReserve))>4000000 THEN \(Self.reject(.budgetExceeded)) END IF;
         e.entry_id:=\(entrySQL); e.entry_version:=1; e.instance_id:=\(instanceSQL); e.origin_generation:=\(scope.generation); e.owner_user_utf8:=\(actorSQL);
         e.library_id_utf8:=\(FileEffectMetadata.bytesSQL(Data(intent.libraryID.utf8))); e.original_path_utf8:=\(FileEffectMetadata.bytesSQL(Data(intent.sourcePath.utf8)));
         e.volume_id:=\(FileEffectMetadata.uuidSQL(volumeID)); e.vault_id:=\(FileEffectMetadata.uuidSQL(vaultID)); e.payload_id:=\(FileEffectMetadata.uuidSQL(payloadID));
@@ -286,7 +291,7 @@ final class DurableFileEffectJournal {
         IF e.origin_generation<>\(scope.generation) OR e.library_id_utf8<>\(FileEffectMetadata.bytesSQL(Data(intent.libraryID.utf8))) OR e.original_path_utf8<>\(FileEffectMetadata.bytesSQL(Data(intent.sourcePath.utf8))) OR e.byte_count<>\(evidence.object.bytes) OR e.sha256<>'\(evidence.sha256)' THEN \(Self.reject(.staleState)) END IF;
         IF EXISTS(SELECT 1 FROM macnas.file_effect_operations WHERE operation_id=\(operationSQL)) THEN \(Self.reject(.collision)) END IF;
         IF (SELECT count(*) FROM macnas.file_effect_operations)>=256 OR (SELECT count(*) FROM macnas.file_effect_operations WHERE phase NOT IN ('completed','cancelled'))>=8 THEN \(Self.reject(.budgetExceeded)) END IF;
-        IF ((\(StateStore.legacyMetadataBytesSQL))+(SELECT count(*)*4096 FROM macnas.recycle_entries)+(SELECT count(*)*8192 FROM macnas.file_effect_operations)+8192+4096)>4000000 THEN \(Self.reject(.budgetExceeded)) END IF;
+        IF ((\(StateStore.legacyMetadataBytesSQL))+(SELECT count(*)*4096 FROM macnas.recycle_entries)+(SELECT count(*)*8192 FROM macnas.file_effect_operations)+8192+4096\(capacityMetadataReserve))>4000000 THEN \(Self.reject(.budgetExceeded)) END IF;
         \(newOperationSQL(operationID, entryID: entryID, keySQL: keySQL, intentSQL: intentSQL, intentHash: intentHash, evidenceSQL: evidenceSQL, kind: .restore))
         IF octet_length(convert_to(to_jsonb(o)::text,'UTF8'))+2048+1024>8192 OR e.revision=9223372036854775807 THEN \(Self.reject(.budgetExceeded)) END IF;
         e.active_operation_id:=\(operationSQL); e.revision:=e.revision+1;

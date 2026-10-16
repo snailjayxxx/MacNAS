@@ -1,4 +1,6 @@
-# MacNAS 原型架构（N-029 C2：持久文件效果与只读核对桥接）
+# MacNAS 原型架构（N-029 C3A：持久容量元数据）
+
+C3A实现0005/Schema5及持久容量元数据：单条16MiB、共用64MiB、64历史和8个未终结预留；原始主体/数据库/宿主/实例/代次/资料库绑定，独立CAS，和文件日志共用事务准入锁。owned不释放，armed保留全部费用并阻止新准入；纯MetadataOnly方法遇已知物理标记即拒绝。旧0001–0004及Migration4原字节不变。 新表进入14表停写、完整UTC摘要和严格权限/结构核对；1–4投影保留。本阶段只验证数据库账目，未接入物理库存、原生上传复制/回收恢复或新执行RPC/UI；现有网页仍为Schema3内存fixture。旧回收/恢复各3次SIGKILL在新全量中重跑，不是容量执行者的中断证明。下一步C3B接单物理合成树与封闭现场凭据，随后才是执行/列表/界面。用户要求自动连续开发并暂停浏览器/预览；仅限新建TestLab合成实例。 详见[ADR-027](docs/decisions/ADR-027-schema5-durable-capacity-ledger.md)及[C3A证据](docs/evidence/n029-c3a-2026-10-17.json)。
 
 Swift 6 / macOS 15部署目标，PostgreSQL 18。当前为非root CLI、无监听的业务API和两个自研可信样例；没有生产HTTP登录、系统Helper或正式接管。
 

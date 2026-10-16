@@ -18,7 +18,7 @@ MacNAS 0.1 synthetic prototype (no listener or system services)
   macnas migrate preview --source PATH          live synthetic fixture, read only
   macnas migrate export --source PATH --dest PATH
   macnas migrate restore --source PATH --dest PATH [--confirm-create --host-id LOGICAL-ID]
-  macnas migrate upgrade --source PATH --dest PATH [--target-schema 2|3|4 --confirm-create --host-id ID]
+  macnas migrate upgrade --source PATH --dest PATH [--target-schema 2|3|4|5 --confirm-create --host-id ID]
   macnas migrate status --dest PATH
   macnas migrate rollback --dest PATH [--confirm]
   macnas migrate cutover                        unavailable, always refuses
@@ -139,7 +139,7 @@ do {
         case "upgrade":
             try checkOptions(prefix:2,valued:["--source","--dest","--host-id","--target-schema"],flags:["--confirm-create"])
             let version = args.contains("--target-schema") ? Int(try option("--target-schema")) : 2
-            guard let version,[2,3,4].contains(version) else { throw NASError.unsupported }
+            guard let version,[2,3,4,5].contains(version) else { throw NASError.unsupported }
             let source = path(try option("--source")), destination = path(try option("--dest"))
             if args.contains("--confirm-create") {
                 let host = args.contains("--host-id") ? try option("--host-id") : "mock-upgrade-host"

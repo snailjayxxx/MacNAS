@@ -4,8 +4,8 @@ import XCTest
 @testable import MacNASCore
 
 class RecycleVaultLab: LabTest {
-    func recycleLab(_ name: String = "recycle") throws -> (URL, FixtureRecycleAuthority, RecycleVaultRegistration) {
-        let root = child(name); try PortableInstance.createSynthetic(at: root, databaseVersion: 4)
+    func recycleLab(_ name: String = "recycle", databaseVersion: Int = 4) throws -> (URL, FixtureRecycleAuthority, RecycleVaultRegistration) {
+        let root = child(name); try PortableInstance.createSynthetic(at: root, databaseVersion: databaseVersion)
         let host = try FixtureRecycleAuthority(root: root, userID: Data("fixture-owner".utf8))
         return (root, host, try host.createFreshFixture(confirmed: true))
     }

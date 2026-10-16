@@ -25,7 +25,7 @@ try:
     run('static-http-policy-tests',['/usr/bin/python3','scripts/test_web.py'])
     run('requirements',['/usr/bin/python3','scripts/verify_requirements.py'])
     run('requirements-negative-tests',['/usr/bin/python3','scripts/test_requirements.py'])
-    baseline_path=next(path for path in [ROOT/'docs/evidence/n029-c2-2026-10-16.json',ROOT/'docs/evidence/n029-b2-2026-10-16.json',ROOT/'docs/evidence/n029-b-2026-10-16.json',ROOT/'docs/evidence/n029-a-2026-10-16.json',ROOT/'docs/evidence/n027-2026-10-16.json',ROOT/'docs/evidence/n025-n026-2026-10-16.json',ROOT/'docs/evidence/n024-2026-10-16.json',ROOT/'docs/evidence/n022-2026-10-16.json',ROOT/'docs/evidence/n021-2026-10-15.json',ROOT/'docs/evidence/n020-2026-10-15.json',ROOT/'docs/evidence/n019-2026-10-15.json',ROOT/'docs/evidence/n016-2026-10-15.json',ROOT/'docs/evidence/n015-2026-10-15.json',ROOT/'docs/evidence/n014-2026-10-15.json',ROOT/'docs/evidence/n012-n013-2026-10-15.json',ROOT/'docs/evidence/n010-2026-10-15.json'] if path.exists())
+    baseline_path=next(path for path in [ROOT/'docs/evidence/n029-c3a-2026-10-17.json',ROOT/'docs/evidence/n029-c2-2026-10-16.json',ROOT/'docs/evidence/n029-b2-2026-10-16.json',ROOT/'docs/evidence/n029-b-2026-10-16.json',ROOT/'docs/evidence/n029-a-2026-10-16.json',ROOT/'docs/evidence/n027-2026-10-16.json',ROOT/'docs/evidence/n025-n026-2026-10-16.json',ROOT/'docs/evidence/n024-2026-10-16.json',ROOT/'docs/evidence/n022-2026-10-16.json',ROOT/'docs/evidence/n021-2026-10-15.json',ROOT/'docs/evidence/n020-2026-10-15.json',ROOT/'docs/evidence/n019-2026-10-15.json',ROOT/'docs/evidence/n016-2026-10-15.json',ROOT/'docs/evidence/n015-2026-10-15.json',ROOT/'docs/evidence/n014-2026-10-15.json',ROOT/'docs/evidence/n012-n013-2026-10-15.json',ROOT/'docs/evidence/n010-2026-10-15.json'] if path.exists())
     baseline_report=json.loads(baseline_path.read_text())
     baseline=baseline_report['source_sha256']
     core={name:digest for name,digest in baseline.items() if name=='Package.swift' or name.startswith(('Sources/','Tests/','database/'))}
@@ -60,8 +60,8 @@ try:
         assert set(dependencies)=={'web/dist/model.js','web/dist/bridge-client.js','web/dist/directory-view.js','web/dist/file-operations.js','web/dist/file-transfers.js','web/dist/sha256.js','scripts/test_directory_bridge.cjs','scripts/test_file_operations_bridge.cjs','scripts/test_file_transfers_bridge.cjs'},'All three embedded scenarios and transitive transfer dependencies are required'
         regression=baseline_report['core_full_regression']
         assert regression['unfiltered'] is True and regression['new_unfiltered_execution'] is True and regression['reused_prior_suite'] is False and regression['swift_tests']==253,'A fresh complete transfer regression is required'
-    if baseline_report.get('task') in ['N-027','N-029 A','N-029 B','N-029 B2','N-029 C2']:
-        assert set(dependencies)=={'web/dist/model.js','web/dist/bridge-client.js','web/dist/directory-view.js','web/dist/file-operations.js','web/dist/file-transfers.js','web/dist/sha256.js','web/dist/file-copies.js','web/dist/file-copy-fixture.js','scripts/test_directory_bridge.cjs','scripts/test_file_operations_bridge.cjs','scripts/test_file_transfers_bridge.cjs','scripts/test_file_copy_bridge.cjs'}|({'web/dist/recycle-observation.js','scripts/test_recycle_observation_bridge.cjs'} if baseline_report.get('task')=='N-029 C2' else set()),'Complete embedded scenarios and all transitive dependencies are required'
+    if baseline_report.get('task') in ['N-027','N-029 A','N-029 B','N-029 B2','N-029 C2','N-029 C3A']:
+        assert set(dependencies)=={'web/dist/model.js','web/dist/bridge-client.js','web/dist/directory-view.js','web/dist/file-operations.js','web/dist/file-transfers.js','web/dist/sha256.js','web/dist/file-copies.js','web/dist/file-copy-fixture.js','scripts/test_directory_bridge.cjs','scripts/test_file_operations_bridge.cjs','scripts/test_file_transfers_bridge.cjs','scripts/test_file_copy_bridge.cjs'}|({'web/dist/recycle-observation.js','scripts/test_recycle_observation_bridge.cjs'} if baseline_report.get('task') in ['N-029 C2','N-029 C3A'] else set()),'Complete embedded scenarios and all transitive dependencies are required'
         regression=baseline_report['core_full_regression']
         assert regression['unfiltered'] is True and regression['new_unfiltered_execution'] is True and regression['reused_prior_suite'] is False and regression['swift_tests']>253,'Fresh complete copy regression is required'
         run_id=regression['run_id']
@@ -74,16 +74,17 @@ try:
         test_log=(receipt_path/'swift-tests.log').read_text()
         assert ('Executed '+str(regression['swift_tests'])+' tests, with 0 failures') in test_log,'Reported test total must match raw XCTest output'
         assert any(r['name']=='postgres-stop' and r['exit_code']==0 for r in receipt['results']),'Successful database cleanup receipt required'
-        if baseline_report.get('task') in ['N-029 A','N-029 B','N-029 B2','N-029 C2']:
+        if baseline_report.get('task') in ['N-029 A','N-029 B','N-029 B2','N-029 C2','N-029 C3A']:
             assert regression['swift_tests']>271,'Fresh complete Schema4 journal regression is required'
-            if baseline_report.get('task') in ['N-029 B','N-029 B2','N-029 C2']:
+            if baseline_report.get('task') in ['N-029 B','N-029 B2','N-029 C2','N-029 C3A']:
                 assert regression['swift_tests']>323,'Fresh complete recycle executor regression is required'
                 assert len(re.findall(r'^Recycle crash proof: ',test_log,re.M))==3,'Three actual recycle SIGKILL scenarios are required'
-                if baseline_report.get('task') in ['N-029 B2','N-029 C2']:
+                if baseline_report.get('task') in ['N-029 B2','N-029 C2','N-029 C3A']:
                     assert regression['swift_tests']>355,'Fresh complete restore regression is required'
                     assert len(re.findall(r'^Restore crash proof: ',test_log,re.M))==3,'Three actual restore SIGKILL scenarios are required'
-                    if baseline_report.get('task')=='N-029 C2':
+                    if baseline_report.get('task') in ['N-029 C2','N-029 C3A']:
                         assert regression['swift_tests']>374,'New full observation-bridge regression required'
+                        if baseline_report.get('task')=='N-029 C3A': assert regression['swift_tests']>391,'Fresh capacity regression required'
                         assert len(re.findall(r'^Recycle observation pipe proof: ',test_log,re.M))==3,'Three actual empty/small/exact-limit observation pipe proofs required'
             assert regression['complete_core_file_count']==len(core) and regression['source_receipt_count']==len(receipt_hashes),'Complete current raw source coverage required'
             independent=regression.get('independent_cli_pipe_dependencies',{})

@@ -2139,6 +2139,26 @@
             "docs/plans/N-029-C2-ACCEPTANCE.md",
             "docs/decisions/ADR-026-host-approved-recycle-observation.md"
           ]
+        },
+        {
+          "id": "FIL-01.durable_capacity_metadata_schema5",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "One guarded metadata-only Schema5 scope and persistent allocation tickets; raw owner/DB/host/library identity, independent CAS,64MiB/64history/8incoming. No physical inventory, incoming file effect, shared tree or production capacity claim.",
+          "evidence": [
+            "docs/evidence/n029-c3a-2026-10-17.json",
+            "docs/plans/N-029-C3A-ACCEPTANCE.md",
+            "docs/decisions/ADR-027-schema5-durable-capacity-ledger.md"
+          ]
+        },
+        {
+          "id": "FIL-01.atomic_capacity_and_journal_metadata_admission",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "Actual synthetic PG upload/copy admission race and joint file-journal metadata-budget race; armed charge preservation, owned no-release, old-schema projection/import/portable refusal. Existing Schema5 read compatibility only; no new capacity RPC/UI.",
+          "evidence": [
+            "docs/evidence/n029-c3a-2026-10-17.json",
+            "docs/plans/N-029-C3A-ACCEPTANCE.md",
+            "docs/decisions/ADR-027-schema5-durable-capacity-ledger.md"
+          ]
         }
       ]
     },

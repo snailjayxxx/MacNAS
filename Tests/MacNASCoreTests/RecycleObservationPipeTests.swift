@@ -5,7 +5,8 @@ import XCTest
 final class RecycleObservationPipeTests: RecycleObservationLab {
     func testActualTypedNodeReadRequiresHostApprovalAndPreservesDatabaseAndPayload() throws {
         for (index, bytes) in [Data(), Data("keep".utf8), Data(repeating: 31, count: 16 * 1024 * 1024)].enumerated() {
-        let (root, host, _) = try recycleLab("pipe-\(index)"), p = try seed(root, host, bytes: bytes), api = try PrototypePlatformAPI(root: root)
+        let databaseVersion = index == 0 ? 4 : 5
+        let (root, host, _) = try recycleLab("pipe-\(index)", databaseVersion: databaseVersion), p = try seed(root, host, bytes: bytes), api = try PrototypePlatformAPI(root: root)
         let owner = try api.beginFixtureSession(userID: "fixture-owner"), bridge = try DesktopBridge(api: api, session: owner)
         defer { bridge.close() }
         let repo = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
@@ -15,7 +16,7 @@ final class RecycleObservationPipeTests: RecycleObservationLab {
             let process = Process(), input = Pipe(), output = Pipe(), errors = Pipe()
             process.executableURL = URL(fileURLWithPath: try XCTUnwrap(ProcessInfo.processInfo.environment["MACNAS_NODE_BINARY"]))
             process.arguments = [repo.appendingPathComponent("scripts/test_recycle_observation_bridge.cjs").path, mode,
-                p.operationID.uuidString.lowercased(), p.entryID.uuidString.lowercased(), String(bytes.count)]
+                p.operationID.uuidString.lowercased(), p.entryID.uuidString.lowercased(), String(bytes.count), String(databaseVersion)]
             process.currentDirectoryURL = repo; process.environment = ["LANG": "C", "LC_ALL": "C"]
             process.standardInput = input; process.standardOutput = output; process.standardError = errors
             let timer = DispatchSource.makeTimerSource(queue: DispatchQueue.global()); timer.schedule(deadline: .now() + 120)
@@ -43,7 +44,7 @@ final class RecycleObservationPipeTests: RecycleObservationLab {
         let snapshot = try XCTUnwrap(observation.snapshot)
         XCTAssertEqual(try Data(contentsOf: vault(root).appendingPathComponent("entries/" + snapshot.payloadID.uuidString.lowercased() + "/payload")), bytes)
         let after = try host.store.contentDigest()
-        let proof: [String: String] = ["bytes": String(bytes.count), "operationID": p.operationID.uuidString.lowercased(),
+        let proof: [String: String] = ["databaseSchema": String(databaseVersion), "bytes": String(bytes.count), "operationID": p.operationID.uuidString.lowercased(),
             "entryID": p.entryID.uuidString.lowercased(), "readOnlyDigestBefore": before, "readOnlyDigestAfter": after,
             "deniedRequests": String(requestCounts["denied"] ?? 0), "approvedRequests": String(requestCounts["approved"] ?? 0),
             "state": snapshot.record.phase.rawValue, "classification": observation.classification]

@@ -239,7 +239,7 @@ final class RecycleVault {
         try require(config.schemaVersion == 1 && identity.kind == "synthetic-prototype" && identity.schemaVersion == 1 && identity.generation >= 0
                     && binding.databaseName == store.databaseName && binding.mode == "synthetic_development"
                     && config.users.filter({ Data($0.id.utf8) == userID }).map(\.role) == ["administrator"], .denied)
-        try store.validate(expectedVersion: 4)
+        try store.validate(); try require([4,5].contains(try store.schemaVersion()), .unsupported)
         try require(try !store.hasRecycleHistory(), .unsupported)
         let host = try RecycleDirectory(root.appendingPathComponent("host-binding"))
         try require(try host.named("recycle-registration.json") == nil, .collision)

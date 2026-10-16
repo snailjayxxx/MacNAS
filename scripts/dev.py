@@ -36,9 +36,10 @@ def run(name,command,input=None,check=True,expected_exit=0):
     print(name+': running',flush=True)
     with log.open('w') as output:
         process=subprocess.Popen([str(c) for c in command],cwd=ROOT,env=env,stdin=subprocess.PIPE if input is not None else subprocess.DEVNULL,text=True,stdout=output,stderr=subprocess.STDOUT,start_new_session=True)
-        # B2 full measured5085.365s; corrected17 observation tests measured676.198s.
-        # Reserve a bounded110 minutes for391 tests; per-command/functional deadlines stay unchanged.
-        try:process.communicate(input=input,timeout=6600 if name=='swift-tests' else 420)
+        # C2 full measured5589.763s. New31 capacity tests measured641.912s,
+        # plus the existing observation pipe: final filtered32 measured832.642s.
+        # Bound422 tests to120 minutes; per-command/functional deadlines stay unchanged.
+        try:process.communicate(input=input,timeout=7200 if name=='swift-tests' else 420)
         except subprocess.TimeoutExpired:
             os.killpg(process.pid,signal.SIGTERM)
             try:process.communicate(timeout=5)
@@ -104,6 +105,19 @@ try:
     run('demo-schema4-restore',[binary/'macnas','migrate','restore','--source',jobs4_export,'--dest',jobs4_restore,'--confirm-create','--host-id','mock-schema4-restore'])
     denied_worker4=run('schema4-readonly-worker-refusal',[binary/'macnas','jobs','work-once','--source',jobs4_restore],expected_exit=1)
     assert 'denied' in denied_worker4,'restored Schema4 worker should refuse'
+    upgraded5=demo/'Schema5-readonly'
+    run('demo-schema5-upgrade',[binary/'macnas','migrate','upgrade','--source',upgraded4,'--dest',upgraded5,'--target-schema','5','--confirm-create','--host-id','mock-schema5'])
+    run('demo-schema5-doctor',[binary/'macnas','doctor','--portable',upgraded5])
+    run('demo-schema5-retry',[binary/'macnas','migrate','upgrade','--source',upgraded4,'--dest',upgraded5,'--target-schema','5','--confirm-create','--host-id','mock-schema5'])
+    run('demo-schema5-rollback',[binary/'macnas','migrate','rollback','--dest',upgraded5,'--confirm'])
+    jobs5=demo/'schema5-durable-jobs'
+    run('demo-schema5-create',[binary/'macnas','fixture','create','--dest',jobs5,'--schema','5'])
+    run('demo-schema5-jobs',[binary/'macnas','jobs','demo','--source',jobs5])
+    jobs5_export=demo/'schema5-jobs-export';jobs5_restore=demo/'schema5-jobs-restore'
+    run('demo-schema5-export',[binary/'macnas','migrate','export','--source',jobs5,'--dest',jobs5_export])
+    run('demo-schema5-restore',[binary/'macnas','migrate','restore','--source',jobs5_export,'--dest',jobs5_restore,'--confirm-create','--host-id','mock-schema5-restore'])
+    denied_worker5=run('schema5-readonly-worker-refusal',[binary/'macnas','jobs','work-once','--source',jobs5_restore],expected_exit=1)
+    assert 'denied' in denied_worker5,'restored Schema5 worker should refuse'
     jobs=demo/'durable-jobs'
     run('demo-jobs-create',[binary/'macnas','fixture','create','--dest',jobs,'--schema','3'])
     run('demo-jobs-work-and-ack',[binary/'macnas','jobs','demo','--source',jobs])

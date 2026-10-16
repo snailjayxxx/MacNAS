@@ -172,7 +172,7 @@ COMMIT;
         return store
     }
     public static func createSynthetic(schemaVersion:Int=1) throws -> StateStore {
-        try require([1,2,3,4].contains(schemaVersion),.invalidSchema)
+        try require([1,2,3,4,5].contains(schemaVersion),.invalidSchema)
         let store = try createEmpty(name: plannedName(UUID()), attestation: "macnas-synthetic-development")
         try store.execute(migrationSQL); if schemaVersion>1 { try store.migrate(toVersion:schemaVersion) }; try store.installAppRoles()
         return store
@@ -193,7 +193,8 @@ COMMIT;
     /// Never call this from ordinary validation or after the migration's imported phase.
     func hardenImportedSchema4FunctionPrivileges() throws {
         guard try schemaVersion() >= 4 else { return }
-        let statements=Self.schema4Functions.map { name,arguments,_ in
+        let functions = Self.schema4Functions + (try schemaVersion() >= 5 ? Self.schema5Functions : [])
+        let statements=functions.map { name,arguments,_ in
             "REVOKE EXECUTE ON FUNCTION macnas.\(name)(\(arguments)) FROM PUBLIC;"
         }.joined(separator:"\n")
         try execute("BEGIN; SET LOCAL lock_timeout='5000ms'; SET LOCAL statement_timeout='10000ms';\n"+statements+"\nCOMMIT;")
@@ -233,7 +234,7 @@ COMMIT;
     }
     public func schemaVersion() throws -> Int {
         let versions = try rows("SELECT version FROM macnas.schema_migrations ORDER BY version;")
-        if versions == [["1"]] { return 1 }; if versions == [["1"],["2"]] { return 2 }; if versions == [["1"],["2"],["3"]] { return 3 }; if versions == [["1"],["2"],["3"],["4"]] { return 4 }; throw NASError.invalidSchema
+        if versions == [["1"]] { return 1 }; if versions == [["1"],["2"]] { return 2 }; if versions == [["1"],["2"],["3"]] { return 3 }; if versions == [["1"],["2"],["3"],["4"]] { return 4 }; if versions == [["1"],["2"],["3"],["4"],["5"]] { return 5 }; throw NASError.invalidSchema
     }
     public func validate(expectedVersion: Int? = nil) throws {
         let version = try schemaVersion()
@@ -243,6 +244,7 @@ COMMIT;
             expectedTables += ["event_clock","event_consumers","event_receipts","job_events","job_steps"].map { ["macnas",$0] }
         }
         if version>=4 { expectedTables += ["file_effect_operations","recycle_entries"].map { ["macnas",$0] } }
+        if version>=5 { expectedTables += ["capacity_scopes","capacity_allocations"].map { ["macnas",$0] } }
         expectedTables.sort { $0.joined(separator:".") < $1.joined(separator:".") }
         try require(try rows("SELECT table_schema,table_name FROM information_schema.tables WHERE table_schema IN ('macnas','app_hello_diagnostics','app_sample_file_index') AND table_type='BASE TABLE' ORDER BY table_schema,table_name;") == expectedTables, .invalidSchema)
         try require(try rows("SELECT current_setting('server_version_num')::int / 10000;") == [["18"]], .unsupported)
@@ -261,6 +263,7 @@ COMMIT;
             try require(columns == (version == 1 ? [["id"],["value"]] : [["id"],["value"],["revision"]]), .invalidSchema)
         }
         if version >= 4 { try validateSchema4() }
+        if version >= 5 { try validateCapacitySchema5() }
     }
     @discardableResult func migrateToVersion2(injectFailure: Bool = false) throws -> Bool {
         try validate(); let version=try schemaVersion(); if version == 2 { return false }; try require(version == 1,.unsupported)
@@ -268,7 +271,7 @@ COMMIT;
         try execute(sql); try validate(expectedVersion: 2); return true
     }
     @discardableResult func migrate(toVersion target:Int,injectFailure:Bool=false) throws -> Bool {
-        try require([1,2,3,4].contains(target),.unsupported);try validate()
+        try require([1,2,3,4,5].contains(target),.unsupported);try validate()
         let source=try schemaVersion();try require(target>=source,.unsupported)
         if source<2 && target>=2 { try migrateToVersion2(injectFailure:injectFailure) }
         if try schemaVersion()<3 && target>=3 {
@@ -277,6 +280,10 @@ COMMIT;
         }
         if try schemaVersion()<4 && target>=4 {
             let sql=injectFailure ? Self.migration4SQL.replacingOccurrences(of:"COMMIT;",with:"SELECT 1/0; COMMIT;") : Self.migration4SQL
+            try execute(sql)
+        }
+        if try schemaVersion()<5 && target>=5 {
+            let sql=injectFailure ? Self.migration5SQL.replacingOccurrences(of:"COMMIT;",with:"SELECT 1/0; COMMIT;") : Self.migration5SQL
             try execute(sql)
         }
         try validate(expectedVersion:target);return source != target
@@ -291,6 +298,7 @@ COMMIT;
             try require(try rows("SELECT next_sequence FROM macnas.event_clock WHERE singleton;")==[["1"]],.integrity)
         }
         if try source<4 && schemaVersion()>=4 { try requirePortableRecycleEmpty() }
+        if try source<5 && schemaVersion()>=5 { try requirePortableCapacityEmpty() }
     }
     func baseDataDigest() throws -> String { try dataDigest(includeSchema:false,asVersion:nil) }
     func contentDigest(asVersion:Int?=nil) throws -> String { try dataDigest(includeSchema:true,asVersion:asVersion) }
@@ -299,12 +307,17 @@ COMMIT;
         guard try schemaVersion() >= 4 else { return false }
         return try rows("SELECT EXISTS(SELECT 1 FROM macnas.recycle_entries) OR EXISTS(SELECT 1 FROM macnas.file_effect_operations);") != [["f"]]
     }
-    func requirePortableRecycleEmpty() throws { try require(try !hasRecycleHistory(), .unsupported) }
-    private static func definition(_ value: String) -> String {
+    func requirePortableRecycleEmpty() throws {
+        try require(try !hasRecycleHistory(), .unsupported)
+        try requirePortableCapacityEmpty()
+    }
+    static func definition(_ value: String) -> String {
         // The two CHECKs contain one closed, exactly verified function call. Parentheses/row casts
         // are deparser spelling only; no boolean expression is discarded or rewritten here.
         value.replacingOccurrences(of:"::macnas.recycle_entries",with:"")
             .replacingOccurrences(of:"::macnas.file_effect_operations",with:"")
+            .replacingOccurrences(of:"::macnas.capacity_scopes",with:"")
+            .replacingOccurrences(of:"::macnas.capacity_allocations",with:"")
             .filter{!$0.isWhitespace && $0 != "(" && $0 != ")"}
     }
     private func validateSchema4() throws {
@@ -321,9 +334,10 @@ COMMIT;
             try require(row[2]=="t" && row[3]=="t" && Self.definition(row[1])==Self.definition(expected), .invalidSchema)
         }
         let functions=try rows("SELECT p.proname,oidvectortypes(p.proargtypes),encode(convert_to(p.prosrc,'UTF8'),'hex'),l.lanname,p.provolatile,p.proisstrict,p.prosecdef,p.proleakproof,p.prokind,format_type(p.prorettype,NULL),array_to_string(p.proconfig,'|'),EXISTS(SELECT 1 FROM aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) acl WHERE acl.grantee=0 AND acl.privilege_type='EXECUTE') FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace JOIN pg_language l ON l.oid=p.prolang WHERE n.nspname='macnas' ORDER BY p.proname;")
-        try require(functions.count == Self.schema4Functions.count, .invalidSchema)
+        let expectedFunctions = Self.schema4Functions + (try schemaVersion() >= 5 ? Self.schema5Functions : [])
+        try require(functions.count == expectedFunctions.count, .invalidSchema)
         for row in functions {
-            guard row.count==12,let expected=Self.schema4Functions.first(where:{$0.0==row[0]}) else { throw NASError.invalidSchema }
+            guard row.count==12,let expected=expectedFunctions.first(where:{$0.0==row[0]}) else { throw NASError.invalidSchema }
             let hex=Data(("\n"+expected.2+"\n").utf8).map{String(format:"%02x",$0)}.joined()
             try require(row[1]==expected.1 && row[2]==hex && Array(row[3...]) == ["sql","i","t","f","f","f","boolean","search_path=pg_catalog|TimeZone=UTC","f"], .invalidSchema)
         }
@@ -357,10 +371,13 @@ COMMIT;
         if includeSchema && version>=4 {
             for table in ["recycle_entries","file_effect_operations"] { tables.append((table,"macnas."+table,Self.schema4Columns[table]!.map{$0[0]}.joined(separator:","))) }
         }
+        if includeSchema && version>=5 {
+            for table in ["capacity_scopes","capacity_allocations"] { tables.append((table,"macnas."+table,Self.schema5Columns[table]!.map{$0[0]}.joined(separator:","))) }
+        }
         return tables
     }
     private static func digestOrder(_ table: String) -> String {
-        switch table { case "job_steps":return "job_id,step";case "job_events":return "sequence";case "event_clock":return "singleton";case "event_receipts":return "consumer_id,sequence";case "recycle_entries":return "entry_id";case "file_effect_operations":return "operation_id";default:return "id" }
+        switch table { case "job_steps":return "job_id,step";case "job_events":return "sequence";case "event_clock":return "singleton";case "event_receipts":return "consumer_id,sequence";case "recycle_entries":return "entry_id";case "file_effect_operations":return "operation_id";case "capacity_scopes":return "singleton";case "capacity_allocations":return "allocation_id";default:return "id" }
     }
     private static func canonicalDataExpression(includeSchema: Bool, version: Int) -> String {
         let fields=digestTables(includeSchema:includeSchema,version:version).map{key,table,columns in
@@ -369,7 +386,7 @@ COMMIT;
         return "jsonb_build_object('schema',\(includeSchema ? version:0),"+fields.joined(separator:",")+")"
     }
     /// Exact serialized size without building any jsonb_agg array. The caller must set UTC and a statement timeout.
-    private static func metadataBytesExpression(includeSchema: Bool, version: Int) -> String {
+    static func metadataBytesExpression(includeSchema: Bool, version: Int) -> String {
         let tables=digestTables(includeSchema:includeSchema,version:version)
         let header="octet_length(jsonb_build_object('schema',\(includeSchema ? version:0),"+tables.map{"'\($0.0)','[]'::jsonb"}.joined(separator:",")+")::text)"
         return header+tables.map{_,table,columns in
@@ -379,12 +396,13 @@ COMMIT;
     static var legacyMetadataBytesSQL: String { "SELECT "+metadataBytesExpression(includeSchema:true,version:3) }
     private func dataDigest(includeSchema:Bool,asVersion:Int?) throws -> String {
         let current=try schemaVersion(),version=asVersion ?? current
-        try require(version<=current && [1,2,3,4].contains(version),.invalidSchema)
+        try require(version<=current && [1,2,3,4,5].contains(version),.invalidSchema)
         let expression=Self.canonicalDataExpression(includeSchema:includeSchema,version:version)
         let actualBytes=Self.metadataBytesExpression(includeSchema:includeSchema,version:version)
         let bytes: String
         if includeSchema && version>=4 {
-            let reservedBytes="(\(Self.legacyMetadataBytesSQL))+(SELECT count(*)*4096 FROM macnas.recycle_entries)+(SELECT count(*)*8192 FROM macnas.file_effect_operations)+4096"
+            let capacityReserve = version>=5 ? "+(SELECT count(*)*3072 FROM macnas.capacity_scopes)+(SELECT count(*)*2048 FROM macnas.capacity_allocations)" : ""
+            let reservedBytes="(\(Self.legacyMetadataBytesSQL))+(SELECT count(*)*4096 FROM macnas.recycle_entries)+(SELECT count(*)*8192 FROM macnas.file_effect_operations)+4096"+capacityReserve
             // A digest may be requested without validation; never trust historical row CHECKs
             // to imply current row sizes, while retaining room for each row's worst final form.
             bytes="GREATEST((\(actualBytes)),(\(reservedBytes)))"

@@ -150,7 +150,7 @@ public final class DesktopBridge: @unchecked Sendable {
     init(api: PrototypePlatformAPI, session: PrototypeSession, limits: BridgeLimits) throws {
         try require((1...4096).contains(limits.requests) && (128...1_048_576).contains(limits.responseBytes), .invalidSchema)
         let info = try api.overview(session: session)
-        try require([3,4].contains(info.databaseSchema), .unsupported)
+        try require([3,4,5].contains(info.databaseSchema), .unsupported)
         self.api = api; self.session = session; self.limits = limits
     }
     deinit { api.endSession(session) }
@@ -213,7 +213,7 @@ public final class DesktopBridge: @unchecked Sendable {
             case "overview":
                 _ = try params.fields(required: [])
                 let info = try api.overview(session: session)
-                try require([3,4].contains(info.databaseSchema), .unsupported)
+                try require([3,4,5].contains(info.databaseSchema), .unsupported)
                 let stats = try api.jobStatistics(session: session), libraries = try self.libraries()
                 guard [stats.active,stats.completed,stats.total].allSatisfy({$0>=0 && $0<=9_007_199_254_740_991}) else { throw BridgeFault.invalidResponse }
                 var total: Int64 = 0
