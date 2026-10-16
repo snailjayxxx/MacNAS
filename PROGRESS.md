@@ -1,5 +1,17 @@
 # MacNAS
 
+## 已完成：N-029 C1，只读核对前端模型（2026-10-16）
+
+C1补齐严格只读核对正文、十字段日志记录与本地视图生命周期。candidateMoved/matchedPost不推进数据库阶段或释放计量，notVisible费用保持未知并标需核对；首个可见结果固定条目/意图，revision不倒退，历史entry后来释放仍能正确呈现。dispose忽略迟到成功/异常，不取消操作或关闭借用来源。
+
+新前端20261016T220551-2740f6f4通过293项Node（新增20）、17语法、15静态策略和9需求负测，未启动监听。复用B2精确未变的70份完整核心及原始374Swift/16独立管道收据，没有在C1重跑或冒称新执行；只有前端验收脚本及两份新JS/测试文件变化，联合120份当前源码及需求输入冻结匹配。
+
+三项实际反例与修复原件保留：返回旧busy=true快照、缺预先entryID时后续同operation更换条目、notVisible误标为无需核对。未知/缺失/继承/getter字段、原始UTF8主体、费用/分类词汇、忙碌/失效/关闭和不可变历史均有模型覆盖。新增1条有限MOCK_PASS，基线898、SYS-09另7，共905子项；父项/优先级、规划原件和旧迁移字节保持。
+
+该模块没有被静态桌面加载/提供，不是宿主DTO、RPC、DOM或浏览器通过。下一步C2由宿主独立批准只读观察，固定会话/实例/代次/DB/注册与不透明来源标记，客户端固定借用来源。C2草稿17项Swift定义已编译（5纯数据通过、12 PG/管道待执行），305Node模型通过，精确清单及隔离工作树准备器在Evidence/n029-c2-*；C2不得沿用B2旧收据冒充新全量。用户要求连续到23点以后，无新确认事项，本轮不使用浏览器。
+
+[阶段证据](docs/evidence/n029-c1-2026-10-16.json) · [C1矩阵](docs/plans/N-029-C1-ACCEPTANCE.md) · [正文契约](docs/contracts/RECYCLE_OBSERVATION_MODEL.md) · [ADR-025](docs/decisions/ADR-025-read-only-recycle-observation.md)。中文提交并正常推送dev/bootstrap，不合并main/强推。
+
 ## 已完成：N-029 B2，同卷合成恢复与原条目结算（2026-10-16）
 
 B2在同一登记owner/library/vault内实现0..16MiB单常规文件恢复，来源恢复与物理目标父目录批准分开，固定双父FD/完整stamp/SHA且只尝试一次RENAME_EXCL。prepared及取消恢复仍保留原entry和计量；双父同步、后置证据复核及完成CAS后才释放原entry的回收计量，历史和slot不复用。

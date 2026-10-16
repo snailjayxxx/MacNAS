@@ -138,3 +138,7 @@ API查询前、查询后及最终编码后核对已有会话、用户原始字�
 第13个固定方法eventConsumerStatus只接收consumerID，返回精确五字段/version 1 DTO；位置必须为JS安全非负整数，ack不大于delivered，不可见时两位置显式null。具名客户端与同消费者poll/ACK串行，采用原有并发/超时/取消上限，不为只读查询保留无限消费者状态。结果仅观察，不回填本地ack/seen，不授予ACK、不清旧通知批或创建新连接。
 
 实际Swift/PostgreSQL及Node独立进程管道核对ACK已提交而响应扣留/超时后的位置；旧视图仍保持未解决批次。来源证明及显式批次协调留待N-022，不能把空轮询当确认。HTML/CSS/desktop.js及静态路由不变，网页仍只连fixture。见[ADR-015](docs/decisions/ADR-015-read-only-event-consumer-status.md)及[N-021验收](docs/plans/N-021-ACCEPTANCE.md)；新的未过滤完整回归必须覆盖全部原生核心和嵌入Node依赖。
+
+## C1只读核对模型
+
+recycle-observation.js仅验证C1精确正文/日志记录并保持读取视图；观察分类与日志完成分开展示，未知结果不推断费用释放，旧entry历史与当前计量分别处理。模型固定operation/主体和可选entry，首个可见响应后拒绝意图/版本倒退；关闭只清本地观察，迟到结果不复活、不关闭借用来源。它不认证来源或签发批准，C2需当前会话/实例/DB固定的宿主投影和具名适配器。代码未被静态桌面加载，见正文契约与ADR-025。

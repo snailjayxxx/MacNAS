@@ -2109,6 +2109,16 @@
             "docs/plans/N-029-B2-ACCEPTANCE.md",
             "docs/decisions/ADR-024-synthetic-restore-executor.md"
           ]
+        },
+        {
+          "id": "FIL-01.readonly_recycle_observation_model",
+          "status": "MOCK_PASS",
+          "scope": "Strict frontend-only observation body/record and local view lifecycle,20 new deterministic Node tests; no host DTO/RPC/DOM/browser acceptance.",
+          "evidence": [
+            "docs/evidence/n029-c1-2026-10-16.json",
+            "docs/plans/N-029-C1-ACCEPTANCE.md",
+            "docs/decisions/ADR-025-read-only-recycle-observation.md"
+          ]
         }
       ]
     },

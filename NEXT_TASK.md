@@ -1,21 +1,19 @@
-# 接续任务：C1只读核对模型，然后C2宿主批准的观察桥接
+# 接续任务：N-029 C2，独立宿主批准的只读观察桥接
 
-B1已发布bbbfcf8；B2完整未过滤374Swift/16独立管道及新前端273Node通过，见docs/evidence/n029-b2-2026-10-16.json。B2中文提交及正常推送后，先核对Evidence/n029-b2-publication-2026-10-16.json和干净树，再推进C1。用户要求本轮自动连续至23点以后，暂不使用浏览器；没有新暂停指令。
+B1/B2已完成同卷合成回收/恢复、真实SIGKILL及新批准结算；B2最新374Swift/16独立管道与前端273Node通过。C1严格只读结果模型新增20项，共293Node/17语法/15静态/9需求负测通过，复用精确B2原生基线，没有新原生/宿主/DOM/浏览器声明。先核对两阶段中文提交、Evidence/n029-b2-publication-2026-10-16.json和n029-c1-publication-2026-10-16.json，再继续；用户要求自动连续到23点以后，本轮不使用浏览器。
 
-先读AGENTS/HANDOFF/PROJECT_SPEC/ARCHITECTURE/PROGRESS、ADR-021至024及阶段证据，验证APFS UUID C1755FBB-FCA8-4EA4-BEE2-AA6BF3258B6C和Git，不使用旧Gen 8。
+## 已准备的C2
 
-## C1前端数据模型
+Evidence/n029-c2-draft及manifest记录13文件和C1两份前置源码SHA。新增17项Swift定义编译、5纯数据和305Node模型通过，12真实API/内嵌管道未执行，不能当成已发布。草稿只接独立宿主observe批准和operationID查询，无执行/列表/清理RPC；每API最多8会话批准，当前会话/原始主体/角色、API构造时实例/代次/DB/宿主和注册均固定，每块读取及响应编码后复核。来源外壳的域隔离HMAC标记只用于防错等值，不是生产认证，也不自动采用跨重启来源。
 
-外部Evidence/n029-c1-draft只有recycle-observation.js及其20项Node测试需要复制；源码SHA在n029-c1-active-state.json，文档在n029-c1-draft-docs。三项实际反例已修复并保留：finally之前返回旧busy、同operation后续更换entry、notVisible误标无需核对。严格五字段正文/十字段记录、原始主体、安全整数/计量、分类不冒充完成、不可变身份/revision及借用生命周期均有模型覆盖。
+具名客户端校验Schema4与当前主体/模式，固定首次有效来源标记、每ID一个且最多8在途；借用适配器固定客户端，创建只查概览，显式refresh才观察，dispose不关闭共享连接。显式abort/超时沿用旧客户端关闭政策，不自动重连。C1正文仍精确五字段，Native投影无FS stamp/绝对路径/grant；unknown费用保持未知、matchedPost不冒充完成。三种大小0/4字节/16MiB真实管道只有定义，必须实际运行并核对proof和只读摘要。
 
-C1不改原生或嵌入管道依赖，只改前端QA列表加新语法/模型测试，要求新的293Node/17语法/15静态/9需求负测、精确匹配B2核心和需求输入冻结。只新增1条有限MOCK_PASS，不称宿主DTO/桥接/DOM/浏览器通过；完成证据/文档后中文提交正常推送dev/bootstrap。
+## 实施顺序
 
-## C2只读真实桥接
+1. 阅读AGENTS/HANDOFF/PROJECT_SPEC/ARCHITECTURE/PROGRESS、ADR-021至025及阶段证据，核对SSD UUID C1755FBB-FCA8-4EA4-BEE2-AA6BF3258B6C、干净主树及B2/C1已发布。
+2. 运行Evidence/n029-c2-prepare-worktree.py；它验证全部基础/前置SHA、发布报告和旧PG关闭后创建同级MacNAS-C2、分支dev/n029-c2-observation，绝不覆盖已有目录/分支。MACNAS_DEV_BUILD_NAMESPACE=n029-c2选择独立Build/swift-n029-c2，默认缓存路径不变；实际状态见n029-c2-worktree-state.json。
+3. 工作树中先运行定向17并保存全部失败/源码/停库，之后新未过滤391及全部CLI/16独立管道。5项内嵌Node场景已含Swift总数，完整传递依赖14（旧12加C1 codec和C2脚本）及4独立依赖逐项核对。新运行若跨23点，完成必要验证后收尾，不跳过完整检查。
+4. 新C2原生PASS后生成worktree对应预证据，再新前端305Node/17语法/15静态/9需求负测、需求冻结及最终完整证据/文档。C2不能用B2旧全量替代；原始失败及源/根路径/构建namespace要如实记录。
+5. 相关检查/文档齐全后中文提交，若主树仍是验证前基线则可快进dev/bootstrap并正常推送；不合并main、不强推/改历史，不发布未通过草稿。
 
-Evidence/n029-c2-draft及manifest记录13文件和C1前置SHA；17项Swift定义编译、5纯数据和305Node通过，12真实API/内嵌管道未执行。只接独立宿主observe批准与operationID查询，固定原始会话/主体、API实例/代次/DB/宿主和注册。C1正文外包不透明来源context，客户端拒绝另一来源混进旧视图；标记仅防错等值，不是认证或强fencing。借用适配器固定客户端，dispose不关共享连接。
-
-B2/C1都发布后可运行Evidence/n029-c2-prepare-worktree.py：它先验证主树干净、发布报告和PG关闭，再创建同级MacNAS-C2分支dev/n029-c2-observation；不覆盖已有路径/分支。运行器以MACNAS_DEV_BUILD_NAMESPACE=n029-c2选择独立Build/swift-n029-c2，默认工程缓存路径不变。先定向17，再全新未过滤391/全部CLI/16独立管道及前端；5内嵌Node场景已包含Swift总数，完整嵌入依赖14（旧12加C1 codec及新C2脚本），另4独立依赖保留。真实管道定义覆盖0/4字节/16MiB，必须实际执行并核对原始proof，不能按编译声明通过。新完整回归若跨23点，完成必要验证后收尾，不发布未验收草稿。
-
-C2完成后方可中文阶段提交并正常推进开发分支，不合并main/强推/改历史。后续执行RPC、列表、共享可见+回收保留+传输预留计量与完整回收恢复UI分别推进；正式NAS、永久清理/到期清扫不授权。
-
-旧0001–0004/29规划/5来源和111父项97/13/1原字节/优先级保持；目前897基线子项，SYS-09独立1父7子（合并112/97-14-1/904），远控很后期，Intel以后。只在新建TestLab做合成测试，PG18.6-only，不读家庭/NAS正式资料，不sudo或改账户/ACL/服务/网络/公网，不加第三方依赖。旧52浏览器45 PASS/7 PARTIAL仅历史，本轮不使用浏览器/预览。保留全部失败、源码/需求冻结和PG关闭，实际OS26.5.2不算15运行/跨Mac/断电/物理盘或生产规模。
+后续执行消息、列表、共享可见+回收保留+上传复制预留计量和完整回收恢复界面分别推进。正式NAS/家庭文件、永久删除/到期清扫无授权；不sudo、不改系统账户/ACL/服务/网络/公网、不引入第三方依赖。PG18.6-only、Apple Silicon/macOS15+目标，实机26.5.2不等于15/跨Mac/断电/生产规模证据。原0001–0004/29规划/5来源、111父项97/13/1原字节和优先级保持；基线898子项加SYS-09独立7为905，合并112父/97-14-1，Intel以后、SYS-09远控很后期。旧52浏览器45 PASS/7 PARTIAL仅历史，本轮无浏览器/预览。
