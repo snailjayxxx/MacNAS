@@ -1,4 +1,4 @@
-# 网页桌面适配契约（N-011至N-024，v1）
+# 网页桌面适配契约（N-011至N-026，v1）
 
 页面当前使用model.js的createFixtureAdapter。业务内容为合成数据、刷新重置；管理员/读者/只读恢复选择器是演示场景，不是登录。不连接Swift、PostgreSQL、NAS文件、系统账户或真实存储池。
 
@@ -53,6 +53,14 @@ DesktopBridge绑定宿主已有的Schema 3 API和会话；createBridgeAdapter(tr
 |previewFileOperation|libraryID、kind、name；可选parentPath、sourceName|第15个方法；只预览createDirectory/rename，需独立宿主写批准|
 |commitFileOperation|operationID、confirmed=true|第16个方法；只应用已登记预览，同宿主回执有界，不覆盖目标|
 |fileOperationStatus|operationID|第17个方法；只读查询本会话短时预览/结果，不授予提交权限|
+|previewUpload|libraryID、name、totalBytes；可选parentPath|第18个方法；独立宿主上传批准、冲突预览，0至16MiB|
+|beginUpload|transferID、confirmed=true|第19个方法；只接受原会话ready预览，固定私有暂存，不创建库内假成品|
+|appendUpload|transferID、offset、parts|第20个方法；最多32KiB原始数据，1至16段规范base64，偏移与背压绑定|
+|finishUpload|transferID、sha256|第21个方法；完整接收后双重摘要核对，不覆盖发布；可能uncertain|
+|beginDownload|libraryID、relativePath|第22个方法；固定打开的已批准常规单链接文件，0至16MiB|
+|readDownloadChunk|transferID、offset|第23个方法；每块最多32KiB，编码成功后才推进，源变化拒绝|
+|transferStatus|transferID|第24个方法；原会话有界状态或notVisible；不赋予写/读/取消能力|
+|cancelTransfer|transferID|第25个方法；原主体清理私有暂存/句柄，已发布文件不回滚|
 
 除已列可选字段外，未知/缺失/错类型一律拒绝。所有字符串拒绝NUL；consumerID/libraryID/id/key最多128字节。协议整数不接受布尔、负数、小数或指数形式。SQL、shell、根URL、用户、角色、模式、数据库选择、会话创建、卷清单/绑定、目录批准、读者变更和套件执行不进入消息白名单。
 
@@ -210,6 +218,30 @@ file-operations.js提供校验、显式来源和createController。prepare/commi
 静态fixture的操作确实修改同一内存目录树，目录改名保留子树、父修订使旧续页和旧预览stale；并发同ID在异步授权返回后再检查已完成回执，避免后到提交覆盖成功结果。界面新建/重命名经输入、预览、确认，冲突可编辑，成功后重读；失败与不确定结果分别显示，读者/恢复禁用。HTML在directory-view之前加载file-operations.js，白名单仅增该静态模块；CSP connect-src仍none，主机客户端/授权入口仍不加载或提供。
 
 原生真实落盘与网页内存演示分别验证。新增FO01–FO06全部待实际浏览器验收；没有真实NAS/生产认证、系统helper/ACL/SMB、持久文件任务、跨Mac/断电或规模承诺。详见[ADR-018](../decisions/ADR-018-guarded-fixture-file-operations.md)。
+
+## N-025 / N-026文件传输
+
+原生额外批准`authorizeFixtureLibraryUploads`仅供宿主，不进入消息白名单，也不由内容读取或mkdir/rename授权推导。需要开发管理员、readWrite卷绑定与已有内容批准；下载沿用现有读取范围。意图中的资料库最多128字节、名称单分量最多255字节，parentPath可省略为空但不能显式null；完整相对目标最多4096字节/128段。上传不接收可更换目标、任意宿主路径、覆盖选项或用户身份。
+
+上传预览精确为`{transferVersion:1,transferID,intent,state,chunkBytes:32768,expiresInSeconds}`，intent恰好为`{libraryID,parentPath,name,totalBytes}`。state=ready/conflict，过期时间分别30/0秒；仅ready登记能力。transferID为小写UUID，整个后续流程保持原ID。确认必须JSON布尔true，数值1、字符串、缺失和多余字段拒绝。
+
+状态精确为`{transferVersion:1,transferID,state,direction,libraryID,relativePath,totalBytes,transferredBytes,chunkBytes:32768,sha256,lastChunkSHA256,error}`。state为ready/uploading/downloading/completed/cancelled/failed/uncertain/notVisible；notVisible所有业务元数据显式null，不能作为未执行证明。其余direction为upload/download；完成字节数不能超过totalBytes，completed/uncertain须传完且有64位小写十六进制摘要，uncertain仅上传；failed/uncertain携带固定错误，其他状态error=null。
+
+appendUpload的parts是1至16段规范base64，每段最多2048原始字节，非最后段必须2048字节，每段字符串最多2732字节。除最后块外原始总数必须32768；禁止空块、跳偏移、更换最后块内容。最后一个相同块可显式重放；更早块不缓存。零字节上传不调用append，finish携带空文件SHA256。既有65536字节请求、4096字节单字符串、1MiB响应及4096次连接请求上限全部不变。
+
+最后块缓存只服务进行中/已完成的会话；取消、失败和uncertain会清理块内容，不承诺其后重放append或读取旧块，原结果仍按短期状态规则查询。释放本地能力只移除客户端所有权，不等于宿主取消；当前控制器在明确开始下一次操作时丢弃上一条本地记录，普通连续45次传输已有模型验证。
+
+下载块精确为`{transferVersion:1,transferID,offset,nextOffset,parts,eof,chunkSHA256,sha256}`，每次最多32768原始字节，最后块的sha256是整文件摘要，其余显式null。仅空文件使用空parts，eof=true且nextOffset=0。最后块可明确重放；成功编码和最终来源复查后才推进偏移/摘要，不按同名路径重新打开替换文件。EOF后缓存是历史块，不能当作新的实时读取。
+
+每API最多8个活动预览/上传/下载，共享上传声明大小预留64MiB。单文件16MiB是原型限制；预览30秒、活动空闲60秒、绝对30分钟，按请求回收。最多32条终止结果保留300秒，只在原API宿主。私有暂存0700/0600、单链接、同设备，发布采用RENAME_EXCL并同步文件/目录；清理只移除仍属于自己的名字。进程崩溃遗留不会自动清扫，结果/配额不跨重启，不冒充持久任务或磁盘剩余空间调度。
+
+具名客户端增加同名八个方法及本地`discardTransfer`。previewUpload/beginDownload获取本客户端的能力；beginUpload(transferID)、appendUpload({transferID,offset,parts})、finishUpload({transferID,sha256})只使用原本地意图和进度，且同ID串行。状态查询不能接管陌生能力，也不从观察偏移自动续传；写入回复不明后禁止自动再次append/finish。最多40个本地已登记头/结果及在途预留，显式discard或close释放本地记录，宿主另有8/32预算。超时/传输断开关闭客户端，不重连；同一仍存活连接可明确查询原结果。
+
+directory-view来源新增fileTransfers；静态来源仍使用原内存树，新增二进制字节和父修订，上传发布后旧分页失效，文本按严格UTF-8解码。file-transfers提供原意图、进度、取消和不确定结果控制器；每块等待I/O与接收端并让出事件循环。file-transfer-view的有界Blob接收端最多16MiB，完整校验后提供需用户点击的保存链接；替换/取消/失败/窗口关闭释放内存和对象URL，不自动触发浏览器下载。
+
+网页新增本机单文件选择、目标名编辑、冲突预览、30秒确认、进度/取消、同宿主核对及匹配目标目录重读。目录导航不会把上传目标改到另一个目录；身份/窗口关闭丢弃迟到结果但不假称回滚已发布文件。HTML加载自有sha256、file-transfers和file-transfer-view，connect-src仍none；不提供bridge-client、主机授权接口或暂存文件的静态路由。
+
+N-025实际合成APFS/Node→Swift管道、N-026内存/DOM结构替身与实际浏览器分别留证。FT01–FT08全部待测；没有GB级、断点/重启恢复、生产认证数据通道、跨设备发布或文件审计。见[ADR-019](../decisions/ADR-019-bounded-fixture-file-transfers.md)及[验收范围](../plans/N-025-026-ACCEPTANCE.md)。
 
 ## 状态与恢复
 

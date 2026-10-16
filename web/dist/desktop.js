@@ -1,6 +1,6 @@
 (function () {
   "use strict";
-  const M = window.MacNASModel, I = window.MacNASI18n, P = window.MacNASTaskPages, N = window.MacNASNotifications, F = window.MacNASDirectoryView, B = window.MacNASFileBrowser, O = window.MacNASFileOperations;
+  const M = window.MacNASModel, I = window.MacNASI18n, P = window.MacNASTaskPages, N = window.MacNASNotifications, F = window.MacNASDirectoryView, B = window.MacNASFileBrowser, O = window.MacNASFileOperations, T = window.MacNASFileTransfers, V = window.MacNASFileTransferView;
   const api = M.createFixtureAdapter();
   const $ = (query, root = document) => root.querySelector(query);
   const paths = {
@@ -80,6 +80,7 @@
     win.pager?.dispose();
     win.filePager?.dispose(); win.previewRequest = (win.previewRequest || 0) + 1;
     win.fileOperation?.dispose();
+    win.fileTransfer?.dispose();win.fileTransferPanel?.dispose();
     if (win.fileModal && state.modal === win.fileModal) closeModal(false);
     saveGeometry(win); win.element.remove(); state.windows.delete(id);
     if (state.active === id) state.active = [...state.windows.values()].filter(w => !w.minimized).at(-1)?.id || null;
@@ -355,6 +356,10 @@
     win.previewRequest = (win.previewRequest || 0) + 1;
     if (!win.filePager) { win.filePager = B.createFileBrowser({ source: state.directorySource }); win.libraryPhase = "idle"; win.libraries = []; }
     if (!win.fileOperation && state.directorySource.fileOperations) win.fileOperation = O.createController(state.directorySource.fileOperations);
+    if (!win.fileTransfer && state.directorySource.fileTransfers) {
+      win.fileTransferPanel=V.createPanel({document,urls:window.URL,translate:t,onUpload:()=>fileUploadDraft(win),onDownload:()=>downloadSelectedFile(win),onCancel:()=>cancelFileTransfer(win),onCheck:()=>checkFileTransfer(win),onConfirm:()=>fileUploadPreview(win)});
+      win.fileTransfer=T.createController(state.directorySource.fileTransfers,{onChange:()=>{if(currentWindow(win))renderFileTransferControls(win);}});
+    }
     const view = win.filePager.snapshot(), shell = el("div", "file-browser-shell"), side = el("aside", "file-browser-sidebar");
     side.setAttribute("aria-label", t("fileLocations")); side.append(el("h2", "", t("fileLocations")));
     win.libraryReload = button(t("reloadLibraries"), "text-button", () => loadFileLibraries(win), "refresh"); side.append(win.libraryReload);
@@ -388,6 +393,7 @@
     win.fileRename = button(t("fileRename"), "secondary-button", () => fileOperationDraft(win, "rename"), "file"); win.fileRename.dataset.fileRename = "";
     win.fileOperationPermission = el("span", "file-operation-hint"); operations.append(win.fileCreate, win.fileRename, win.fileOperationPermission); header.append(operations);
     win.fileOperationNotice = el("div", "file-operation-notice"); win.fileOperationNotice.setAttribute("role", "status"); win.fileOperationNotice.setAttribute("aria-live", "polite"); header.append(win.fileOperationNotice);
+    if(win.fileTransferPanel)header.append(win.fileTransferPanel.element);
     header.append(el("p", "file-scope", t("fileLoadedScope")));
     win.fileFailure = el("p", "readonly-note"); win.fileFailure.setAttribute("role", "alert"); header.append(win.fileFailure); main.append(header);
     const workspace = el("div", "file-workspace"), listing = el("div", "file-listing");
@@ -532,10 +538,12 @@
     if (view.phase !== "loading" && view.previewPhase !== "loading") win.fileCount.textContent = t("fileLoadedCount", { count: view.items.length, matches: view.visibleItems.length, selected: view.selectedPaths.length });
     renderFileDetails(win, view, actionable);
     renderFileOperationControls(win, view, actionable);
+    renderFileTransferControls(win);
   }
   function renderFileOperationControls(win, view, actionable) {
     const operation = win.fileOperation?.snapshot(), busy = operation && ["previewing", "committing", "checking"].includes(operation.phase);
-    const allowed = actionable && win.fileOperation?.canWrite && !busy && operation?.phase !== "uncertain";
+    const transferPhase=win.fileTransfer?.snapshot().phase,transferBusy=V.busyPhases.includes(transferPhase)||transferPhase==="ready"||transferPhase==="uncertain";
+    const allowed = actionable && win.fileOperation?.canWrite && !busy && operation?.phase !== "uncertain"&&!transferBusy;
     win.fileCreate.disabled = !allowed; win.fileRename.disabled = !allowed || view.selectedItems.length !== 1;
     win.fileOperationPermission.textContent = win.fileOperation?.canWrite ? t("fileOperationShortHint") : t("fileOperationReadOnly");
     win.fileOperationNotice.replaceChildren();
@@ -548,7 +556,7 @@
   function fileOperationDraft(win, kind, previousName) {
     if (!currentWindow(win) || !win.fileOperation?.canWrite) return;
     const view = win.filePager.snapshot(), operation = win.fileOperation.snapshot();
-    if (win.libraryPhase !== "ready" || view.phase !== "ready" || view.requiresReload || ["previewing", "committing", "checking", "uncertain"].includes(operation.phase)) return;
+    if (win.libraryPhase !== "ready" || view.phase !== "ready" || view.requiresReload || ["previewing", "committing", "checking", "uncertain"].includes(operation.phase)||V.busyPhases.includes(win.fileTransfer?.snapshot().phase)||["ready","uncertain"].includes(win.fileTransfer?.snapshot().phase)) return;
     const selected = view.selectedItems[0]; if (kind === "rename" && view.selectedItems.length !== 1) return;
     const captured = Object.freeze({ libraryID: view.libraryID, parentPath: view.relativePath, kind, ...(kind === "rename" ? { sourceName: selected.name } : {}) });
     fileOperationInput(win, captured, previousName ?? (kind === "rename" ? selected.name : t("fileNewDirectoryName")));
@@ -613,6 +621,79 @@
       fileOperationResult(win);
     }});
     showModal(t("fileOperationViewResult"), content, actions); win.fileModal = state.modal;
+  }
+  function renderFileTransferControls(win) {
+    if(!win.fileTransferPanel||!win.filePager)return;
+    const current=win.filePager.snapshot(),operation=win.fileOperation?.snapshot(),actionable=win.libraryPhase==="ready"&&current.phase==="ready"&&!current.requiresReload;
+    win.fileTransferPanel.render(win.fileTransfer.snapshot(),{actionable,canUpload:win.fileTransfer.canUpload,canDownload:current.selectedItems.length===1&&current.selectedItems[0].kind==="file"&&current.selectedItems[0].bytes<=T.fileBytes,
+      otherBusy:["previewing","committing","checking","uncertain"].includes(operation?.phase)});
+    if(win.fileCreate)renderFileOperationControls(win,current,actionable);
+  }
+  function fileUploadDraft(win,previous) {
+    if(!currentWindow(win)||!win.fileTransfer?.canUpload)return;
+    const view=win.filePager.snapshot(),transfer=win.fileTransfer.snapshot();
+    if(win.libraryPhase!=="ready"||view.phase!=="ready"||view.requiresReload||V.busyPhases.includes(transfer.phase)||transfer.phase==="uncertain")return;
+    const captured=Object.freeze({libraryID:view.libraryID,parentPath:view.relativePath}),content=el("div","file-upload-draft"),label=el("label","",t("fileChooseLocal")),picker=el("input"),nameLabel=el("label","",t("fileOperationName")),name=el("input"),summary=el("p");
+    picker.type="file";picker.id="file-upload-picker";picker.multiple=false;label.htmlFor=picker.id;
+    name.type="text";name.maxLength=255;name.id="file-upload-name";nameLabel.htmlFor=name.id;let selected=previous?.file||null;name.value=previous?.name||selected?.name||"";
+    const refresh=()=>{summary.textContent=selected?t("fileBytes",{bytes:new Intl.NumberFormat(prefs.locale).format(selected.size)}):t("fileChooseLocalHint");};
+    picker.addEventListener("change",()=>{selected=picker.files?.[0]||null;name.value=selected?.name||"";refresh();});refresh();
+    content.append(el("p","",fileLibraryName(captured.libraryID)+"/"+captured.parentPath),label,picker,nameLabel,name,summary,el("p","",t("fileTransferLimitHint")));
+    const epoch=state.epoch,controller=win.fileTransfer;
+    showModal(t("fileUpload"),content,[{key:"cancel",style:"secondary-button",action:closeModal},{key:"fileOperationPreview",style:"primary-button",action:async({isCurrent})=>{
+      if(!(selected instanceof Blob))throw new M.ServiceError("invalidInput");if(selected.size>T.fileBytes)throw new M.ServiceError("budgetExceeded");
+      const intent=T.uploadIntent({...captured,name:name.value,totalBytes:selected.size},true);win.uploadDraft={file:selected,name:intent.name};win.fileTransferPanel.clearDownload();
+      await controller.prepareUpload(intent,selected);
+      if(epoch!==state.epoch||!currentWindow(win)||controller!==win.fileTransfer||!isCurrent())return;
+      fileUploadPreview(win);
+    }}]);win.fileModal=state.modal;picker.focus();
+  }
+  function fileUploadPreview(win) {
+    const controller=win.fileTransfer,view=controller?.snapshot(),preview=view?.preview;if(!currentWindow(win)||!preview||!["ready","conflict"].includes(view.phase))return;
+    const p=preview.intent,content=el("div"),details=el("dl","detail-grid");
+    for(const[key,value]of[["fileCurrentPath",fileLibraryName(p.libraryID)+"/"+T.target(p)],["fileSortSize",t("fileBytes",{bytes:new Intl.NumberFormat(prefs.locale).format(p.totalBytes)})]])details.append(el("dt","",t(key)),el("dd","",value));
+    content.append(el("p","",t(preview.state==="ready"?"fileUploadConfirmHint":"fileOperationConflict")),details);
+    const actions=[{key:"cancel",style:"secondary-button",action:async()=>{await controller.cancel();win.uploadDraft=null;closeModal();}},
+      {key:"fileOperationEditName",style:"secondary-button",action:()=>fileUploadDraft(win,win.uploadDraft)}];
+    if(preview.state==="ready")actions.push({key:"fileUploadConfirm",style:"primary-button",action:async({isCurrent})=>{
+      const epoch=state.epoch,intent=preview.intent;if(isCurrent())closeModal(false);
+      try{await controller.startUpload();}catch{}win.uploadDraft=null;
+      if(epoch!==state.epoch||!currentWindow(win)||controller!==win.fileTransfer)return;
+      await refreshUploadedDirectory(win,intent);renderFileTransferControls(win);
+    }});
+    showModal(t("fileUploadReview"),content,actions);win.fileModal=state.modal;
+  }
+  async function refreshUploadedDirectory(win,intent) {
+    if(win.fileTransfer.snapshot().phase!=="completed")return;
+    const view=win.filePager.snapshot();
+    if(view.libraryID===intent.libraryID&&view.relativePath===intent.parentPath&&view.phase!=="loading"){
+      await moveFilePage(win,"reload",undefined,false);
+      if(currentWindow(win)&&win.filePager.snapshot().phase!=="ready")toast(t("fileOperationReloadFailed"));
+    }
+  }
+  async function checkFileTransfer(win) {
+    const controller=win.fileTransfer,epoch=state.epoch;if(!controller||controller.snapshot().phase!=="uncertain")return;
+    try{await controller.check();}catch{}
+    if(epoch!==state.epoch||!currentWindow(win)||controller!==win.fileTransfer)return;
+    const intent=controller.snapshot().preview?.intent;if(intent)await refreshUploadedDirectory(win,intent);renderFileTransferControls(win);
+  }
+  async function cancelFileTransfer(win) {
+    const controller=win.fileTransfer,epoch=state.epoch;if(!controller)return;
+    await controller.cancel();win.uploadDraft=null;
+    if(epoch!==state.epoch||!currentWindow(win)||controller!==win.fileTransfer)return;
+    const intent=controller.snapshot().preview?.intent;if(intent)await refreshUploadedDirectory(win,intent);renderFileTransferControls(win);
+  }
+  async function downloadSelectedFile(win) {
+    if(!currentWindow(win)||!win.fileTransfer)return;
+    const view=win.filePager.snapshot(),selected=view.selectedItems[0];
+    if(win.libraryPhase!=="ready"||view.phase!=="ready"||view.requiresReload||view.selectedItems.length!==1||selected.kind!=="file"||selected.bytes>T.fileBytes)return;
+    const controller=win.fileTransfer,epoch=state.epoch,sink=V.createBlobSink();win.fileTransferPanel.clearDownload();win.uploadDraft=null;
+    try{
+      await controller.download({libraryID:view.libraryID,relativePath:selected.relativePath},sink);
+      if(epoch!==state.epoch||!currentWindow(win)||controller!==win.fileTransfer)return;
+      if(controller.snapshot().phase==="completed"&&sink.blob)win.fileTransferPanel.setDownload(sink.blob,selected.name);
+    }catch{if(epoch===state.epoch&&currentWindow(win)&&controller===win.fileTransfer&&controller.snapshot().phase==="completed")toast(t("fileSaveFailed"));}
+    finally{if(epoch===state.epoch&&currentWindow(win)&&controller===win.fileTransfer)renderFileTransferControls(win);}
   }
   function renderFileDetails(win, view, actionable) {
     const pane = win.fileDetails; pane.replaceChildren(); pane.append(el("h2", "", t("fileDetails")));
@@ -821,7 +902,7 @@
   async function switchScenario(scenario, showPreferences = false) {
     const epoch = ++state.epoch, old = state.session;
     document.body.dataset.ready = "false"; closeModal(false); hidePanels();
-    for (const win of state.windows.values()) { win.pager?.dispose(); win.filePager?.dispose(); win.fileOperation?.dispose(); win.element.remove(); }
+    for (const win of state.windows.values()) { win.pager?.dispose(); win.filePager?.dispose(); win.fileOperation?.dispose();win.fileTransfer?.dispose();win.fileTransferPanel?.dispose(); win.element.remove(); }
     const oldSource = state.taskSource; state.notifications?.dispose();
     state.directorySource?.dispose();
     state.windows.clear(); state.active = null; state.previewJobs = []; state.notifications = null; state.overview = null; state.taskSource = null; state.directorySource = null; state.session = null;

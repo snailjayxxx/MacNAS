@@ -4,7 +4,7 @@ import http.server, json, mimetypes, plistlib, subprocess, urllib.parse
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 SITE=ROOT/'web/dist'
-ALLOWED={'/':'index.html','/index.html':'index.html','/desktop.css':'desktop.css','/desktop.js':'desktop.js','/model.js':'model.js','/i18n.js':'i18n.js','/task-pages.js':'task-pages.js','/notification-view.js':'notification-view.js','/directory-view.js':'directory-view.js','/file-browser.js':'file-browser.js','/file-operations.js':'file-operations.js','/icon.svg':'icon.svg'}
+ALLOWED={'/':'index.html','/index.html':'index.html','/desktop.css':'desktop.css','/desktop.js':'desktop.js','/model.js':'model.js','/i18n.js':'i18n.js','/task-pages.js':'task-pages.js','/notification-view.js':'notification-view.js','/directory-view.js':'directory-view.js','/file-browser.js':'file-browser.js','/file-operations.js':'file-operations.js','/sha256.js':'sha256.js','/file-transfers.js':'file-transfers.js','/file-transfer-view.js':'file-transfer-view.js','/icon.svg':'icon.svg'}
 actual=plistlib.loads(subprocess.check_output(['/usr/sbin/diskutil','info','-plist','/Volumes/MacNAS-Dev']))
 expected=json.loads((ROOT.parent/'Evidence/environment.json').read_text())
 assert actual['VolumeUUID']==expected['volume_uuid'] and actual['MountPoint']=='/Volumes/MacNAS-Dev' and not actual['Internal']

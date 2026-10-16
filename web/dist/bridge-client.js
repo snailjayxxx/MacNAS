@@ -1,7 +1,7 @@
 (function (root, factory) {
-  if (typeof module === "object" && module.exports) module.exports = factory(require("./model.js"),require("./file-operations.js"));
-  else root.MacNASBridgeClient = Object.freeze(factory(root.MacNASModel,root.MacNASFileOperations));
-})(globalThis, function (M,O) {
+  if (typeof module === "object" && module.exports) module.exports = factory(require("./model.js"),require("./file-operations.js"),require("./file-transfers.js"),require("./sha256.js"));
+  else root.MacNASBridgeClient = Object.freeze(factory(root.MacNASModel,root.MacNASFileOperations,root.MacNASFileTransfers,root.MacNASSHA256));
+})(globalThis, function (M,O,T,H) {
   "use strict";
   const fail = code => { throw new M.ServiceError(code); };
   const check = (value, code = "invalidResponse") => { if (!value) fail(code); };
@@ -134,10 +134,12 @@
     check(typeof AbortController!=="undefined","unavailable");
     const adapter=M.createBridgeAdapter(transport,{requestIdPrefix:"dc-"+uuid()}),pending=new Set(),consumers=new Map(),statusQueries=new Set(),pages=new Map(),busyPages=new Set(),directories=new Map(),busyDirectories=new Set(),fileOperations=new Map(),operationQueries=new Set();
     let operationHeads=0;
+    const transfers=new Map(),busyTransfers=new Set();let transferHeads=0;
     let closed=false,binding,eventBinding;
     function close() {
       if (closed) return;closed=true;binding=undefined;eventBinding=undefined;consumers.clear();statusQueries.clear();pages.clear();busyPages.clear();directories.clear();busyDirectories.clear();fileOperations.clear();operationQueries.clear();
       for (const entry of [...pending]) entry.cancel();
+      transfers.clear();busyTransfers.clear();
       if (closeTransport) { try { Promise.resolve(closeTransport()).catch(()=>{}); } catch {} }
     }
     function caller(write = false, administrator = false) {
@@ -175,6 +177,13 @@
       check(!statusQueries.has(id),"busy");
       if (!consumers.has(id)) { check(consumers.size<32,"budgetExceeded");consumers.set(id,{ack:0,seen:new Map(),busy:false}); }
       const value=consumers.get(id);check(!value.busy,"busy");return value;
+    }
+    async function transferCall(id,operation){
+      O.id(id,"invalidInput");check(!busyTransfers.has(id),"busy");busyTransfers.add(id);
+      try{return await operation();}finally{busyTransfers.delete(id);}
+    }
+    function ownedTransfer(id,direction){
+      O.id(id,"invalidInput");const saved=transfers.get(id);check(saved&&saved.expected.direction===direction,"denied");return saved;
     }
     return Object.freeze({
       source:"fixture-host-client",get closed(){return closed;},close,
@@ -326,6 +335,66 @@
         finally{operationQueries.delete(operationID);}
       },
       discardFileOperation(operationID) {O.id(operationID,"invalidInput");check(!operationQueries.has(operationID),"busy");return fileOperations.delete(operationID);},
+      async previewUpload(params,opts){
+        caller(true,true);const p=T.uploadIntent(params,true);check(transfers.size+transferHeads<40,"budgetExceeded");transferHeads++;
+        try{return await invoke("previewUpload",p,value=>{
+          const v=T.preview(value,p);check(!transfers.has(v.transferID));
+          if(v.state==="ready")transfers.set(v.transferID,{expected:{direction:"upload",libraryID:p.libraryID,relativePath:T.target(p),totalBytes:p.totalBytes},state:"ready",offset:0,blocked:false});return v;
+        },opts);}finally{transferHeads--;}
+      },
+      async beginUpload(transferID,opts){
+        caller(true,true);const saved=ownedTransfer(transferID,"upload");check(saved.state==="ready"&&!saved.blocked,"denied");
+        return transferCall(transferID,async()=>{saved.blocked=true;return invoke("beginUpload",{transferID,confirmed:true},value=>{
+          const v=T.status(value,transferID,saved.expected);check(["uploading","failed","cancelled"].includes(v.state)&&v.transferredBytes===0);
+          saved.state=v.state;saved.blocked=false;return v;
+        },opts);});
+      },
+      async appendUpload(params,opts){
+        caller(true,true);const p=fields(params,["transferID","offset","parts"],[],"invalidInput"),saved=ownedTransfer(p.transferID,"upload");
+        integer(p.offset,0,T.fileBytes,"invalidInput");const bytes=T.decodeParts(p.parts,false,"invalidInput"),captured=[...p.parts];
+        check(saved.state==="uploading"&&!saved.blocked&&p.offset===saved.offset,"denied");check(bytes.length===Math.min(T.chunkBytes,saved.expected.totalBytes-p.offset),"invalidInput");
+        return transferCall(p.transferID,async()=>{saved.blocked=true;return invoke("appendUpload",{transferID:p.transferID,offset:p.offset,parts:captured},value=>{
+          const v=T.status(value,p.transferID,saved.expected);check(["uploading","failed"].includes(v.state));
+          if(v.state==="uploading")check(v.transferredBytes===p.offset+bytes.length&&v.lastChunkSHA256===H.digest(bytes));
+          saved.state=v.state;saved.offset=v.transferredBytes;saved.blocked=false;return v;
+        },opts);});
+      },
+      async finishUpload(params,opts){
+        caller(true,true);const p=fields(params,["transferID","sha256"],[],"invalidInput"),saved=ownedTransfer(p.transferID,"upload");
+        text(p.sha256,64,{code:"invalidInput"});check(/^[0-9a-f]{64}$/.test(p.sha256),"invalidInput");
+        check(saved.state==="uploading"&&!saved.blocked&&saved.offset===saved.expected.totalBytes,"denied");
+        return transferCall(p.transferID,async()=>{saved.blocked=true;return invoke("finishUpload",{transferID:p.transferID,sha256:p.sha256},value=>{
+          const v=T.status(value,p.transferID,saved.expected);check(["completed","failed","uncertain"].includes(v.state));if(v.sha256!==null)check(v.sha256===p.sha256);
+          saved.state=v.state;return v;
+        },opts);});
+      },
+      async beginDownload(params,opts){
+        caller();const p=T.downloadIntent(params);check(transfers.size+transferHeads<40,"budgetExceeded");transferHeads++;
+        try{return await invoke("beginDownload",p,value=>{
+          const id=cursorToken(value.transferID),v=T.status(value,id,{direction:"download",...p});check(!transfers.has(id)&&v.state==="downloading"&&v.transferredBytes===0);
+          transfers.set(id,{expected:{direction:"download",...p,totalBytes:v.totalBytes},state:"downloading",offset:0,last:null});return v;
+        },opts);}finally{transferHeads--;}
+      },
+      async readDownloadChunk(params,opts){
+        caller();const p=fields(params,["transferID","offset"],[],"invalidInput"),saved=ownedTransfer(p.transferID,"download");integer(p.offset,0,T.fileBytes,"invalidInput");
+        const replay=saved.last&&p.offset===saved.last.offset;check(!saved.blocked&&(replay||saved.state==="downloading"&&p.offset===saved.offset),"denied");
+        return transferCall(p.transferID,async()=>{
+          try{return await invoke("readDownloadChunk",{transferID:p.transferID,offset:p.offset},value=>{
+            const v=T.chunk(value,p.transferID,p.offset,saved.expected.totalBytes);if(replay)check(JSON.stringify(v)===JSON.stringify(saved.last));
+            saved.last=v;saved.offset=v.nextOffset;if(v.eof)saved.state="completed";return v;
+          },opts);}catch(error){saved.blocked=true;throw error;}
+        });
+      },
+      async transferStatus(transferID,opts){
+        caller();return transferCall(transferID,()=>invoke("transferStatus",{transferID},value=>T.status(value,transferID,transfers.get(transferID)?.expected),opts));
+      },
+      async cancelTransfer(transferID,opts){
+        caller();O.id(transferID,"invalidInput");const saved=transfers.get(transferID);check(saved,"denied");
+        return transferCall(transferID,()=>invoke("cancelTransfer",{transferID},value=>{
+          const v=T.status(value,transferID,saved.expected);check(["cancelled","failed","completed","uncertain"].includes(v.state));saved.state=v.state;saved.blocked=true;return v;
+        },opts));
+      },
+      discardTransfer(transferID){O.id(transferID,"invalidInput");check(!busyTransfers.has(transferID),"busy");return transfers.delete(transferID);},
       async previewFile(params,opts) {
         caller();const v=fields(params,["libraryID","relativePath"],["maximumBytes"],"invalidInput");
         const libraryID=text(v.libraryID,128,{code:"invalidInput"}),relativePath=path(v.relativePath,false,"invalidInput"),maximumBytes=integer(Object.hasOwn(v,"maximumBytes")?v.maximumBytes:65536,1,65536,"invalidInput");

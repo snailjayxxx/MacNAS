@@ -1955,6 +1955,48 @@
             "docs/plans/N-024-ACCEPTANCE.md",
             "docs/decisions/ADR-018-guarded-fixture-file-operations.md"
           ]
+        },
+        {
+          "id": "FIL-01.bounded_fixture_upload_download",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "N025 host-lifetime streams in separately approved synthetic APFS libraries; 32 KiB blocks, 16 MiB file cap, quotas, pinned source, no-overwrite publication and same-host receipts. Not production large-file transfer or restart recovery.",
+          "evidence": [
+            "docs/evidence/n025-n026-2026-10-16.json",
+            "docs/plans/N-025-026-ACCEPTANCE.md",
+            "docs/decisions/ADR-019-bounded-fixture-file-transfers.md"
+          ]
+        },
+        {
+          "id": "FIL-01.typed_transfer_protocol",
+          "status": "MOCK_PASS",
+          "scope": "N025 exact DTOs, canonical base64 parts, per-ID backpressure, incremental SHA and explicit observation; synthetic models and real pipe are separately recorded.",
+          "evidence": [
+            "docs/evidence/n025-n026-2026-10-16.json",
+            "docs/plans/N-025-026-ACCEPTANCE.md",
+            "docs/decisions/ADR-019-bounded-fixture-file-transfers.md"
+          ]
+        },
+        {
+          "id": "FIL-01.file_transfer_web_flow",
+          "status": "IN_PROGRESS",
+          "scope": "N026 local file selection, target confirmation, progress, safe-boundary cancellation, verified save link and correct-target directory reread; FT01-FT08 browser acceptance unexecuted.",
+          "evidence": [
+            "docs/evidence/n025-n026-2026-10-16.json",
+            "docs/plans/N-025-026-ACCEPTANCE.md",
+            "docs/decisions/ADR-019-bounded-fixture-file-transfers.md",
+            "web/tests/BROWSER_ACCEPTANCE.md"
+          ]
+        },
+        {
+          "id": "FIL-01.transfer_dom_shape",
+          "status": "MOCK_PASS",
+          "scope": "N026 DOM-shape double and bounded Blob/object URL ownership checks only; no browser layout, CSP execution, focus, file-picker or download-permission acceptance.",
+          "evidence": [
+            "docs/evidence/n025-n026-2026-10-16.json",
+            "docs/plans/N-025-026-ACCEPTANCE.md",
+            "docs/decisions/ADR-019-bounded-fixture-file-transfers.md",
+            "web/tests/BROWSER_ACCEPTANCE.md"
+          ]
         }
       ]
     },
@@ -1965,12 +2007,17 @@
       "phases": [
         "P08"
       ],
-      "status": "NOT_STARTED",
+      "status": "IN_PROGRESS",
       "children": [
         {
           "id": "FIL-02.design",
-          "status": "NOT_STARTED",
-          "evidence": []
+          "status": "IN_PROGRESS",
+          "evidence": [
+            "docs/evidence/n025-n026-2026-10-16.json",
+            "docs/plans/N-025-026-ACCEPTANCE.md",
+            "docs/decisions/ADR-019-bounded-fixture-file-transfers.md"
+          ],
+          "scope": "Bounded prototype protocol defined; production large-file and resumable transport remain separate future work."
         },
         {
           "id": "FIL-02.implementation",
@@ -2001,6 +2048,26 @@
           "id": "FIL-02.owner_acceptance",
           "status": "NOT_STARTED",
           "evidence": []
+        },
+        {
+          "id": "FIL-02.bounded_upload_prototype",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "N025 independently approved fixed-budget upload protocol and synthetic disk tests; 16 MiB cap is not GB-scale or durable resumable upload acceptance.",
+          "evidence": [
+            "docs/evidence/n025-n026-2026-10-16.json",
+            "docs/plans/N-025-026-ACCEPTANCE.md",
+            "docs/decisions/ADR-019-bounded-fixture-file-transfers.md"
+          ]
+        },
+        {
+          "id": "FIL-02.production_large_upload_and_resume",
+          "status": "NOT_STARTED",
+          "scope": "Future authenticated streaming channel, durable external-effect log, host-crash recovery, orphan staging reconciliation and actual large-file/space/throughput testing require their own implementation and new versioned migration.",
+          "evidence": [
+            "docs/evidence/n025-n026-2026-10-16.json",
+            "docs/plans/N-025-026-ACCEPTANCE.md",
+            "docs/decisions/ADR-019-bounded-fixture-file-transfers.md"
+          ]
         }
       ]
     },

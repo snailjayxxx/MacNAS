@@ -316,6 +316,38 @@ public final class DesktopBridge: @unchecked Sendable {
             case "fileOperationStatus":
                 let p=try params.fields(required:["operationID"])
                 return try response(api.fixtureFileOperationStatus(operationID:p.text("operationID",maximum:36),session:session),id:id)
+            case "previewUpload":
+                let p=try params.fields(required:["libraryID","name","totalBytes"],optional:["parentPath"])
+                let intent=try FixtureUploadIntent(libraryID:p.text("libraryID"),parentPath:p.text("parentPath",maximum:4096,fallback:"",allowEmpty:true),name:p.text("name",maximum:255),totalBytes:p.integer("totalBytes",range:0...FixtureTransferLimits.fileBytes))
+                try writable()
+                return try api.withFixtureUploadPreview(intent,session:session){try self.response($0,id:id)}
+            case "beginUpload":
+                let p=try params.fields(required:["transferID","confirmed"])
+                guard case .bool(true) = p["confirmed"]! else{throw NASError.invalidSchema}
+                try writable()
+                return try response(api.beginFixtureUpload(transferID:p.text("transferID",maximum:36),confirmed:true,session:session),id:id)
+            case "appendUpload":
+                let p=try params.fields(required:["transferID","offset","parts"])
+                guard case .array(let values)=p["parts"]!, (1...16).contains(values.count) else{throw NASError.invalidSchema}
+                let parts=try values.map{try $0.text(maximumBytes:2732)}
+                try writable()
+                return try response(api.appendFixtureUpload(transferID:p.text("transferID",maximum:36),offset:p.integer("offset",range:0...FixtureTransferLimits.fileBytes),parts:parts,session:session),id:id)
+            case "finishUpload":
+                let p=try params.fields(required:["transferID","sha256"])
+                try writable()
+                return try response(api.finishFixtureUpload(transferID:p.text("transferID",maximum:36),sha256:p.text("sha256",maximum:64),session:session),id:id)
+            case "beginDownload":
+                let p=try params.fields(required:["libraryID","relativePath"])
+                return try api.withFixtureDownload(libraryID:p.text("libraryID"),relativePath:p.text("relativePath",maximum:4096),session:session){try self.response($0,id:id)}
+            case "readDownloadChunk":
+                let p=try params.fields(required:["transferID","offset"])
+                return try api.withFixtureDownloadChunk(transferID:p.text("transferID",maximum:36),offset:p.integer("offset",range:0...FixtureTransferLimits.fileBytes),session:session){try self.response($0,id:id)}
+            case "transferStatus":
+                let p=try params.fields(required:["transferID"])
+                return try response(api.fixtureTransferStatus(transferID:p.text("transferID",maximum:36),session:session),id:id)
+            case "cancelTransfer":
+                let p=try params.fields(required:["transferID"])
+                return try response(api.cancelFixtureTransfer(transferID:p.text("transferID",maximum:36),session:session),id:id)
             default: throw NASError.unsupported
             }
         } catch {

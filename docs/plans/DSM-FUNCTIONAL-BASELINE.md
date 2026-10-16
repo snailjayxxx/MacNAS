@@ -12,7 +12,7 @@
 |---|---|---|---|
 |在桌面打开多个应用、管理窗口和任务|静态窗口管理代码与偏好模型已有；32项真实网页检查未执行|SYS-01、SYS-07|保留实测门槛，不能把桌面外观当完整NAS系统；参照[DSM桌面指南](https://global.download.synology.com/download/Document/Software/UserGuide/Os/DSM/7.2/enu/Syno_UsersGuide_NAServer_7_2_enu.pdf#page=11)|
 |连续浏览目录、切换文件展示方式|当前仅合成树和三项/页演示；真实目录读取只在显式批准的合成测试宿主中验证，网页未连接|FIL-01|N-023优先补导航、路径、选择、详情与合理加载量；参照[File Station](https://www.synology.com/en-global/dsm/7.4/software_spec/file_access)|
-|上传/下载、建目录、重命名、复制/移动|网页与核心均没有完整文件操作流程|FIL-01、FIL-02、FIL-03|浏览基础后补后台任务、冲突处理、取消/重试与授权；参照[文件管理能力](https://www.synology.com/en-global/dsm/7.4/software_spec/file_access)|
+|上传/下载、建目录、重命名、复制/移动|N-024新建/改名和N-025/N-026的16MiB有界传输已接代码/合成测试；实际网页未验收，复制/移动尚无实现|FIL-01、FIL-02、FIL-03|继续复制、回收站、持久任务/审计与大文件生产通道，不能将短期回执当重启恢复；参照[文件管理能力](https://www.synology.com/en-global/dsm/7.4/software_spec/file_access)|
 |回收站恢复、管理保留期|未开发|FIL-04|在合成目录完成恢复流程及错误保护后才接真实目录；参照[File Station回收站能力](https://www.synology.com/en-global/dsm/7.4/software_spec/file_access)|
 |查找文件、预览内容、受控分享|只有当前页过滤与64KiB文本预览原型；全局索引、照片/视频预览及分享未实现|FIL-05、FIL-06、FIL-07、FIL-08、FIL-09|全目录搜索不能由当前页过滤冒充；分享保持既定后续优先级；参照[搜索与分享](https://www.synology.com/en-global/dsm/7.4/software_spec/file_access)|
 |查看与解释文件夹权限|合成API有读者范围及目录批准；无生产ACL编辑、有效权限解释界面|SHR-04、SHR-06、SEC-06|把可见目录、操作权限、拒绝原因做成一条完整流程；参照[文件夹权限](https://kb.synology.com/en-global/DSM/help/FileStation/privilege?version=7)|

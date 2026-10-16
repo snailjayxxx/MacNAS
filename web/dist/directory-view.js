@@ -1,7 +1,7 @@
 (function (root, factory) {
-  if (typeof module === "object" && module.exports) module.exports = factory(require("./model.js"),require("./file-operations.js"));
-  else root.MacNASDirectoryView = Object.freeze(factory(root.MacNASModel,root.MacNASFileOperations));
-})(globalThis, function (M,O) {
+  if (typeof module === "object" && module.exports) module.exports = factory(require("./model.js"),require("./file-operations.js"),require("./file-transfers.js"));
+  else root.MacNASDirectoryView = Object.freeze(factory(root.MacNASModel,root.MacNASFileOperations,root.MacNASFileTransfers));
+})(globalThis, function (M,O,T) {
   "use strict";
   const sources = new WeakSet(), encoder = new TextEncoder();
   const errors = new Set(["invalidInput","invalidResponse","unsupported","denied","readOnly","unavailable","budgetExceeded","replay","collision","missingVolume","unsafePath","unsafeFile","integrity","database","busy","expired","staleState","interrupted","timedOut","cancelled","pluginFailed","invalidSchema"]);
@@ -80,11 +80,12 @@
       if (!cursors.has(cursor) || busy.has(cursor)) return false;
       cursors.delete(cursor); try { return operations.discard(cursor); } catch { return false; }
     }
-    function dispose() { if (closed) return; closed = true; for (const cursor of cursors.keys()) discard(cursor); fileOperations?.dispose(); operations.dispose?.(); }
+    function dispose() { if (closed) return; closed = true; for (const cursor of cursors.keys()) discard(cursor); fileOperations?.dispose();fileTransfers?.dispose(); operations.dispose?.(); }
     const binding = context(await call(operations.overview), kind), fixture = kind === "fixture";
     const fileOperations=operations.previewOperation ? O.createSource(binding,{preview:operations.previewOperation,commit:operations.commitOperation,status:operations.operationStatus,discard:operations.discardOperation,isClosed:()=>closed||!!operations.isClosed?.()}) : null;
+    const fileTransfers=operations.transferStore?T.createFixtureSource(binding,operations.transferStore,{monotonicNow:operations.transferClock}):operations.transferMethods?T.createSource(binding,operations.transferMethods):null;
     const source = Object.freeze({
-      context: binding, fileOperations, get closed() { return closed || !!operations.isClosed?.(); }, dispose, discardCursor: discard,
+      context: binding, fileOperations,fileTransfers, get closed() { return closed || !!operations.isClosed?.(); }, dispose, discardCursor: discard,
       async libraries() {
         const raw = await call(operations.libraries);
         try {
@@ -144,8 +145,12 @@
     const mutation= ["previewFileOperation","commitFileOperation","fileOperationStatus"].every(key=>typeof client[key]==="function") ? {
       previewOperation:p=>client.previewFileOperation(p),commitOperation:value=>client.commitFileOperation(value),operationStatus:value=>client.fileOperationStatus(value),discardOperation:value=>client.discardFileOperation?.(value)
     } : {};
+    const transferMethods=["previewUpload","beginUpload","appendUpload","finishUpload","beginDownload","readDownloadChunk","transferStatus","cancelTransfer"].every(key=>typeof client[key]==="function")?{
+      transferMethods:{previewUpload:p=>client.previewUpload(p),beginUpload:id=>client.beginUpload(id),appendUpload:(transferID,offset,parts)=>client.appendUpload({transferID,offset,parts}),finishUpload:(transferID,sha256)=>client.finishUpload({transferID,sha256}),
+        beginDownload:p=>client.beginDownload(p),readDownloadChunk:(transferID,offset)=>client.readDownloadChunk({transferID,offset}),status:id=>client.transferStatus(id),cancel:id=>client.cancelTransfer(id),discard:id=>client.discardTransfer(id),isClosed:()=>client.closed}
+    }:{};
     return makeSource("fixture-host", { overview: () => client.overview(), libraries: () => client.listLibraries(), page: p => client.listFilesPage(p),
-      preview: p => client.previewFile(p), discard: cursor => client.discardFilePage(cursor), isClosed: () => client.closed,...mutation });
+      preview: p => client.previewFile(p), discard: cursor => client.discardFilePage(cursor), isClosed: () => client.closed,...mutation,...transferMethods });
   }
   async function createFixtureDirectorySource(api, session, options = {}) {
     check(api?.source === "fixture" && typeof api.overview === "function", "unavailable");
@@ -169,7 +174,7 @@
       ["shared/Notes/Readme.txt", "嵌套目录合成样例 / 入れ子のサンプル\n"],
       ["personal/Private.txt", "仅所有者的合成文字 / オーナー用のサンプル\n"],
       ["personal/Travel/List.txt", "合成旅行清单 / 旅行リストのサンプル\n"]
-    ]) data.set(id, value);
+    ]) data.set(id, encoder.encode(value));
     const pending = new Map(), consumed = new Map(),revisions=new Map(),operationPreviews=new Map(),operationReceipts=new Map();
     const visible = libraryID => libraryID === "shared" || libraryID === "personal" && who.role === "administrator";
     function clock() { const time = now(); check(Number.isFinite(time) && time >= 0, "unavailable"); return time; }
@@ -182,6 +187,10 @@
     function collision(p){const key=directoryKey(p)+(p.parentPath?"/":""),wanted=p.name.normalize("NFC").toLowerCase();return [...directories,...data.keys()].some(value=>{if(!value.startsWith(key))return false;const name=value.slice(key.length);return name&&!name.includes("/")&&name.normalize("NFC").toLowerCase()===wanted;});}
     return makeSource("fixture", {
       overview: authorized,
+      transferClock:now,
+      transferStore:{authorizeSession:authorized,authorizeUpload:mutationAuthorized,async authorizeRead(p){await authorized();check(visible(p.libraryID),"denied");},
+        parentExists:p=>directories.has(directoryKey(p)),version:p=>revisions.get(directoryKey(p))||0,exists:collision,
+        read:p=>data.get(p.libraryID+"/"+p.relativePath),publish(p,bytes){check(directories.size+data.size<4096,"budgetExceeded");data.set(p.libraryID+"/"+T.target(p),bytes);const key=directoryKey(p);revisions.set(key,(revisions.get(key)||0)+1);}},
       async libraries() { await authorized(); return ["shared", "personal"].filter(visible).map(libraryID => ({ libraryID, state: "synthetic", estimatedBytes: null })); },
       async page(p) {
         await authorized(); check(visible(p.libraryID), "denied");
@@ -193,7 +202,7 @@
           if (!id.startsWith(prefix)) continue;
           const name = id.slice(prefix.length); if (!name || name.includes("/")) continue;
           const kind = directories.has(id) ? "directory" : "file";
-          items.push({ name, relativePath: (p.relativePath ? p.relativePath + "/" : "") + name, kind, modifiedAt: null, ...(kind === "file" ? { bytes: encoder.encode(data.get(id)).length } : {}) });
+          items.push({ name, relativePath: (p.relativePath ? p.relativePath + "/" : "") + name, kind, modifiedAt: null, ...(kind === "file" ? { bytes: data.get(id).length } : {}) });
         }
         items.sort((a, b) => byteOrder(a.name, b.name));
         const remaining = items.filter(item => after === undefined || byteOrder(item.name, after) > 0), page = remaining.slice(0, p.pageSize);
@@ -208,8 +217,9 @@
       async preview(p) {
         await authorized(); check(visible(p.libraryID), "denied");
         const value = data.get(p.libraryID + "/" + p.relativePath); check(value !== undefined, "denied");
-        check(encoder.encode(value).length <= p.maximumBytes, "budgetExceeded"); await authorized();
-        return { libraryID: p.libraryID, relativePath: p.relativePath, text: value, utf8Bytes: encoder.encode(value).length };
+        check(value.length <= p.maximumBytes, "budgetExceeded"); await authorized();let decoded;
+        try{decoded=new TextDecoder("utf-8",{fatal:true}).decode(value);}catch{throw new M.ServiceError("unsupported");}
+        return { libraryID: p.libraryID, relativePath: p.relativePath, text: decoded, utf8Bytes: value.length };
       },
       async previewOperation(p){
         await mutationAuthorized(p);reclaimOperations();check(directories.has(directoryKey(p)),"staleState");

@@ -99,4 +99,17 @@ class WebStaticTests(unittest.TestCase):
         js=(ROOT/'web/dist/desktop.js').read_text()
         self.assertNotIn('authorizeFixtureLibraryMutations',js)
         self.assertIn('win.fileOperation?.dispose()',js)
+    def test_transfer_assets_load_before_sources_and_preserve_static_only_permissions(self):
+        scripts=re.findall(r'<script defer src="([^"]+)"',(ROOT/'web/dist/index.html').read_text())
+        for earlier,later in [('model.js','sha256.js'),('sha256.js','file-transfers.js'),('file-operations.js','file-transfers.js'),('file-transfers.js','file-transfer-view.js'),('file-transfers.js','directory-view.js'),('file-transfer-view.js','desktop.js')]:
+            self.assertLess(scripts.index(earlier),scripts.index(later))
+        for path in ['/sha256.js','/file-transfers.js','/file-transfer-view.js']:self.assertEqual(exchange(path)[0],200)
+        self.assertEqual(exchange('/transfer-staging/upload-test')[0],404)
+        js=(ROOT/'web/dist/desktop.js').read_text()
+        self.assertIn('win.fileTransfer?.dispose()',js);self.assertIn('win.fileTransferPanel?.dispose()',js)
+        for marker in ['authorizeFixtureLibraryUploads','fetch(','XMLHttpRequest','WebSocket(']:self.assertNotIn(marker,js)
+    def test_download_view_uses_bounded_blob_and_explicit_link_without_automatic_click(self):
+        js=(ROOT/'web/dist/file-transfer-view.js').read_text()
+        self.assertIn('urls.revokeObjectURL(url)',js);self.assertIn('save.download=name',js)
+        for marker in ['.click(','.innerHTML','window.open(','fetch(','localStorage']:self.assertNotIn(marker,js)
 if __name__=='__main__':unittest.main()
