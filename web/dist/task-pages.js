@@ -20,7 +20,7 @@
   const errorCode = error => error instanceof M.ServiceError && errors.has(error.code) ? error.code : "unavailable";
   async function call(operation) { try { return await operation(); } catch (error) { throw new M.ServiceError(errorCode(error)); } }
   function context(info, kind) {
-    check(info && info.source === kind && info.apiVersion === 1 && (kind === "fixture" ? info.databaseSchema === 3 : [3,4,5].includes(info.databaseSchema)) && info.physicalPool === "unbound");
+    check(info && info.source === kind && info.apiVersion === 1 && (kind === "fixture" ? info.databaseSchema === 3 : [3,4,5,6].includes(info.databaseSchema)) && info.physicalPool === "unbound");
     text(info.userID); check(["administrator","reader"].includes(info.role) && ["synthetic_development","read_only_recovery","rolled_back_recovery"].includes(info.mode));
     return freeze({ source: kind, userID: info.userID, role: info.role, mode: info.mode });
   }

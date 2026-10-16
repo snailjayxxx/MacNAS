@@ -1,4 +1,6 @@
-# MacNAS 原型架构（N-029 C3A：持久容量元数据）
+# MacNAS 原型架构（N-029 C3B：单物理合成范围与持久身份）
+
+C3B实现0006/Schema6及一个新建空白、同设备、固定私有UUID文件名的TestLab物理范围，持久绑定目录/uid及owned文件stamp/SHA。有限接收、复制与回收恢复共用64MiB声明额度，单文件16MiB；owned穿过回收恢复仍收费，armed未知不认领/重放/取消/释放。reserved仅新批准和现场双路径缺失证明才能取消。旧无许可入口与MetadataOnly拒绝已管理范围，普通可携拒绝范围/历史/已知物理布局。 新两表纳入16表屏障、UTC摘要、10封闭函数及严格结构/角色校验；1–5投影保持，0001–0005/Migration5原字节保持。本阶段只接一个有限私有合成范围；旧网页Schema3内存树和fixtures/volumes仍各自独立，没有管理范围的桌面观察/列表/执行RPC或DOM。Schema6实际只读桥接验证的是未管理回收fixture兼容。没有任意既有库存导入、armed修复、受管理日志写结算/取消、永久删除/到期清理或生产NAS/fencing。诊断DB快照只含元数据，DB回退不逆转文件效果。当前Mac合成验证不证明macOS15运行、跨Mac、真实断电、物理池、认证或生产规模。 见[ADR-028](docs/decisions/ADR-028-schema6-physical-capacity-namespace.md)及[C3B证据](docs/evidence/n029-c3b-2026-10-17.json)。
 
 C3A实现0005/Schema5及持久容量元数据：单条16MiB、共用64MiB、64历史和8个未终结预留；原始主体/数据库/宿主/实例/代次/资料库绑定，独立CAS，和文件日志共用事务准入锁。owned不释放，armed保留全部费用并阻止新准入；纯MetadataOnly方法遇已知物理标记即拒绝。旧0001–0004及Migration4原字节不变。 新表进入14表停写、完整UTC摘要和严格权限/结构核对；1–4投影保留。本阶段只验证数据库账目，未接入物理库存、原生上传复制/回收恢复或新执行RPC/UI；现有网页仍为Schema3内存fixture。旧回收/恢复各3次SIGKILL在新全量中重跑，不是容量执行者的中断证明。下一步C3B接单物理合成树与封闭现场凭据，随后才是执行/列表/界面。用户要求自动连续开发并暂停浏览器/预览；仅限新建TestLab合成实例。 详见[ADR-027](docs/decisions/ADR-027-schema5-durable-capacity-ledger.md)及[C3A证据](docs/evidence/n029-c3a-2026-10-17.json)。
 

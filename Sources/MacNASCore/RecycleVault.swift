@@ -21,6 +21,22 @@ struct RecycleVaultRegistration: Codable, Equatable {
     let libraryInode: String
     let vaultInode: String
     let slots: [RecycleSlotRegistration]
+
+    /// Validate every host-controlled string before it can enter SQL or a path.
+    /// This reads metadata only and does not open an earlier library/vault.
+    func validateMetadata() throws {
+        try require(version == 1 && generation >= 0, .invalidSchema)
+        try PostgreSQLTools.fixtureName(databaseName)
+        try FileEffectMetadata.text(hostID, maximum: 256)
+        try FileEffectMetadata.text(libraryID, maximum: 128)
+        try require((2...256).contains(ownerUserHex.utf8.count) && ownerUserHex.utf8.count % 2 == 0
+                    && ownerUserHex.utf8.allSatisfy { (48...57).contains($0) || (97...102).contains($0) }, .invalidSchema)
+        try FileEffectMetadata.unsignedDecimal(device)
+        try FileEffectMetadata.unsignedDecimal(libraryInode)
+        try FileEffectMetadata.unsignedDecimal(vaultInode)
+        try require(slots.count == 64 && Set(slots.map(\.id)).count == 64, .invalidSchema)
+        for slot in slots { try FileEffectMetadata.unsignedDecimal(slot.inode) }
+    }
 }
 
 /// A directory reached one component at a time, retaining both its FD and the approved absolute name.
@@ -239,7 +255,7 @@ final class RecycleVault {
         try require(config.schemaVersion == 1 && identity.kind == "synthetic-prototype" && identity.schemaVersion == 1 && identity.generation >= 0
                     && binding.databaseName == store.databaseName && binding.mode == "synthetic_development"
                     && config.users.filter({ Data($0.id.utf8) == userID }).map(\.role) == ["administrator"], .denied)
-        try store.validate(); try require([4,5].contains(try store.schemaVersion()), .unsupported)
+        try store.validate(); try require([4,5,6].contains(try store.schemaVersion()), .unsupported)
         try require(try !store.hasRecycleHistory(), .unsupported)
         let host = try RecycleDirectory(root.appendingPathComponent("host-binding"))
         try require(try host.named("recycle-registration.json") == nil, .collision)

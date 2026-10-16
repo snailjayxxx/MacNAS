@@ -15,7 +15,7 @@ const hosts=new Set(),errorCode=code=>error=>error instanceof M.ServiceError&&er
 
 class PipeHost {
   constructor(source,user="fixture-owner") {
-    this.pending=[];this.stderr="";this.unexpected=[];
+    this.pending=[];this.stderr="";this.unexpected=[];this.recent=[];
     this.child=spawn(binary,["bridge","fixture","--source",source,"--user",user],{stdio:["pipe","pipe","pipe"]});
     hosts.add(this);
     this.exit=new Promise(resolve=>this.child.once("close",(code,signal)=>{hosts.delete(this);resolve({code,signal});}));
@@ -38,16 +38,20 @@ class PipeHost {
     return C.createDesktopClient({transport:message=>this.raw(JSON.stringify(message)+"\n"),timeoutMs:20000,closeTransport:()=>this.child.stdin.end(),...config});
   }
   raw(bytes){
+    let method="unparsed";try{method=JSON.parse(bytes).method||"unparsed";}catch{}
+    this.recent.push(method);if(this.recent.length>12)this.recent.shift();
     return new Promise((resolve,reject)=>{
-      const entry={resolve,reject,timer:setTimeout(()=>{this.fail(Error("bridge response timeout"));this.child.kill("SIGKILL");},20000)};
+      const entry={resolve,reject,timer:setTimeout(()=>{this.fail(Error("bridge response timeout: "+method+"; stderr="+this.stderr));this.child.kill("SIGKILL");},20000)};
       this.pending.push(entry);this.child.stdin.write(bytes);
     });
   }
   async finish(expected=0){
+    const started=performance.now();
     this.child.stdin.end();
     const timer=setTimeout(()=>this.child.kill("SIGKILL"),5000);
     const result=await this.exit;clearTimeout(timer);
-    assert.deepEqual(result,{code:expected,signal:null});assert.deepEqual(this.unexpected,[]);
+    const diagnostics=JSON.stringify({pid:this.child.pid,exitElapsedMs:performance.now()-started,pending:this.pending.length,recent:this.recent,stderr:this.stderr});
+    assert.deepEqual(result,{code:expected,signal:null},diagnostics);assert.deepEqual(this.unexpected,[]);
     if(expected===0)assert.equal(this.stderr,"");
     return result;
   }
@@ -68,6 +72,7 @@ test("Schema4 keeps typed jobs, reader views and read-only restoration through r
   }
   cli(["fixture","create","--dest",source,"--schema","4"]);
   const host=new PipeHost(source),client=host.typed();
+  let primaryFailure;
   try{
     assert.equal((await client.overview()).databaseSchema,4);
     const created=await client.submitLabelJob({id:"schema4-pipe-job",key:"schema4-pipe-key",value:"Schema4 合成"});
@@ -80,7 +85,12 @@ test("Schema4 keeps typed jobs, reader views and read-only restoration through r
     assert.equal((await client.cancelJob(created.id)).state,"cancelled");
     assert.equal(client.previewRecycleFile,undefined);assert.equal(client.confirmRestoreFile,undefined);
     notifications.dispose();directory.dispose();assert.equal(client.closed,false);
-  }finally{client.close();await host.finish();}
+  }catch(error){primaryFailure=error;throw error;}
+  finally{
+    client.close();
+    try{await host.finish();}
+    catch(error){if(primaryFailure)console.error("Schema4 cleanup after primary failure:",error);else throw error;}
+  }
   cli(["migrate","export","--source",source,"--dest",portable]);
   cli(["migrate","restore","--source",portable,"--dest",restored,"--confirm-create","--host-id","schema4-pipe-restored"]);
   const recovery=new PipeHost(restored),readonlyClient=recovery.typed();

@@ -4,8 +4,8 @@ import XCTest
 
 final class RecycleObservationPipeTests: RecycleObservationLab {
     func testActualTypedNodeReadRequiresHostApprovalAndPreservesDatabaseAndPayload() throws {
-        for (index, bytes) in [Data(), Data("keep".utf8), Data(repeating: 31, count: 16 * 1024 * 1024)].enumerated() {
-        let databaseVersion = index == 0 ? 4 : 5
+        for (index, bytes) in [Data(), Data("keep".utf8), Data(repeating: 31, count: 16 * 1024 * 1024), Data("schema6".utf8)].enumerated() {
+        let databaseVersion = index == 0 ? 4 : (index == 3 ? 6 : 5)
         let (root, host, _) = try recycleLab("pipe-\(index)", databaseVersion: databaseVersion), p = try seed(root, host, bytes: bytes), api = try PrototypePlatformAPI(root: root)
         let owner = try api.beginFixtureSession(userID: "fixture-owner"), bridge = try DesktopBridge(api: api, session: owner)
         defer { bridge.close() }

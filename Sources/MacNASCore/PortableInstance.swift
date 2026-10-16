@@ -17,7 +17,7 @@ public enum PortableInstance {
         return value
     }
     public static func createSynthetic(at root: URL, hostID: String = "mock-source", databaseVersion:Int=1) throws {
-        try require([1,2,3,4,5].contains(databaseVersion),.invalidSchema)
+        try require([1,2,3,4,5,6].contains(databaseVersion),.invalidSchema)
         try SafeFS.freshDirectory(root)
         for dir in ["config", "state", "logical-storage", "host-binding", "apps", "app-data"] {
             try FileManager.default.createDirectory(at: root.appendingPathComponent(dir), withIntermediateDirectories: false)
@@ -93,6 +93,10 @@ public enum PortableInstance {
     /// explicitly disabled/unregistered host layout; B must replace it with a vault registry.
     enum FileEffectPortableBoundary { case legacy, unboundPackage, disabledUnregistered }
     @discardableResult static func validateFileEffectHostBoundary(_ root: URL, version: Int, store: StateStore? = nil) throws -> FileEffectPortableBoundary {
+        for path in [FixturePhysicalCapacityNamespace.markerPath, RecycleVault.registrationPath] {
+            let marker = try SafeFS.resolve(root, path)
+            try require(!FileManager.default.fileExists(atPath: marker.path), .unsupported)
+        }
         if version < 4 { return .legacy }
         let host = try SafeFS.resolve(root, "host-binding")
         guard FileManager.default.fileExists(atPath: host.path) else { return .unboundPackage }
@@ -116,6 +120,10 @@ public enum PortableInstance {
     }
     static func requirePortableFileEffectsDisabled(_ root: URL, store: StateStore) throws {
         let version = try store.schemaVersion()
+        for path in [FixturePhysicalCapacityNamespace.markerPath, RecycleVault.registrationPath] {
+            let marker = try SafeFS.resolve(root, path)
+            try require(!FileManager.default.fileExists(atPath: marker.path), .unsupported)
+        }
         if version < 4 { return }
         try store.requirePortableRecycleEmpty()
         _ = try validateFileEffectHostBoundary(root, version: version, store: store)

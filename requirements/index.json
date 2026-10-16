@@ -2159,6 +2159,26 @@
             "docs/plans/N-029-C3A-ACCEPTANCE.md",
             "docs/decisions/ADR-027-schema5-durable-capacity-ledger.md"
           ]
+        },
+        {
+          "id": "FIL-01.durable_physical_capacity_scope_schema6",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "One fresh private same-device TestLab Schema6 scope, durable root/uid and owned-file inode/stamp/SHA proofs, sealed purpose approval, old-path and portability refusal. No arbitrary existing inventory import, desktop execution/list messages or production fencing claim.",
+          "evidence": [
+            "docs/evidence/n029-c3b-2026-10-17.json",
+            "docs/plans/N-029-C3B-ACCEPTANCE.md",
+            "docs/decisions/ADR-028-schema6-physical-capacity-namespace.md"
+          ]
+        },
+        {
+          "id": "FIL-01.conserved_physical_incoming_recycle_restore",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "Actual bounded receive/copy publication and recycle/restore owned-charge conservation,0/16MiB/64MiB/race, positive unarmed cancellation, atomic proof SQL failure and four SIGKILL checkpoints. Armed matching files remain unadopted/charged. Legacy typed Schema6 read compatibility; webpage memory and original fixtures/volumes remain separate.",
+          "evidence": [
+            "docs/evidence/n029-c3b-2026-10-17.json",
+            "docs/plans/N-029-C3B-ACCEPTANCE.md",
+            "docs/decisions/ADR-028-schema6-physical-capacity-namespace.md"
+          ]
         }
       ]
     },

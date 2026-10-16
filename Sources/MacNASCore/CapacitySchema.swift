@@ -22,7 +22,7 @@ extension StateStore {
             guard row.count == 4, let expected = Self.schema5Constraints[row[0]] else { throw NASError.invalidSchema }
             try require(row[2] == "t" && row[3] == "t" && Self.definition(row[1]) == Self.definition(expected), .invalidSchema)
         }
-        // validateSchema4 verifies the complete eight-function namespace, including these
+        // validateSchema4 verifies the complete version-specific function namespace, including these
         // exact bodies and attributes, before any recheck below can execute those functions.
         try require(try rows("SELECT NOT EXISTS(SELECT 1 FROM macnas.capacity_scopes s WHERE macnas.valid_capacity_scope(s) IS NOT TRUE) AND NOT EXISTS(SELECT 1 FROM macnas.capacity_allocations a WHERE macnas.valid_capacity_allocation(a) IS NOT TRUE);") == [["t"]], .invalidSchema)
         let indexes = try rows("SELECT i.relname,x.indisvalid,x.indisready FROM pg_index x JOIN pg_class i ON i.oid=x.indexrelid WHERE x.indrelid IN (\(relationIDs)) ORDER BY i.relname;")

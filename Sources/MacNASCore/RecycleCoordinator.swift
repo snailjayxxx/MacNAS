@@ -63,7 +63,7 @@ final class FixtureRecycleCoordinator {
     }
     private func journal(_ permit: FileEffectExecutionPermit) throws -> DurableFileEffectJournal {
         try DurableFileEffectJournal(store: authority.store, scope: .init(instanceID: permit.registration.instanceID,
-            generation: permit.registration.generation, userID: permit.userID, originScopeSHA256: permit.originScopeSHA256))
+            generation: permit.registration.generation, userID: permit.userID, originScopeSHA256: permit.originScopeSHA256), physicalAccess: authority.physicalAccess)
     }
     private func snapshot(_ journal: DurableFileEffectJournal, _ operationID: UUID) throws -> FileEffectExecutionSnapshot {
         guard let value = try journal.executionSnapshot(operationID: operationID) else { throw NASError.denied }; return value
@@ -114,6 +114,9 @@ final class FixtureRecycleCoordinator {
         lock.lock(); defer { lock.unlock() }; pending = pending.filter { $0.value.deadline > now() }
         try require(pending.count < 8, .budgetExceeded)
         return try authority.withLockedVault(grant, action: .recycle) { permit in
+            let boundIntent = FileEffectIntent(kind: .recycle, libraryID: permit.registration.libraryID,
+                sourcePath: path, targetParentPath: "", name: (path as NSString).lastPathComponent)
+            try authority.physicalAccess?.checkIntent(boundIntent)
             let used = try catalog(permit).union(pending.values.map(\.payloadID))
             guard let slot = permit.registration.slots.first(where: { !used.contains($0.id) }) else { throw NASError.budgetExceeded }
             let target = try permit.vault.slot(slot.id), (parent, name) = try permit.vault.library.parent(of: path)
@@ -154,6 +157,9 @@ final class FixtureRecycleCoordinator {
             guard let original = try journal.retainedEntry(entryID: entryID), let originalPost = original.postEvidence else { throw NASError.denied }
             try require(original.vaultID == permit.registration.vaultID && original.volumeID == permit.registration.volumeID
                         && Data(original.intent.libraryID.utf8) == Data(permit.registration.libraryID.utf8), .denied)
+            let boundIntent = FileEffectIntent(kind: .restore, libraryID: permit.registration.libraryID,
+                sourcePath: original.intent.sourcePath, targetParentPath: parentPath, name: name)
+            try authority.physicalAccess?.checkIntent(boundIntent, entryID: entryID)
             let sourceParent = try permit.vault.slot(original.payloadID), target = try directory(permit.vault.library, relative: parentPath)
             guard let approvedTarget = permit.destinationParentStamp else { throw NASError.denied }
             try require(RecycleDirectory.sameIdentity(approvedTarget, target.identity), .staleState)
@@ -225,6 +231,7 @@ final class FixtureRecycleCoordinator {
         try require(plan.grant == grant && plan.destinationGrant == destinationGrant && action(plan) == grant.action, .denied)
         pending.removeValue(forKey: previewID)
         return try authority.withLockedVault(grant, action: action(plan), destinationGrant: destinationGrant) { permit in
+            try authority.physicalAccess?.checkIntent(plan.intent, entryID: plan.intent.kind == .restore ? plan.preview.entryID : nil)
             let journal = try self.journal(permit)
             try before(plan, permit); let used = try catalog(permit)
             try require(used.contains(plan.payloadID) == (plan.intent.kind == .restore), .staleState)

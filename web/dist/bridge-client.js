@@ -60,7 +60,7 @@
   function libraries(value) { return unique(array(value,1024).map(library),v=>v.libraryID); }
   function overview(value) {
     const v=fields(value,["apiVersion","source","userID","role","mode","languages","databaseSchema","active","completed","logicalReferenceBytes","physicalPool","taskTimestampsAvailable","libraries"]);
-    check(v.apiVersion===1 && v.source==="fixture-host" && [3,4,5].includes(v.databaseSchema) && v.physicalPool==="unbound" && v.taskTimestampsAvailable===false);
+    check(v.apiVersion===1 && v.source==="fixture-host" && [3,4,5,6].includes(v.databaseSchema) && v.physicalPool==="unbound" && v.taskTimestampsAvailable===false);
     text(v.userID);check(["administrator","reader"].includes(v.role) && modes.includes(v.mode));
     check(Array.isArray(v.languages) && v.languages.length>=1 && v.languages.length<=2 && v.languages.every(x=>["zh-CN","ja-JP"].includes(x)) && new Set(v.languages).size===v.languages.length);
     integer(v.active);integer(v.completed);integer(v.logicalReferenceBytes);
@@ -287,7 +287,7 @@
         },opts);}finally{statusQueries.delete(consumerID);}
       },
       async observeRecycleOperation(operationID,opts) {
-        const who=caller(false,true);check([4,5].includes(who.databaseSchema),"unsupported");cursorToken(operationID,"invalidInput");
+        const who=caller(false,true);check([4,5,6].includes(who.databaseSchema),"unsupported");cursorToken(operationID,"invalidInput");
         check(!recycleObservationQueries.has(operationID),"busy");check(recycleObservationQueries.size<8,"budgetExceeded");
         recycleObservationQueries.add(operationID);
         try{return await invoke("observeRecycleOperation",{operationID},value=>{
@@ -468,7 +468,7 @@
     cursorToken(p.operationID,"invalidInput");if(Object.hasOwn(p,"entryID"))cursorToken(p.entryID,"invalidInput");
     check(!Object.hasOwn(opts,"onChange")||typeof opts.onChange==="function","invalidInput");
     check(client?.source==="fixture-host-client"&&!client.closed&&typeof client.overview==="function"&&typeof client.observeRecycleOperation==="function","unavailable");
-    const who=await client.overview();check(!client.closed,"unavailable");check([4,5].includes(who.databaseSchema),"unsupported");check(who.role==="administrator","denied");
+    const who=await client.overview();check(!client.closed,"unavailable");check([4,5,6].includes(who.databaseSchema),"unsupported");check(who.role==="administrator","denied");
     // Capture this borrowed client by value; disposal never closes or cancels its transport.
     return R.createReadOnlyModel({operationID:p.operationID,ownerUserID:who.userID,...(Object.hasOwn(p,"entryID")?{entryID:p.entryID}:{}),
       read:id=>client.observeRecycleOperation(id),...(Object.hasOwn(opts,"onChange")?{onChange:opts.onChange}:{})});

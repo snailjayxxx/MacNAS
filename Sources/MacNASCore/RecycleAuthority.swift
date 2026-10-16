@@ -34,6 +34,7 @@ final class FileEffectExecutionPermit {
         self.destinationParentPath = destinationParentPath
         self.destinationParentStamp = destinationParentStamp
     }
+    func validateHeldLock() throws { try vaultLock.validate() }
     func check(_ expected: RecycleHostAction) throws {
         try require(action == expected, .denied); try validateGrant(); try vault.validate(); try vaultLock.validate()
     }
@@ -46,6 +47,7 @@ final class FixtureRecycleAuthority {
     let store: StateStore
     let userID: Data
     private let databaseVersion: Int
+    let physicalAccess: PhysicalCapacityLegacyAccess?
     private let host = UUID()
     private let lock = NSLock()
     private var revision: UInt64 = 0
@@ -54,16 +56,29 @@ final class FixtureRecycleAuthority {
     private let additionalContextCheck: () throws -> Void
 
     init(root: URL, userID: Data, now: @escaping () -> TimeInterval = { ProcessInfo.processInfo.systemUptime },
-         additionalContextCheck: @escaping () throws -> Void = {}) throws {
+         additionalContextCheck: @escaping () throws -> Void = {},
+         physicalAccess: PhysicalCapacityLegacyAccess? = nil) throws {
         try RecycleVault.requireLabRoot(root); try FileEffectMetadata.subject(userID)
+        self.physicalAccess = physicalAccess
         self.root = root; self.userID = userID; self.now = now; self.additionalContextCheck = additionalContextCheck; store = try PortableInstance.store(root)
         databaseVersion = try PortableInstance.databaseDescriptor(root).version()
-        try require([4,5].contains(databaseVersion), .unsupported)
+        try require([4,5,6].contains(databaseVersion), .unsupported)
         _ = try context(write: false)
         try store.validate(expectedVersion: databaseVersion)
+        try requireNamespaceAccess()
+    }
+    private func requireNamespaceAccess(_ action: RecycleHostAction? = nil) throws {
+        if let physicalAccess {
+            try require(physicalAccess.root == root && physicalAccess.userID == userID && databaseVersion == 6, .denied)
+            if let action { try physicalAccess.check(action) } else { try physicalAccess.check() }
+        } else if databaseVersion >= 6 {
+            try require(try store.rows("SELECT EXISTS(SELECT 1 FROM macnas.physical_capacity_scopes);") == [["f"]], .unsupported)
+        }
     }
     private func context(write: Bool) throws -> (InstanceIdentity, HostBinding) {
         try additionalContextCheck()
+        if let physicalAccess { try physicalAccess.check() }
+        else { try require(!FileManager.default.fileExists(atPath: root.appendingPathComponent(FixturePhysicalCapacityNamespace.markerPath).path), .unsupported) }
         let identity = try PortableInstance.strictRead(InstanceIdentity.self, SafeFS.resolve(root, "instance.json"))
         let binding = try PortableInstance.strictRead(HostBinding.self, SafeFS.resolve(root, "host-binding/binding.json"))
         let config = try PortableInstance.strictRead(PortableConfig.self, SafeFS.resolve(root, "config/platform.json"))
@@ -83,16 +98,12 @@ final class FixtureRecycleAuthority {
         try require(value.version == 1 && value.instanceID == identity.instanceID && value.generation == Int64(identity.generation)
                     && value.databaseName == store.databaseName && Data(value.hostID.utf8) == Data(binding.hostID.utf8), .staleState)
         try require(value.ownerUserHex == FileEffectMetadata.hex(userID), .denied)
-        try require(value.slots.count == 64 && Set(value.slots.map(\.id)).count == 64, .invalidSchema)
-        for slot in value.slots { try FileEffectMetadata.unsignedDecimal(slot.inode) }
-        try FileEffectMetadata.text(value.libraryID, maximum: 128)
-        try FileEffectMetadata.unsignedDecimal(value.device); try FileEffectMetadata.unsignedDecimal(value.libraryInode)
-        try FileEffectMetadata.unsignedDecimal(value.vaultInode)
+        try value.validateMetadata()
         return value
     }
     /// The only creation entry: fresh fixed-layout synthetic directories beneath this TestLab instance.
     func createFreshFixture(confirmed: Bool) throws -> RecycleVaultRegistration {
-        try require(confirmed, .denied)
+        try require(confirmed, .denied); try requireNamespaceAccess()
         let gate = try InstanceLock(root, timeout: 1)
         return try withExtendedLifetime(gate) {
             _ = try context(write: true)
@@ -105,6 +116,7 @@ final class FixtureRecycleAuthority {
     }
     func approveRestoreDestination(parentPath: String, confirmed: Bool) throws -> RecycleHostGrant {
         try FileEffectMetadata.path(parentPath, empty: true)
+        try physicalAccess?.checkDestination(parentPath)
         try require(confirmed, .denied); _ = try context(write: true)
         let registered = try registration(), directory = try destinationDirectory(parentPath, registration: registered)
         return try issue(.restoreDestination, destinationParentPath: Data(parentPath.utf8), destinationParentStamp: directory.identity, confirmed: true)
@@ -132,6 +144,7 @@ final class FixtureRecycleAuthority {
         if revision < UInt64.max { revision += 1 }
     }
     func validate(_ grant: RecycleHostGrant, action: RecycleHostAction, registration expected: RecycleVaultRegistration? = nil) throws {
+        try physicalAccess?.check(action)
         lock.lock()
         let held = grants[grant.id], current = revision
         lock.unlock()
@@ -152,6 +165,7 @@ final class FixtureRecycleAuthority {
         try require(action != .restoreDestination, .denied)
         if action == .restore { try require(destinationGrant != nil, .denied) }
         let gate = try InstanceLock(root, mode: .shared, timeout: 1)
+        try requireNamespaceAccess(action)
         try validate(grant, action: action)
         let registration = try self.registration()
         if let destinationGrant {
@@ -171,7 +185,8 @@ final class FixtureRecycleAuthority {
                 if let destinationGrant { try self.validate(destinationGrant, action: .restoreDestination, registration: registration) }
             })
         return try withExtendedLifetime(permit) {
-            try permit.check(action); let result = try body(permit); try permit.check(action); return result
+            try permit.check(action); try physicalAccess?.checkLocked(permit)
+            let result = try body(permit); try permit.check(action); return result
         }
     }
 }

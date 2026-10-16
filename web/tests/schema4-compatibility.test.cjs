@@ -26,11 +26,11 @@ test("Schema4 host keeps existing typed task, notification and directory readers
 });
 
 test("host schema whitelist rejects unknown versions and does not adopt a schema change on an open connection",async()=>{
-  for(const schema of [0,1,2,6,"4",true]){
+  for(const schema of [0,1,2,7,"4",true]){
     const client=C.createDesktopClient({transport:async request=>response(request,info(schema))});
     await assert.rejects(client.overview(),code("invalidResponse"));assert.equal(client.closed,true);
   }
-  for(const [first,second] of [[3,4],[4,3],[4,5],[5,4]]){
+  for(const [first,second] of [[3,4],[4,3],[4,5],[5,4],[5,6],[6,5]]){
     let schema=first;
     const client=C.createDesktopClient({transport:async request=>response(request,info(schema))});
     await client.overview();schema=second;
@@ -50,7 +50,7 @@ test("static fixture remains Schema3 and cannot masquerade as a durable Schema4 
   await api.endSession(second);await api.endSession(third);
 });
 
-for (const schema of [5]) test(`Schema${schema} host preserves existing typed readers without exposing capacity mutation`,async()=>{
+for (const schema of [5,6]) test(`Schema${schema} host preserves existing typed readers without exposing capacity mutation`,async()=>{
   const client=C.createDesktopClient({transport:async request=>response(request,request.method==="overview"?info(schema):request.method==="listJobsPage"?{pageVersion:1,order:"id-utf8",consistency:"live",pageSize:50,items:[],nextCursor:null}:[])});
   assert.equal((await client.overview()).databaseSchema,schema);
   const tasks=await P.createClientTaskSource(client),directory=await F.createClientDirectorySource(client),notifications=await N.createClientNotificationView(client,{consumerID:"schema5"});

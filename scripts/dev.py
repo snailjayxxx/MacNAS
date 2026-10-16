@@ -8,7 +8,7 @@ actual=plistlib.loads(subprocess.check_output(['/usr/sbin/diskutil','info','-pli
 assert actual['VolumeUUID']==expected['volume_uuid'] and actual['MountPoint']=='/Volumes/MacNAS-Dev' and actual['FilesystemType']=='apfs' and not actual['Internal'], 'BLOCKED: development volume identity changed'
 assert ROOT.is_relative_to(Path('/Volumes/MacNAS-Dev')) and ROOT.resolve()==ROOT, 'BLOCKED: unsafe project path'
 dev_build_namespace=os.environ.get('MACNAS_DEV_BUILD_NAMESPACE','')
-assert dev_build_namespace in ['', 'n029-c2'], 'Unknown development build namespace'
+assert dev_build_namespace in ['', 'n029-c2', 'n029-c3b'], 'Unknown development build namespace'
 def dev_build_dir(name): return WORK/'Build'/(name+('-'+dev_build_namespace if dev_build_namespace else ''))
 runid=datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))).strftime('%Y%m%dT%H%M%S')+'-'+uuid.uuid4().hex[:8]
 evidence=WORK/'Evidence/runs'/runid; evidence.mkdir(parents=True)
@@ -36,10 +36,11 @@ def run(name,command,input=None,check=True,expected_exit=0):
     print(name+': running',flush=True)
     with log.open('w') as output:
         process=subprocess.Popen([str(c) for c in command],cwd=ROOT,env=env,stdin=subprocess.PIPE if input is not None else subprocess.DEVNULL,text=True,stdout=output,stderr=subprocess.STDOUT,start_new_session=True)
-        # C2 full measured5589.763s. New31 capacity tests measured641.912s,
-        # plus the existing observation pipe: final filtered32 measured832.642s.
-        # Bound422 tests to120 minutes; per-command/functional deadlines stay unchanged.
-        try:process.communicate(input=input,timeout=7200 if name=='swift-tests' else 420)
+        # C2 full measured5589.763s plus C3A new31 measured641.912s.
+        # New physical native30 measured3061.190s; focused new cases/Schema6
+        # add further bounded work. Bound456 tests to180 minutes with I/O margin.
+        # Product/SQL/client/CLI and individual functional deadlines are unchanged.
+        try:process.communicate(input=input,timeout=10800 if name=='swift-tests' else 420)
         except subprocess.TimeoutExpired:
             os.killpg(process.pid,signal.SIGTERM)
             try:process.communicate(timeout=5)
@@ -118,6 +119,19 @@ try:
     run('demo-schema5-restore',[binary/'macnas','migrate','restore','--source',jobs5_export,'--dest',jobs5_restore,'--confirm-create','--host-id','mock-schema5-restore'])
     denied_worker5=run('schema5-readonly-worker-refusal',[binary/'macnas','jobs','work-once','--source',jobs5_restore],expected_exit=1)
     assert 'denied' in denied_worker5,'restored Schema5 worker should refuse'
+    upgraded6=demo/'Schema6-readonly'
+    run('demo-schema6-upgrade',[binary/'macnas','migrate','upgrade','--source',upgraded5,'--dest',upgraded6,'--target-schema','6','--confirm-create','--host-id','mock-schema6'])
+    run('demo-schema6-doctor',[binary/'macnas','doctor','--portable',upgraded6])
+    run('demo-schema6-retry',[binary/'macnas','migrate','upgrade','--source',upgraded5,'--dest',upgraded6,'--target-schema','6','--confirm-create','--host-id','mock-schema6'])
+    run('demo-schema6-rollback',[binary/'macnas','migrate','rollback','--dest',upgraded6,'--confirm'])
+    jobs6=demo/'schema6-durable-jobs'
+    run('demo-schema6-create',[binary/'macnas','fixture','create','--dest',jobs6,'--schema','6'])
+    run('demo-schema6-jobs',[binary/'macnas','jobs','demo','--source',jobs6])
+    jobs6_export=demo/'schema6-jobs-export';jobs6_restore=demo/'schema6-jobs-restore'
+    run('demo-schema6-export',[binary/'macnas','migrate','export','--source',jobs6,'--dest',jobs6_export])
+    run('demo-schema6-restore',[binary/'macnas','migrate','restore','--source',jobs6_export,'--dest',jobs6_restore,'--confirm-create','--host-id','mock-schema6-restore'])
+    denied_worker5=run('schema6-readonly-worker-refusal',[binary/'macnas','jobs','work-once','--source',jobs6_restore],expected_exit=1)
+    assert 'denied' in denied_worker5,'restored Schema6 worker should refuse'
     jobs=demo/'durable-jobs'
     run('demo-jobs-create',[binary/'macnas','fixture','create','--dest',jobs,'--schema','3'])
     run('demo-jobs-work-and-ack',[binary/'macnas','jobs','demo','--source',jobs])

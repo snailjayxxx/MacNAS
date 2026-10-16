@@ -144,16 +144,28 @@ final class DurableFileEffectJournal {
     private let scope: FileEffectJournalScope
     private let root: URL
     private let databaseVersion: Int
+    private let physicalAccess: PhysicalCapacityLegacyAccess?
 
-    init(store: StateStore, scope: FileEffectJournalScope) throws {
+    init(store: StateStore, scope: FileEffectJournalScope, physicalAccess: PhysicalCapacityLegacyAccess? = nil) throws {
+        self.physicalAccess = physicalAccess
         databaseVersion = try store.schemaVersion()
-        try require([4,5].contains(databaseVersion), .unsupported); try store.validate(expectedVersion: databaseVersion)
+        try require([4,5,6].contains(databaseVersion), .unsupported); try store.validate(expectedVersion: databaseVersion)
         try require(scope.generation >= 0, .invalidSchema); try FileEffectMetadata.subject(scope.userID); try FileEffectMetadata.hash(scope.originScopeSHA256)
         guard let root = store.instanceRoot else { throw NASError.denied }
         self.store = store; self.scope = scope; self.root = root
         try validateScope(write: false)
     }
     private func validateScope(write: Bool) throws {
+        if let physicalAccess {
+            try require(physicalAccess.root == root && physicalAccess.userID == scope.userID && databaseVersion == 6
+                        && (!write || physicalAccess.purpose.writes), .denied)
+            try physicalAccess.check()
+        } else {
+            try require(!FileManager.default.fileExists(atPath: root.appendingPathComponent(FixturePhysicalCapacityNamespace.markerPath).path), .unsupported)
+            if databaseVersion >= 6 {
+                try require(try store.rows("SELECT EXISTS(SELECT 1 FROM macnas.physical_capacity_scopes);") == [["f"]], .unsupported)
+            }
+        }
         let identity = try PortableInstance.strictRead(InstanceIdentity.self, SafeFS.resolve(root, "instance.json"))
         try require(identity.schemaVersion == 1 && identity.instanceID == scope.instanceID && identity.generation == scope.generation && identity.kind == "synthetic-prototype", .denied)
         let config = try PortableInstance.strictRead(PortableConfig.self, SafeFS.resolve(root, "config/platform.json"))
@@ -175,7 +187,8 @@ final class DurableFileEffectJournal {
     }
     private static func reject(_ error: NASError) -> String { "INSERT INTO effect_result VALUES(jsonb_build_object('error','\(error.rawValue)')); RETURN;" }
     private var capacityMetadataReserve: String {
-        databaseVersion >= 5 ? "+(SELECT count(*)*3072 FROM macnas.capacity_scopes)+(SELECT count(*)*2048 FROM macnas.capacity_allocations)" : ""
+        let base = databaseVersion >= 5 ? "+(SELECT count(*)*3072 FROM macnas.capacity_scopes)+(SELECT count(*)*2048 FROM macnas.capacity_allocations)" : ""
+        return base + (databaseVersion >= 6 ? "+(SELECT count(*)*3072 FROM macnas.physical_capacity_scopes)+(SELECT count(*)*2048 FROM macnas.capacity_file_ownership)" : "")
     }
     private var budgetGuard: String {
         """
@@ -229,6 +242,7 @@ final class DurableFileEffectJournal {
                         && scope.originScopeSHA256 == executorPermit.originScopeSHA256
                         && executorPermit.registration.slots.contains { $0.id == payloadID }, .denied)
         }
+        try physicalAccess?.checkIntent(intent)
         try require(intent.kind == .recycle, .invalidSchema)
         let (intentSQL, intentHash, evidenceSQL) = try input(key, intent, evidence, bytes: byteCount)
         let keySQL = FileEffectMetadata.bytesSQL(key), operationSQL = FileEffectMetadata.uuidSQL(operationID), entrySQL = FileEffectMetadata.uuidSQL(entryID)
@@ -274,6 +288,7 @@ final class DurableFileEffectJournal {
                         && Data(intent.targetParentPath.utf8) == executorPermit.destinationParentPath
                         && scope.originScopeSHA256 == executorPermit.originScopeSHA256, .denied)
         }
+        try physicalAccess?.checkIntent(intent, entryID: entryID)
         try require(intent.kind == .restore && expectedEntryRevision > 0, .invalidSchema)
         let (intentSQL, intentHash, evidenceSQL) = try input(key, intent, evidence, bytes: evidence.object.bytes)
         let entrySQL = FileEffectMetadata.uuidSQL(entryID), operationSQL = FileEffectMetadata.uuidSQL(operationID), keySQL = FileEffectMetadata.bytesSQL(key)

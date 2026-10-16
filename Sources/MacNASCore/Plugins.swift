@@ -43,7 +43,7 @@ public final class SamplePluginRegistry: @unchecked Sendable {
     private func locked<T>(_ body:() throws -> T) rethrows -> T { lock.lock();defer { lock.unlock() };return try body() }
     public var states:[String:PluginState] { locked { entries.mapValues(\.state) } }
     public func register(_ manifest:PluginManifest) throws {
-        try require(SampleApp(rawValue:manifest.id) != nil && [1,2,3,4,5].contains(manifest.dataSchema) && manifest == .sample(manifest.id,dataSchema:manifest.dataSchema),.denied)
+        try require(SampleApp(rawValue:manifest.id) != nil && [1,2,3,4,5,6].contains(manifest.dataSchema) && manifest == .sample(manifest.id,dataSchema:manifest.dataSchema),.denied)
         locked { entries[manifest.id]=Entry(state:.registered,epoch:UUID(),manifest:manifest) }
     }
     public func disable(_ id:String) { locked { if entries[id] != nil { entries[id]?.state = .disabled;entries[id]?.epoch=UUID() } } }

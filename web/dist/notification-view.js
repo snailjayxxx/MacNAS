@@ -24,7 +24,7 @@
     text(consumerID,128,"invalidInput"); check(Number.isSafeInteger(capacity) && capacity >= 1 && capacity <= 100,"invalidInput");
     let info;
     try { info = await operations.overview(); } catch (error) { throw new M.ServiceError(codeOf(error)); }
-    check(info?.source === kind && info.apiVersion === 1 && (kind === "fixture" ? info.databaseSchema === 3 : [3,4,5].includes(info.databaseSchema)) && info.physicalPool === "unbound");
+    check(info?.source === kind && info.apiVersion === 1 && (kind === "fixture" ? info.databaseSchema === 3 : [3,4,5,6].includes(info.databaseSchema)) && info.physicalPool === "unbound");
     text(info.userID); check(["administrator","reader"].includes(info.role) && ["synthetic_development","read_only_recovery","rolled_back_recovery"].includes(info.mode));
     const context = freeze({ source: kind, userID: info.userID, role: info.role, mode: info.mode });
     if (!locks.has(provider)) locks.set(provider,new Map());

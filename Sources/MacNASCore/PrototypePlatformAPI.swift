@@ -141,7 +141,7 @@ public final class PrototypePlatformAPI: @unchecked Sendable {
         let identity = try PortableInstance.strictRead(InstanceIdentity.self, SafeFS.resolve(root, "instance.json"))
         try require(identity.schemaVersion == 1 && identity.kind == "synthetic-prototype" && identity.generation >= 0 && identity.instanceID == instanceID, .denied)
         let anchor = try RecycleObservationAnchor(root: root, identity: identity)
-        try require(anchor == recycleObservationAnchor, .denied); try require([4,5].contains(anchor.databaseSchema), .unsupported)
+        try require(anchor == recycleObservationAnchor, .denied); try require([4,5,6].contains(anchor.databaseSchema), .unsupported)
         let binding = try PortableInstance.strictRead(HostBinding.self, SafeFS.resolve(root, "host-binding/binding.json"))
         try require(["synthetic_development","read_only_recovery","rolled_back_recovery"].contains(binding.mode), .denied)
         return .init(sessionID: session.id, anchor: anchor, userID: userID, role: matches[0].role, mode: binding.mode)

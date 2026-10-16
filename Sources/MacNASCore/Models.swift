@@ -90,7 +90,7 @@ struct DatabaseDescriptor: Codable, Equatable {
     var baseDataSHA256: String? = nil
     var contentSHA256: String? = nil
     func version() throws -> Int {
-        guard let version = Int(schemaVersion), [1,2,3,4,5].contains(version) else { throw NASError.invalidSchema }
+        guard let version = Int(schemaVersion), [1,2,3,4,5,6].contains(version) else { throw NASError.invalidSchema }
         try require(engine == "PostgreSQL" && major == "18" && snapshotFormat == "pgdump-custom", .invalidSchema)
         for hash in [baseDataSHA256, contentSHA256].compactMap({ $0 }) {
             try require(hash.count == 64 && hash.allSatisfy { $0.isASCII && ("0123456789abcdef".contains($0)) }, .invalidSchema)
