@@ -23,7 +23,7 @@ submitLabelJob 接受管理员当前身份，创建属于该用户的标签任�
 
 submitAppValueJob、appJobs、cancelAppJob、appJobEvents、acknowledgeAppJobEvents 使用现有套件票据，每次核对实例、epoch、权限及期限。套件不能选择另一个受众或核心 SQL；已提交的应用任务只能写自己应用的状态表。应用角色不能直接访问新任务或 outbox 表。已入队的数据任务由可信核心管理，临时 UI 票据失效不自动撤销已接受的工作；取消需要调用对应任务接口。
 
-这些方法要求数据库 Schema 3。历史 enqueue 接口只保留给 Schema 1/2 的第一轮测试；Schema 3 拒绝该旧入口，使用有载荷及作用域的 submit 方法。旧 legacy fixture 任务不由新工作进程领取。
+这些任务/事件方法目前支持Schema3/4；N-010初始实现为Schema3。历史 enqueue 接口只保留给 Schema 1/2 的第一轮测试；Schema3/4拒绝该旧入口，使用有载荷及作用域的 submit 方法。旧 legacy fixture 任务不由新工作进程领取。
 
 DurableJobQueue 是可信核心执行器，不传给 native 样例。内置工作只有测试标签、应用私有状态、合成文件摘要；没有任务脚本、网络发送、系统授权或真实卷绑定。workOne/CLI work-once 供当前合成测试手动驱动，不安装常驻服务。具体一致性、租约和事件语义见 ADR-004。
 
@@ -38,3 +38,17 @@ DurableJobQueue.page(audience:afterID:pageSize:)供可信核心使用；afterID�
 jobEventConsumerStatus(consumerID:session:)返回EventConsumerStatus：consumerID、visibility、acknowledgedThrough、deliveredThrough。只读事务限定当前用户受众，自己的行visible，未创建或其它用户/套件行统一notVisible及空位置；不创建消费者，不改变交付/确认，也不删除事件/收据。恢复及回退只读允许查询，poll/ack继续拒写。
 
 实例/数据库、注册会话、用户原始字节、角色和模式在查询前后与最终编码后复核；上下文变化拒绝结果。核心可保留Int64，桌面消息拒绝超出JS安全整数的值。DurableJobQueue.consumerStatus的受众参数仅供可信核心，桌面不能选择受众。该结果是一次观察，不是跨连接来源证明或自动重连/清理旧批授权。详见[ADR-015](../decisions/ADR-015-read-only-event-consumer-status.md)及[桌面消息契约](DESKTOP_API.md)。
+
+## N-029 C2：宿主独立批准的只读文件效果观察
+
+|宿主API|作用与边界|
+|---|---|
+|authorizeFixtureRecycleObservation(session:confirmed:)|confirmed必须true；仅新建TestLab、Schema4、原始UTF8唯一管理员。固定当前会话/角色/模式、API构造时实例/代次/DB/宿主和登记字节；允许当前只读恢复模式的新observe批准。不是RPC。|
+|revokeFixtureRecycleObservation(session:)|只撤销该会话内存批准，不写DB/载荷；endSession同样撤销。|
+|observeFixtureRecycleOperation(operationID:session:)|标准小写operation UUID，返回严格C1正文投影；每许可/读取块和最终编码复核。只分类，不移动/取消/结算或释放费用。|
+
+每API最多8个会话批准。同会话重新批准替换并撤销旧grant；失败清理只移除仍属于该Entry的注册，不撤销后来的替换。管理员会话之间、读者、已结束/撤销会话、旧实例/代次/DB/宿主/登记不能借用批准。新明确批准不重新运行旧文件效果。
+
+直接宿主调用返回正文RecycleOperationObservation；DesktopBridge唯一新消息observeRecycleOperation另包装版本化来源context，具名客户端固定该来源和借用连接。ID、观察结果及scopeID都不授予回收/恢复/结算权限，宿主批准无消息签发入口。数据字段、原始主体、安全整数、独立operation/entry计数及生命周期见[正文契约](RECYCLE_OBSERVATION_MODEL.md)、[桌面契约](DESKTOP_API.md)和ADR-026。
+
+本阶段有实际只读API、CLI开关及Node→Swift0/4字节/16MiB证据，新391 Swift/16独立管道和306 Node通过；旧C1纯模型计数耦合反例、修复和完整新收据见[C2证据](../evidence/n029-c2-2026-10-16.json)。这不是生产认证/网页接线、共享容量、执行/列表/清理RPC或浏览器验收。

@@ -1,4 +1,4 @@
-# 网页桌面适配契约（N-011至N-027，v1）
+# 网页桌面适配契约（N-011至N-029 C2，v1）
 
 页面当前使用model.js的createFixtureAdapter。业务内容为合成数据、刷新重置；管理员/读者/只读恢复选择器是演示场景，不是登录。不连接Swift、PostgreSQL、NAS文件、系统账户或真实存储池。
 
@@ -36,7 +36,7 @@ DesktopBridge绑定宿主已有的Schema 3 API和会话；createBridgeAdapter(tr
 
 |白名单方法|params精确字段|结果及限制|
 |---|---|---|
-|overview|空对象|fixture-host来源、用户/角色/模式、Schema 3、受众任务计数、逻辑估计容量及资料库；物理池unbound|
+|overview|空对象|fixture-host来源、用户/角色/模式、Schema 3/4、受众任务计数、逻辑估计容量及资料库；物理池unbound|
 |authorizeApp|id|overview/files/storage/apps/tasks/settings/preferences；settings限管理员|
 |listJobs|空对象|完整数组或明确拒绝；最多4096条，另受输出/响应字节预算约束；当前用户且app_id为空|
 |listJobsPage|可选pageSize、cursor|pageSize默认50、范围1至100；仅当前用户；返回版本化实时任务页，见下文|
@@ -66,6 +66,7 @@ DesktopBridge绑定宿主已有的Schema 3 API和会话；createBridgeAdapter(tr
 |copyFileChunk|copyID、offset|第28个方法；宿主读源写暂存最多32KiB，最后块校验并不覆盖发布|
 |fileCopyStatus|copyID|第29个方法；原会话短期结果，不授予复制/取消权|
 |cancelFileCopy|copyID|第30个方法；原主体清理未发布私有对象，不删除源或已发布目标|
+|observeRecycleOperation|operationID|第31个固定方法；Schema4、独立宿主只读批准；精确观察正文及固定来源外壳，见N-029 C2|
 
 除已列可选字段外，未知/缺失/错类型一律拒绝。所有字符串拒绝NUL；consumerID/libraryID/id/key最多128字节。协议整数不接受布尔、负数、小数或指数形式。SQL、shell、根URL、用户、角色、模式、数据库选择、会话创建、卷清单/绑定、目录批准、读者变更和套件执行不进入消息白名单。
 
@@ -277,3 +278,15 @@ FC01–FC06连同原46项共52项实际浏览器验收均未执行。元素替�
 localStorage键macnas.desktop.preferences.v1只含version、locale、theme和允许应用的窗口几何；损坏/不可访问时使用默认值。会话/业务数据/令牌不保存，此偏好不属于可携实例配置。数据库仍为PostgreSQL 18-only。
 
 身份切换退出旧会话、关闭窗口、清空数据通知，并通过epoch丢弃旧响应。恢复模式可看任务/文件，拒绝创建、取消和事件游标修改。生产认证、浏览器接线和跨Mac会话均未验收。
+
+## N-029 C2：独立批准的只读回收／恢复核对
+
+observeRecycleOperation的params精确为{operationID}，值是标准小写UUID；拒绝entryID、路径、用户、confirmed和未知字段。宿主方法authorizeFixtureRecycleObservation(session:confirmed:)不在消息白名单，CLI只有显式--approve-synthetic-recycle-observation才尝试签发；默认无批准，读者不能签发。只限新建TestLab合成实例、Schema4及原始UTF8唯一管理员，允许当前只读恢复模式的新observe批准。固定API构造时的实例/代次/数据库/宿主，批准另固定会话/角色/模式和登记字节，每许可/32KiB读取及最终响应编码后复查。每API最多8个会话批准；结束/撤销仅清内存，不写DB/载荷。
+
+响应data精确为{observationEnvelopeVersion:1,context,observation}。context精确为{contextVersion:1,source:"fixture-host",scopeID,userID,role,mode}；scopeID是64位小写十六进制标记。每API私有随机nonce作为HMAC键，输入按域隔离、长度分帧固定会话、构造锚点及登记；同API/会话/登记重新批准相等，其他API/会话/登记不同。标记只作来源防错等值，不是认证凭据、操作能力或强fencing，不用于自动采用跨重启来源。
+
+observation沿用[只读正文契约](RECYCLE_OBSERVATION_MODEL.md)：精确observationVersion=1、operationID、visibility、record、classification；record可见时仅operationID、entryID、kind、phase、revision、entryRevision、chargeState、chargedBytes、ownerUserHex、intentSHA256。没有绝对/vault路径、FD/inode/stamp、grant或任意错误信息。整数为安全整数，chargedBytes在0..16777216，released为0，方向/阶段/计量和分类必须一致；matchedPost、observed/completed要求已有post。无记录统一notVisible/record:null，不推断未执行或费用为0；candidateMoved/matchedPost不推进完成或授权结算。
+
+具名客户端observeRecycleOperation(operationID,{signal}?)须先overview，固定Schema4及当前管理员主体/模式；每ID一个、最多8个在途。校验精确外壳/正文并固定首次有效scopeID，来源变化拒绝且关闭客户端；普通业务拒绝保留连接。createRecycleObservationModel(client,{operationID,entryID?},{onChange?})只借用固定客户端，创建只查overview，refresh才读取操作。dispose清本地视图并丢弃迟到结果，不取消操作/读请求或关闭共享连接；显式AbortSignal/超时仍沿用原客户端关闭政策，不自动重连/重试。
+
+实际验证见[C2阶段证据](../evidence/n029-c2-2026-10-16.json)：新391 Swift、16独立CLI管道及306 Node，含0/4字节/16MiB真实Node→Swift只读摘要及载荷检查、实际CLI默认/明确批准/读者拒绝。静态网页没有加载/提供具名客户端和观察模块，未新增DOM、执行/列表/结算RPC或共享容量接线；本轮按用户要求无浏览器/预览。后续执行批准、列表和整树容量单独实现，不从只读状态、ID或scopeID推导写权限。

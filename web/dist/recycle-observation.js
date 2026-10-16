@@ -36,7 +36,7 @@
   function record(value,binding){
     const p=fields(value,["operationID","entryID","kind","phase","revision","entryRevision","chargeState","chargedBytes","ownerUserHex","intentSHA256"]);
     id(p.operationID);id(p.entryID);check(p.operationID===binding.operationID&&(!binding.entryID||p.entryID===binding.entryID));
-    check(["recycle","restore"].includes(p.kind)&&phases.has(p.phase));integer(p.revision,1);integer(p.entryRevision,p.revision);
+    check(["recycle","restore"].includes(p.kind)&&phases.has(p.phase));integer(p.revision,1);integer(p.entryRevision,1);
     check(["reserved","retained","released"].includes(p.chargeState));integer(p.chargedBytes,0,fileBytes);
     check(typeof p.ownerUserHex==="string"&&p.ownerUserHex===hex(binding.ownerUserID));
     check(typeof p.intentSHA256==="string"&&/^[0-9a-f]{64}$/.test(p.intentSHA256));
@@ -93,7 +93,6 @@
                   check(["operationID","entryID","kind","ownerUserHex","intentSHA256"].every(key=>current[key]===lastVisible[key]));
                   check(current.revision>=lastVisible.revision&&current.entryRevision>=lastVisible.entryRevision);
                   if(current.revision===lastVisible.revision)check(current.phase===lastVisible.phase);
-                  else check(current.entryRevision>lastVisible.entryRevision);
                   if(current.entryRevision===lastVisible.entryRevision)check(current.chargeState===lastVisible.chargeState&&current.chargedBytes===lastVisible.chargedBytes);
                   if(lastVisible.chargeState==="released")check(current.chargeState==="released");
                   if(["completed","cancelled"].includes(lastVisible.phase))check(current.phase===lastVisible.phase);

@@ -41,3 +41,9 @@ DescriptorLibrary每次有界全扫描，最多8192项、名称合计1MiB、单�
 新增directory-view.js显式借用已有fixture会话或具名客户端。宿主仍使用本契约原有卷/目录批准及有界读取；网页本身为固定内存样例，每页3项，没有真实批准或磁盘扫描。样例consistency为synthetic-fixed-directory，实际宿主仍为directory-stamped-live-metadata；未知时间/库估计为null，不把样例数组排序当成真实扫描证据。
 
 控制器只保留当前页，错误保留标注的旧内容并要求显式重读；关闭窗口不关闭任务/通知共享提供者。预览限当前页普通文本且再次校验64KiB/UTF-8/上下文，宿主依旧每次独立授权。接口见[桌面契约](DESKTOP_API.md)，生命周期、迟到结果及限制见[ADR-014](../decisions/ADR-014-directory-page-presentation.md)。F01–F08和既有W/T/N均待用户回家实测，没有浏览器业务连接或生产文件访问。
+
+## N-029 C2：私有TestLab回收观察与现有资料库分离
+
+B1/B2的私有登记库及vault不是上述fixtureContent浏览/上传/复制树的自动扩展。C2只新增宿主authorizeFixtureRecycleObservation、revokeFixtureRecycleObservation及observeFixtureRecycleOperation，固定原始主体、会话、实例/代次/DB/宿主和登记；只有observeRecycleOperation进入消息层。它查询已有operation，不创建/移动/取消/结算，窗口与会话退出不释放日志费用。新CLI独立开关默认关闭，读者拒绝；真实合成Node→Swift和CLI已验证，字段/来源/生命周期见[桌面契约](DESKTOP_API.md)及ADR-026。
+
+原生各上传/复制注册表的64MiB预留、持久回收reserved+retained与网页共享64MiB树仍是不同的现有范围。C2不把它们相加后声称完成统一准入；恢复释放的是回收计量，恢复后的可见字节仍须由后续共享容量权威计量。普通portable继续拒绝任何登记vault或日志历史，payload备份/跨Mac接管及生产授权没有因只读桥接完成。

@@ -1,19 +1,21 @@
-# 回收/恢复只读核对模型（C1）
+# 回收/恢复只读核对正文与模型（C1 / C2）
 
-状态：C1已实现并通过完整前端模型检查，尚未接入宿主DTO、桥接白名单、静态桌面或浏览器。它不创建批准、权限、连接或文件操作。C2须提供当前会话/实例/代次固定的真实适配器；模型中的ID等值校验不是生产认证。
+状态：C1正文/模型已由C2宿主投影和固定来源适配器接通，并通过实际合成桥接及新完整回归；尚未接入静态桌面或浏览器。它不创建批准、权限、连接或文件操作。C2适配器固定当前会话/实例/代次和来源外壳，见[桌面契约](DESKTOP_API.md)；模型中的ID等值校验不是生产认证。
 
 ## 只读数据投影
 
-observationVersion固定1。响应精确五字段：observationVersion、operationID、visibility、record、classification。ID使用标准小写UUID；未来宿主投影负责规范输出。visibility为visible或notVisible，后者必须record=null、classification=notVisible，并保留被查询的operationID，不区分陌生ID与他人记录。
+observationVersion固定1。响应精确五字段：observationVersion、operationID、visibility、record、classification。ID使用标准小写UUID；C2宿主投影负责规范输出。visibility为visible或notVisible，后者必须record=null、classification=notVisible，并保留被查询的operationID，不区分陌生ID与他人记录。
 
-visible的record精确对应日志的operationID、entryID、kind、phase、revision、entryRevision、chargeState、chargedBytes、ownerUserHex、intentSHA256；不接FS stamp、绝对路径、vault路径、批准令牌或任意附加字段。ownerUserHex须等于调用方捕获主体的原始UTF8字节，规范等价Unicode不合并。revision为正的JS安全整数，entryRevision不能小于operation revision；费用0..16MiB，released必须0。当前entry费用可随后来恢复变化，历史已完成recycle或已取消restore并不永久等于retained。
+visible的record精确对应日志的operationID、entryID、kind、phase、revision、entryRevision、chargeState、chargedBytes、ownerUserHex、intentSHA256；不接FS stamp、绝对路径、vault路径、批准令牌或任意附加字段。ownerUserHex须等于调用方捕获主体的原始UTF8字节，规范等价Unicode不合并。revision与entryRevision各自为正的JS安全整数，属于独立计数，不比较两者大小；费用0..16MiB，released必须0。当前entry费用可随后来恢复变化，历史已完成recycle或已取消restore并不永久等于retained。
 
 classification为notObserved、sourceOnly、candidateMoved、matchedPost、changed、ambiguous或统一notVisible，且须与日志允许的证据阶段一致。candidateMoved不是完成证明；observed/uncertain的matchedPost仍不推进journal phase、不释放计量或获得结算批准。summary分别给出journalPhase、journalCompleted、classification、chargeState/chargedBytes和requiresReview，不导出执行能力。notVisible费用保持null并要求核对，不推断为成功、无效果或已释放。
 
 ## 生命周期
 
-createReadOnlyModel接operationID、ownerUserID、read回调，及可选entryID/onChange。构造不读取，只有显式refresh调用read；模型不重试、不取消/关闭借用来源，也不接原始文件路径。后续同operation的可见结果固定首个entry/kind/owner/intent，拒绝revision倒退、同revision改phase/charge、终态改phase及released重新收费。旧completed operation可保留operation revision而随着entry revision推进显示已释放的当前计量。
+createReadOnlyModel接operationID、ownerUserID、read回调，及可选entryID/onChange。构造不读取，只有显式refresh调用read；模型不重试、不取消/关闭借用来源，也不接原始文件路径。后续同operation的可见结果固定首个entry/kind/owner/intent，拒绝任一计数倒退、同operation revision改phase、同entryRevision改charge/bytes、终态改phase及released重新收费。旧completed operation可保留operation revision而随着entry revision推进显示已释放的当前计量。
 
 视图phase只描述读取生命周期，不是文件操作阶段。刷新失败保留旧观察并标明stale；错误只用封闭代码，任意异常不回显路径或消息。并发refresh在发起第二次读取前拒绝busy。dispose清空观察及身份锚点，读取中关闭后的迟到成功/异常不改闭合视图；onChange在reading阶段同步关闭，也不会启动旧读取。refresh在finally更新busy后才返回最终snapshot。
 
 该模块只校验已提供的数据，不签发宿主观察批准，不验证独立数据库来源，不判断文件系统当前状态。C2必须把宿主的独立新批准、当前会话/主体、实例generation/DB和固定连接上下文保留到查询与响应编码之后；不能因纯模型通过就新增RPC或网页能力。
+
+C2真实桥接定向发现原C1纯模型错误耦合了两种计数。实际已完成回收是operation revision4、entryRevision2，armed/observed/uncertain也可推进操作而保持条目版本不变。C2修正两侧验证与读取推进，保留实际失败、只读DB反例及模型红例，原C1历史收据不重写。

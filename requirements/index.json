@@ -2119,6 +2119,26 @@
             "docs/plans/N-029-C1-ACCEPTANCE.md",
             "docs/decisions/ADR-025-read-only-recycle-observation.md"
           ]
+        },
+        {
+          "id": "FIL-01.host_approved_readonly_recycle_observation_bridge",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "Guarded synthetic host-approved readonly API/RPC; actual Node-to-Swift0/4/16777216-byte observations preserve DB digest and payload. No execution/list/UI/production authentication.",
+          "evidence": [
+            "docs/evidence/n029-c2-2026-10-16.json",
+            "docs/plans/N-029-C2-ACCEPTANCE.md",
+            "docs/decisions/ADR-026-host-approved-recycle-observation.md"
+          ]
+        },
+        {
+          "id": "FIL-01.fixed_recycle_observation_source_context",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "Exact C1 body plus fixed API/session/anchor/registration source context, named client and borrowed model; marker equality only, no authentication/fencing or automatic adoption.",
+          "evidence": [
+            "docs/evidence/n029-c2-2026-10-16.json",
+            "docs/plans/N-029-C2-ACCEPTANCE.md",
+            "docs/decisions/ADR-026-host-approved-recycle-observation.md"
+          ]
         }
       ]
     },

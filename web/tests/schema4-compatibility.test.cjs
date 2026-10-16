@@ -6,7 +6,7 @@ const code=value=>error=>error instanceof M.ServiceError&&error.code===value;
 const info=(schema=4)=>({apiVersion:1,source:"fixture-host",userID:"fixture-owner",role:"administrator",mode:"synthetic_development",languages:["zh-CN"],databaseSchema:schema,active:0,completed:0,logicalReferenceBytes:0,physicalPool:"unbound",taskTimestampsAvailable:false,libraries:[]});
 const response=(request,data)=>({apiVersion:1,requestId:request.requestId,data});
 
-test("Schema4 host keeps existing typed task, notification and directory readers without recycle capabilities",async()=>{
+test("Schema4 host keeps existing typed task, notification and directory readers without recycle mutation capabilities",async()=>{
   const methods=[];
   const client=C.createDesktopClient({transport:async request=>{
     methods.push(request.method);

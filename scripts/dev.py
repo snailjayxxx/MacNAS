@@ -7,6 +7,9 @@ expected=json.loads((WORK/'Evidence/environment.json').read_text())
 actual=plistlib.loads(subprocess.check_output(['/usr/sbin/diskutil','info','-plist','/Volumes/MacNAS-Dev']))
 assert actual['VolumeUUID']==expected['volume_uuid'] and actual['MountPoint']=='/Volumes/MacNAS-Dev' and actual['FilesystemType']=='apfs' and not actual['Internal'], 'BLOCKED: development volume identity changed'
 assert ROOT.is_relative_to(Path('/Volumes/MacNAS-Dev')) and ROOT.resolve()==ROOT, 'BLOCKED: unsafe project path'
+dev_build_namespace=os.environ.get('MACNAS_DEV_BUILD_NAMESPACE','')
+assert dev_build_namespace in ['', 'n029-c2'], 'Unknown development build namespace'
+def dev_build_dir(name): return WORK/'Build'/(name+('-'+dev_build_namespace if dev_build_namespace else ''))
 runid=datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))).strftime('%Y%m%dT%H%M%S')+'-'+uuid.uuid4().hex[:8]
 evidence=WORK/'Evidence/runs'/runid; evidence.mkdir(parents=True)
 lab=WORK/'TestLab'/runid;lab.mkdir()
@@ -15,12 +18,12 @@ pgbin=WORK/'Build/postgresql/install-18.6-macos15/bin';assert (pgbin/'postgres')
 socket=Path(tempfile.mkdtemp(prefix='macnas-pg-',dir='/private/tmp'))
 env={k:v for k,v in os.environ.items() if not k.startswith('PG')}
 env.update({'MACNAS_TESTLAB':str(lab),'MACNAS_PG_BIN':str(pgbin),'MACNAS_PG_SOCKET':str(socket),
- 'CLANG_MODULE_CACHE_PATH':str(WORK/'Build/clang-module-cache'),'SWIFTPM_MODULECACHE_OVERRIDE':str(WORK/'Build/swift-module-cache'),
+ 'CLANG_MODULE_CACHE_PATH':str(dev_build_dir('clang-module-cache')),'SWIFTPM_MODULECACHE_OVERRIDE':str(dev_build_dir('swift-module-cache')),
  'LC_ALL':'C','LANG':'C','HOME':str(socket)})
 node=shutil.which('node');assert node,'Existing Node.js required; no automatic installation'
 env['MACNAS_NODE_BINARY']=node
-flags=['--scratch-path',str(WORK/'Build/swift'),'--cache-path',str(WORK/'Build/swift-cache'),'--config-path',str(WORK/'Build/swift-config'),'--security-path',str(WORK/'Build/swift-security')]
-tracked_sources=[ROOT/'Package.swift',ROOT/'web/dist/model.js',ROOT/'web/dist/bridge-client.js',ROOT/'web/dist/task-pages.js',ROOT/'web/dist/notification-view.js',ROOT/'web/dist/notification-reconciliation.js',ROOT/'web/dist/directory-view.js',ROOT/'web/dist/file-operations.js',ROOT/'web/dist/file-transfers.js',ROOT/'web/dist/sha256.js',ROOT/'web/dist/file-copies.js',ROOT/'web/dist/file-copy-fixture.js']+[p for folder in ['Sources','Tests','database','scripts'] for p in (ROOT/folder).rglob('*') if p.is_file() and p.suffix in ['.swift','.sql','.py','.cjs']]
+flags=['--scratch-path',str(dev_build_dir('swift')),'--cache-path',str(dev_build_dir('swift-cache')),'--config-path',str(dev_build_dir('swift-config')),'--security-path',str(dev_build_dir('swift-security'))]
+tracked_sources=[ROOT/'Package.swift',ROOT/'web/dist/model.js',ROOT/'web/dist/recycle-observation.js',ROOT/'web/dist/bridge-client.js',ROOT/'web/dist/task-pages.js',ROOT/'web/dist/notification-view.js',ROOT/'web/dist/notification-reconciliation.js',ROOT/'web/dist/directory-view.js',ROOT/'web/dist/file-operations.js',ROOT/'web/dist/file-transfers.js',ROOT/'web/dist/sha256.js',ROOT/'web/dist/file-copies.js',ROOT/'web/dist/file-copy-fixture.js']+[p for folder in ['Sources','Tests','database','scripts'] for p in (ROOT/folder).rglob('*') if p.is_file() and p.suffix in ['.swift','.sql','.py','.cjs']]
 source_hashes={str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(tracked_sources)}
 (evidence/'source-sha256.json').write_text(json.dumps(source_hashes,indent=2)+'\n')
 git_head=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip()
@@ -33,9 +36,9 @@ def run(name,command,input=None,check=True,expected_exit=0):
     print(name+': running',flush=True)
     with log.open('w') as output:
         process=subprocess.Popen([str(c) for c in command],cwd=ROOT,env=env,stdin=subprocess.PIPE if input is not None else subprocess.DEVNULL,text=True,stdout=output,stderr=subprocess.STDOUT,start_new_session=True)
-        # B1 measured4259s for355 tests; restore adds19 effect/crash cases.
-        # Reserve a bounded100 minutes for the expanded full suite, retaining group cleanup.
-        try:process.communicate(input=input,timeout=6000 if name=='swift-tests' else 420)
+        # B2 full measured5085.365s; corrected17 observation tests measured676.198s.
+        # Reserve a bounded110 minutes for391 tests; per-command/functional deadlines stay unchanged.
+        try:process.communicate(input=input,timeout=6600 if name=='swift-tests' else 420)
         except subprocess.TimeoutExpired:
             os.killpg(process.pid,signal.SIGTERM)
             try:process.communicate(timeout=5)
@@ -131,7 +134,7 @@ finally:
         try:run('postgres-stop',[pgbin/'pg_ctl','-D',cluster,'--wait','--timeout=20','--mode=fast','stop'])
         except Exception as error:outcome='FAILED';print('PostgreSQL cleanup failed: '+str(error),flush=True)
     if not started or not (lab/'postgresql/postmaster.pid').exists():shutil.rmtree(socket)
-    summary={'run_id':runid,'status':outcome,'os':expected['os'],'architecture':'arm64','database':'PostgreSQL 18.6','database_transport':'private Unix socket only; TCP disabled','synthetic_data':True,'cross_mac':'NOT_EXECUTED','physical_pool':'BLOCKED_NO_DESTROYABLE_TEST_DISKS','macOS15_runtime':'NOT_EXECUTED','source_base':git_head,'bootstrap_lineage':'e05b3d7e3acbeb447f10c2f5f27a64be332be6f5','branch':git_branch,'working_tree_status_at_start':git_status,'commit':git_head,'test_filter':env.get('MACNAS_TEST_FILTER'),'source_receipt':'source-sha256.json','sources_unchanged':all(hashlib.sha256((ROOT/p).read_bytes()).hexdigest()==h for p,h in source_hashes.items()),'results':results}
+    summary={'run_id':runid,'status':outcome,'os':expected['os'],'architecture':'arm64','build_namespace':dev_build_namespace,'swift_scratch':str(dev_build_dir('swift')),'database':'PostgreSQL 18.6','database_transport':'private Unix socket only; TCP disabled','synthetic_data':True,'cross_mac':'NOT_EXECUTED','physical_pool':'BLOCKED_NO_DESTROYABLE_TEST_DISKS','macOS15_runtime':'NOT_EXECUTED','source_base':git_head,'bootstrap_lineage':'e05b3d7e3acbeb447f10c2f5f27a64be332be6f5','branch':git_branch,'working_tree_status_at_start':git_status,'commit':git_head,'test_filter':env.get('MACNAS_TEST_FILTER'),'source_receipt':'source-sha256.json','sources_unchanged':all(hashlib.sha256((ROOT/p).read_bytes()).hexdigest()==h for p,h in source_hashes.items()),'results':results}
     (evidence/'summary.json').write_text(json.dumps(summary,ensure_ascii=False,indent=2)+'\n')
     print('SUMMARY:',evidence/'summary.json',flush=True)
     print('STATUS:',outcome,flush=True)

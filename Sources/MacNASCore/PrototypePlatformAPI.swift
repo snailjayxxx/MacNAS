@@ -39,6 +39,9 @@ public final class PrototypePlatformAPI: @unchecked Sendable {
     public let root:URL
     public let registry:SamplePluginRegistry
     private let instanceID:UUID
+    private let recycleObservationAnchor: RecycleObservationAnchor
+    private let recycleObservationSourceNonce = Data((UUID().uuidString + UUID().uuidString).utf8)
+    let recycleObservationReads = RecycleObservationRegistry()
     let fixtureVolumes: FixtureVolumeRegistry
     let fixtureContent = FixtureContentRegistry()
     let jobPages = JobPageRegistry()
@@ -51,7 +54,9 @@ public final class PrototypePlatformAPI: @unchecked Sendable {
     private var libraries:[UUID:URL]=[:]
     public init(root:URL,registry:SamplePluginRegistry=SamplePluginRegistry()) throws {
         self.root=root;self.registry=registry
-        instanceID=try PortableInstance.validateLayout(root,exported:false).instanceID
+        let identity = try PortableInstance.validateLayout(root,exported:false)
+        instanceID = identity.instanceID
+        recycleObservationAnchor = try RecycleObservationAnchor(root: root, identity: identity)
         fixtureVolumes = try FixtureVolumeRegistry(references: PortableInstance.strictRead([VolumeReference].self, SafeFS.resolve(root, "logical-storage/references.json")))
         for app in SampleApp.allCases {
             try registry.register(PortableInstance.strictRead(PluginManifest.self,SafeFS.resolve(root,"apps/\(app.rawValue)/manifest.json")))
@@ -67,7 +72,7 @@ public final class PrototypePlatformAPI: @unchecked Sendable {
         guard let id,let user=try config().users.first(where:{$0.id==id}) else { throw NASError.denied }
         try require(!administrator || user.role == "administrator",.denied);return user
     }
-    public func endSession(_ session:PrototypeSession) { sessionLock.lock();sessions.removeValue(forKey:session.id);sessionLock.unlock(); fixtureVolumes.endSession(session.id);jobPages.endSession(session.id);directoryPages.endSession(session.id);fileOperations.endSession(session.id);fileTransfers.endSession(session.id);fileCopies.endSession(session.id) }
+    public func endSession(_ session:PrototypeSession) { sessionLock.lock();sessions.removeValue(forKey:session.id);sessionLock.unlock(); fixtureVolumes.endSession(session.id);jobPages.endSession(session.id);directoryPages.endSession(session.id);fileOperations.endSession(session.id);fileTransfers.endSession(session.id);fileCopies.endSession(session.id);recycleObservationReads.endSession(session.id) }
     private func writable() throws {
         let binding=try PortableInstance.strictRead(HostBinding.self,SafeFS.resolve(root,"host-binding/binding.json"))
         try require(binding.mode == "synthetic_development",.denied)
@@ -125,6 +130,32 @@ public final class PrototypePlatformAPI: @unchecked Sendable {
         let binding=try PortableInstance.strictRead(HostBinding.self,SafeFS.resolve(root,"host-binding/binding.json"))
         return JobPageScope(sessionID:session.id,instanceID:identity,databaseName:try PortableInstance.store(root).databaseName,
                             userID:Data(caller.id.utf8),role:caller.role,mode:binding.mode)
+    }
+    /// Metadata-only live checks: never open an old library/vault or launch SQL from a chunk check.
+    func recycleObservationScope(_ session: PrototypeSession) throws -> RecycleObservationReadScope {
+        sessionLock.lock(); let raw = sessions[session.id]; sessionLock.unlock()
+        guard let raw else { throw NASError.denied }
+        let userID = Data(raw.utf8); try FileEffectMetadata.subject(userID)
+        let config = try self.config(), matches = config.users.filter { Data($0.id.utf8) == userID }
+        try require(config.schemaVersion == 1 && matches.count == 1 && matches[0].role == "administrator", .denied)
+        let identity = try PortableInstance.strictRead(InstanceIdentity.self, SafeFS.resolve(root, "instance.json"))
+        try require(identity.schemaVersion == 1 && identity.kind == "synthetic-prototype" && identity.generation >= 0 && identity.instanceID == instanceID, .denied)
+        let anchor = try RecycleObservationAnchor(root: root, identity: identity)
+        try require(anchor == recycleObservationAnchor, .denied); try require(anchor.databaseSchema == 4, .unsupported)
+        let binding = try PortableInstance.strictRead(HostBinding.self, SafeFS.resolve(root, "host-binding/binding.json"))
+        try require(["synthetic_development","read_only_recovery","rolled_back_recovery"].contains(binding.mode), .denied)
+        return .init(sessionID: session.id, anchor: anchor, userID: userID, role: matches[0].role, mode: binding.mode)
+    }
+    func makeRecycleObservationContext(scope: RecycleObservationReadScope, registration: RecycleVaultRegistration) throws -> RecycleObservationContext {
+        let parts = [Data("macnas-recycle-observation-source-v1".utf8),
+            Data(scope.sessionID.uuidString.lowercased().utf8), Data(scope.anchor.instanceID.uuidString.lowercased().utf8),
+            Data(String(scope.anchor.generation).utf8), scope.anchor.databaseName, scope.anchor.hostID, scope.userID,
+            Data(scope.role.utf8), Data(scope.mode.utf8), try FileEffectMetadata.encoded(registration)]
+        var framed = Data()
+        for part in parts { framed.append(Data("\(part.count):".utf8)); framed.append(part) }
+        let marker = HMAC<SHA256>.authenticationCode(for: framed, using: SymmetricKey(data: recycleObservationSourceNonce))
+            .map { String(format: "%02x", $0) }.joined()
+        return .init(scopeID: marker, userID: String(decoding: scope.userID, as: UTF8.self), role: scope.role, mode: scope.mode)
     }
     public func jobPage(pageSize:Int=50,cursor:String?=nil,session:PrototypeSession) throws -> DurableJobPage {
         try withJobPage(pageSize:pageSize,cursor:cursor,session:session) { $0 }

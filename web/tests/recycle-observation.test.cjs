@@ -36,7 +36,7 @@ test("raw subject bytes remain distinct including canonical Unicode variants",()
 });
 test("numbers reject boolean, negative, fractional and unsafe integers",()=>{
   for(const revision of [true,0,1.5,Number.MAX_SAFE_INTEGER+1,NaN,Infinity])bad(()=>R.observation(dto(record({revision})),scope));
-  bad(()=>R.observation(dto(record({entryRevision:1})),scope));
+  for(const entryRevision of [true,0,-1,1.5,Number.MAX_SAFE_INTEGER+1,NaN,Infinity])bad(()=>R.observation(dto(record({entryRevision})),scope));
   for(const chargedBytes of [-1,0.5,true,16777217])bad(()=>R.observation(dto(record({chargedBytes})),scope));
   assert.equal(R.observation(dto(record({chargedBytes:0})),scope).record.chargeState,"reserved");
 });
@@ -113,4 +113,12 @@ test("completed history can retain its operation revision while entry release ad
   let calls=0;const model=R.createReadOnlyModel({...scope,read:async()=>dto(record({phase:"completed",revision:4,entryRevision:calls++===0?4:8,chargeState:calls===1?"retained":"released",chargedBytes:calls===1?4:0}),"ambiguous")});
   await model.refresh();assert.equal(model.snapshot().observation.record.chargeState,"retained");
   const result=await model.refresh();assert.equal(result.observation.record.revision,4);assert.equal(result.observation.record.chargeState,"released");assert.equal(result.observation.record.entryRevision,8);
+});
+
+const journalBase={operationID,entryID,kind:'recycle',chargeState:'reserved',chargedBytes:4,ownerUserHex,intentSHA256:'a'.repeat(64)};
+const rows=[['prepared',1,1,'reserved',4,'notObserved'],['armed',2,1,'reserved',4,'sourceOnly'],['observed',3,1,'reserved',4,'matchedPost'],['uncertain',4,1,'reserved',4,'matchedPost'],['completed',5,2,'retained',4,'matchedPost'],['completed',5,4,'released',0,'ambiguous']].map(([phase,revision,entryRevision,chargeState,chargedBytes,classification])=>({observationVersion:1,operationID,visibility:'visible',classification,record:{...journalBase,phase,revision,entryRevision,chargeState,chargedBytes}}));
+test('actual journal revisions advance independently through phase changes and later entry release',async()=>{
+ let i=0;const model=R.createReadOnlyModel({operationID,entryID,ownerUserID,read:async()=>rows[i++]});
+ try{for(const expected of rows){const view=await model.refresh();assert.equal(view.busy,false);assert.deepEqual(view.observation,expected);}}finally{model.dispose();}
+ assert.equal(i,rows.length);
 });

@@ -296,6 +296,11 @@ public final class DesktopBridge: @unchecked Sendable {
                 let library=try p.text("libraryID"),path=try p.text("relativePath",maximum:4096,fallback:"",allowEmpty:true)
                 let size=try p.integer("pageSize",range:1...100,fallback:50),cursor=try p["cursor"].map { try $0.text(maximumBytes:36) }
                 return try api.withFixtureLibraryPage(libraryID:library,relativePath:path,pageSize:Int(size),cursor:cursor,session:session) { try self.response(DesktopDirectoryPage($0),id:id) }
+            case "observeRecycleOperation":
+                let p = try params.fields(required: ["operationID"])
+                return try api.withBoundFixtureRecycleOperationObservation(operationID: p.text("operationID", maximum: 36), session: session) { observation, context in
+                    try self.response(RecycleOperationObservationEnvelope(context: context, observation: observation), id: id)
+                }
             case "previewFile":
                 let p = try params.fields(required: ["libraryID","relativePath"], optional: ["maximumBytes"])
                 let library = try p.text("libraryID"), path = try p.text("relativePath", maximum: 4096)
@@ -383,11 +388,14 @@ public final class DesktopBridge: @unchecked Sendable {
 
 /// NDJSON transport over the caller-owned stdin/stdout only. No listener or browser is opened.
 public enum DesktopBridgeCLI {
-    public static func run(root: URL, fixtureUser: String) throws {
+    public static func run(root: URL, fixtureUser: String, recycleObservationConfirmed: Bool = false) throws {
         let api = try PrototypePlatformAPI(root: root)
         let session = try api.beginFixtureSession(userID: fixtureUser)
         let bridge: DesktopBridge
-        do { bridge = try DesktopBridge(api: api, session: session) }
+        do {
+            if recycleObservationConfirmed { try api.authorizeFixtureRecycleObservation(session: session, confirmed: true) }
+            bridge = try DesktopBridge(api: api, session: session)
+        }
         catch { api.endSession(session); throw error }
         defer { bridge.close() }
         var frame = Data(), buffer = [UInt8](repeating: 0, count: 4096), frames = 0

@@ -50,14 +50,17 @@ final class FixtureRecycleAuthority {
     private var revision: UInt64 = 0
     private var grants: [UUID: (RecycleHostGrant, TimeInterval, Data)] = [:]
     private let now: () -> TimeInterval
+    private let additionalContextCheck: () throws -> Void
 
-    init(root: URL, userID: Data, now: @escaping () -> TimeInterval = { ProcessInfo.processInfo.systemUptime }) throws {
+    init(root: URL, userID: Data, now: @escaping () -> TimeInterval = { ProcessInfo.processInfo.systemUptime },
+         additionalContextCheck: @escaping () throws -> Void = {}) throws {
         try RecycleVault.requireLabRoot(root); try FileEffectMetadata.subject(userID)
-        self.root = root; self.userID = userID; self.now = now; store = try PortableInstance.store(root)
+        self.root = root; self.userID = userID; self.now = now; self.additionalContextCheck = additionalContextCheck; store = try PortableInstance.store(root)
         _ = try context(write: false)
         try store.validate(expectedVersion: 4)
     }
     private func context(write: Bool) throws -> (InstanceIdentity, HostBinding) {
+        try additionalContextCheck()
         let identity = try PortableInstance.strictRead(InstanceIdentity.self, SafeFS.resolve(root, "instance.json"))
         let binding = try PortableInstance.strictRead(HostBinding.self, SafeFS.resolve(root, "host-binding/binding.json"))
         let config = try PortableInstance.strictRead(PortableConfig.self, SafeFS.resolve(root, "config/platform.json"))
