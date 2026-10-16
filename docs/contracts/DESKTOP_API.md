@@ -1,4 +1,4 @@
-# 网页桌面适配契约（N-011至N-026，v1）
+# 网页桌面适配契约（N-011至N-027，v1）
 
 页面当前使用model.js的createFixtureAdapter。业务内容为合成数据、刷新重置；管理员/读者/只读恢复选择器是演示场景，不是登录。不连接Swift、PostgreSQL、NAS文件、系统账户或真实存储池。
 
@@ -61,6 +61,11 @@ DesktopBridge绑定宿主已有的Schema 3 API和会话；createBridgeAdapter(tr
 |readDownloadChunk|transferID、offset|第23个方法；每块最多32KiB，编码成功后才推进，源变化拒绝|
 |transferStatus|transferID|第24个方法；原会话有界状态或notVisible；不赋予写/读/取消能力|
 |cancelTransfer|transferID|第25个方法；原主体清理私有暂存/句柄，已发布文件不回滚|
+|previewFileCopy|sourceLibraryID、sourcePath、targetLibraryID、name；可选parentPath|第26个方法；独立宿主复制批准、固定两端、同设备单文件0至16MiB|
+|beginFileCopy|copyID、confirmed=true|第27个方法；明确确认原预览，只创建私有暂存|
+|copyFileChunk|copyID、offset|第28个方法；宿主读源写暂存最多32KiB，最后块校验并不覆盖发布|
+|fileCopyStatus|copyID|第29个方法；原会话短期结果，不授予复制/取消权|
+|cancelFileCopy|copyID|第30个方法；原主体清理未发布私有对象，不删除源或已发布目标|
 
 除已列可选字段外，未知/缺失/错类型一律拒绝。所有字符串拒绝NUL；consumerID/libraryID/id/key最多128字节。协议整数不接受布尔、负数、小数或指数形式。SQL、shell、根URL、用户、角色、模式、数据库选择、会话创建、卷清单/绑定、目录批准、读者变更和套件执行不进入消息白名单。
 
@@ -242,6 +247,30 @@ directory-view来源新增fileTransfers；静态来源仍使用原内存树，�
 网页新增本机单文件选择、目标名编辑、冲突预览、30秒确认、进度/取消、同宿主核对及匹配目标目录重读。目录导航不会把上传目标改到另一个目录；身份/窗口关闭丢弃迟到结果但不假称回滚已发布文件。HTML加载自有sha256、file-transfers和file-transfer-view，connect-src仍none；不提供bridge-client、主机授权接口或暂存文件的静态路由。
 
 N-025实际合成APFS/Node→Swift管道、N-026内存/DOM结构替身与实际浏览器分别留证。FT01–FT08全部待测；没有GB级、断点/重启恢复、生产认证数据通道、跨设备发布或文件审计。见[ADR-019](../decisions/ADR-019-bounded-fixture-file-transfers.md)及[验收范围](../plans/N-025-026-ACCEPTANCE.md)。
+
+## N-027文件复制与总字节预算
+
+宿主单独调用`authorizeFixtureLibraryCopies(libraryID:session:)`批准目标；已有下载能力、上传批准或新建/改名批准均不能代替。来源要求明确内容读批准，目标同时要求开发管理员、readWrite绑定和复制批准。桌面没有批准根路径的方法。
+
+复制请求意图恰好`{sourceLibraryID,sourcePath,targetLibraryID,parentPath?,name}`；两个库ID最多128 UTF8字节，sourcePath非空，parentPath可省略为空但显式null拒绝，名称为单分量最多255字节，完整相对路径最多4096字节/128段。响应intent显式含全部五字段。确认必须真正JSON布尔true，offset为0至16777216的整数。不存在客户端parts/sha256、任意绝对路径、覆盖或删除选项。
+
+preview恰好`{copyVersion:1,copyID,intent,state,totalBytes,chunkBytes:32768,expiresInSeconds}`。state=ready/conflict/unchanged，仅ready登记30秒能力；其余有效期0。来源与目标库及路径原始字节都相同时unchanged。copyID为小写UUID，确认后不可修改两端或名称。
+
+status恰好`{copyVersion:1,copyID,state,intent,totalBytes,copiedBytes,chunkBytes:32768,sha256,error}`。状态为ready/copying/completed/cancelled/failed/uncertain/notVisible；notVisible时全部业务元数据显式null。其他状态有原intent、大小和进度；completed/uncertain已复制全部字节且有64位小写摘要，failed/uncertain带固定错误，其他error=null。notVisible不证明未执行。
+
+begin只建暂存。每次chunk在原offset读取并写入最多32KiB，最后块核对暂存SHA256并发布；空文件offset=0直接核对空摘要和发布。只允许上一块offset明确重放，不重复写入/发布，未知偏移replay。每块、发布前后均核对固定两端和授权；来源保留。跨设备明确unsupported，无隐式复制/移动回退。本次发布流程内的文件/授权复查、同步或期限失败为uncertain；响应编码或传输失败不改写既有回执，应查询原copyID核对。取消不会回滚目标。
+
+复制注册表独立限8个活动能力、64MiB预留、32条结果；预览30秒、活动空闲60秒、绝对30分钟、终态300秒。宿主内存能力/结果不持久，退出清理，崩溃孤儿保留，不代表重启恢复、磁盘空间调度或文件任务审计。Schema3未改。
+
+具名客户端提供同名五方法及`discardFileCopy`。preview取参数对象，beginFileCopy(copyID)、fileCopyStatus(copyID)、cancelFileCopy(copyID)，chunk取`{copyID,offset}`，均可带既有options。本地最多40条结果/预览及在途预留，来源包装也限40条实际拥有的头与在途预留，同ID串行；status不可接管未知能力，不明写回复禁止自动重交。`file-copies.js`提供createSource/createClientSource/createController；控制器prepare/confirm/cancel/check/snapshot/dispose，关闭清空视图并最终清理迟到头，保留共享连接。
+
+directory来源增加fileCopies，fixture实现位于`file-copy-fixture.js`。所有库已发布初始UTF8文本和二进制，加上传/复制完整预留，共享每树64MiB上限；原4096条目、16MiB单文件及8个活动能力等限制继续生效。发布将预留同步转换为已发布计量；取消/失败/到期只释放未发布预留，已发布字节继续计量；会话结束或目录来源dispose清理该树，不能通过反复传输绕过。测试可通过maximumTreeBytes收紧，不能提高固定上限。fixture会话结束观察者立即dispose来源和清空其字节树；该fixture清理不建立生产连接，借用的共享客户端仍由身份所有者管理。
+
+上传预览、下载头和复制预览在窗口或来源关闭后才返回时，控制器/来源尽力取消原宿主能力并丢弃本地头；来源dispose清理已登记自有能力，同ID在途操作完成后再清理，陌生status不登记所有权。失败保留不确定语义，不重新连接或扩大预算。宿主取消/连接失效不代表撤回已发布文件。下载取消清理本地保存缓冲，即使宿主已读完也不显示本机已保存。
+
+网页目标选择器每页50项，只保留当前页，显示可进入子目录/资料库、上级/重读/继续；预览显示原来源、目标、名称和字节数，确认后进度/取消/只读核对。成功只重读匹配的当前目标目录，导航不改变已预览的目标。新增自有脚本仍只服务web/dist白名单；CSP connect-src保持none，具名客户端和宿主批准不加载/静态提供。
+
+FC01–FC06连同原46项共52项实际浏览器验收均未执行。元素替身不证明布局/键盘/焦点，真实Node→Swift只证明合成管道。详见[ADR-020](../decisions/ADR-020-bounded-file-copy.md)与[验收范围](../plans/N-027-ACCEPTANCE.md)。
 
 ## 状态与恢复
 

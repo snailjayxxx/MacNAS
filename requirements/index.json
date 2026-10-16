@@ -1997,6 +1997,68 @@
             "docs/decisions/ADR-019-bounded-fixture-file-transfers.md",
             "web/tests/BROWSER_ACCEPTANCE.md"
           ]
+        },
+        {
+          "id": "FIL-01.bounded_fixture_copy",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "Independent target-copy approval, pinned source and target, same-device 16MiB single regular file, 32KiB server blocks and verified no-overwrite publication. Fresh unfiltered 271-test XCTest run includes actual synthetic APFS and Node-to-Swift copy; no source deletion, production NAS or restart persistence.",
+          "evidence": [
+            "docs/evidence/n027-2026-10-16.json",
+            "docs/plans/N-027-ACCEPTANCE.md",
+            "docs/decisions/ADR-020-bounded-file-copy.md"
+          ]
+        },
+        {
+          "id": "FIL-01.typed_copy_confirmation",
+          "status": "MOCK_PASS",
+          "scope": "Exact copy DTOs, per-ID serialization, no ownership from status, cancellation and uncertain outcome observation; synthetic models only.",
+          "evidence": [
+            "docs/evidence/n027-2026-10-16.json",
+            "docs/plans/N-027-ACCEPTANCE.md",
+            "docs/decisions/ADR-020-bounded-file-copy.md"
+          ]
+        },
+        {
+          "id": "FIL-01.aggregate_fixture_tree_byte_quota",
+          "status": "MOCK_PASS",
+          "scope": "64MiB per explicit tree includes all published initial UTF8 and binary bytes plus upload/copy reservations; publish converts reservation and terminal/session cleanup releases it. Not production disk quota.",
+          "evidence": [
+            "docs/evidence/n027-2026-10-16.json",
+            "docs/plans/N-027-ACCEPTANCE.md",
+            "docs/decisions/ADR-020-bounded-file-copy.md"
+          ]
+        },
+        {
+          "id": "FIL-01.interrupted_preview_head_reclamation",
+          "status": "MOCK_PASS",
+          "scope": "Window and source disposal reclaim owned late upload/download/copy heads and known in-flight capabilities with bounded local records, without closing a shared client; synthetic deterministic models, not production transport guarantees.",
+          "evidence": [
+            "docs/evidence/n027-2026-10-16.json",
+            "docs/plans/N-027-ACCEPTANCE.md",
+            "docs/decisions/ADR-020-bounded-file-copy.md"
+          ]
+        },
+        {
+          "id": "FIL-01.file_copy_web_flow",
+          "status": "IN_PROGRESS",
+          "scope": "Bounded target-library/folder picker, preview and explicit confirmation, progress, cancel and original-result observation wired to fixture; actual browser not executed.",
+          "evidence": [
+            "docs/evidence/n027-2026-10-16.json",
+            "docs/plans/N-027-ACCEPTANCE.md",
+            "docs/decisions/ADR-020-bounded-file-copy.md",
+            "web/tests/BROWSER_ACCEPTANCE.md"
+          ]
+        },
+        {
+          "id": "FIL-01.file_copy_browser_acceptance",
+          "status": "NOT_STARTED",
+          "scope": "FC01-FC06 actual browser, focus, keyboard, responsive and locale acceptance remain unexecuted; model and DOM-shaped doubles are separate evidence.",
+          "evidence": [
+            "docs/evidence/n027-2026-10-16.json",
+            "docs/plans/N-027-ACCEPTANCE.md",
+            "docs/decisions/ADR-020-bounded-file-copy.md",
+            "web/tests/BROWSER_ACCEPTANCE.md"
+          ]
         }
       ]
     },

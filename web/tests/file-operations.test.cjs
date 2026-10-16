@@ -103,5 +103,5 @@ test("caller mutation after prepare cannot change the captured operation",async(
 });
 test("source and controller disposal do not close shared providers and ended sessions cannot write",async()=>{
  const {api,session,source,operations,controller}=await fixture();controller.dispose();assert.equal(source.closed,false);
- const p=await operations.preview({libraryID:"shared",kind:"createDirectory",name:"no"});await api.endSession(session);await assert.rejects(operations.commit(p.operationID),code("denied"));source.dispose();assert.equal(operations.closed,true);
+ const p=await operations.preview({libraryID:"shared",kind:"createDirectory",name:"no"});await api.endSession(session);await assert.rejects(async()=>operations.commit(p.operationID),code("unavailable"));source.dispose();assert.equal(operations.closed,true);
 });

@@ -348,6 +348,27 @@ public final class DesktopBridge: @unchecked Sendable {
             case "cancelTransfer":
                 let p=try params.fields(required:["transferID"])
                 return try response(api.cancelFixtureTransfer(transferID:p.text("transferID",maximum:36),session:session),id:id)
+            case "previewFileCopy":
+                let p = try params.fields(required: ["sourceLibraryID", "sourcePath", "targetLibraryID", "name"], optional: ["parentPath"])
+                let intent = try FixtureFileCopyIntent(sourceLibraryID: p.text("sourceLibraryID"), sourcePath: p.text("sourcePath", maximum: 4096),
+                    targetLibraryID: p.text("targetLibraryID"), parentPath: p.text("parentPath", maximum: 4096, fallback: "", allowEmpty: true), name: p.text("name", maximum: 255))
+                try writable()
+                return try api.withFixtureFileCopyPreview(intent, session: session) { try self.response($0, id: id) }
+            case "beginFileCopy":
+                let p = try params.fields(required: ["copyID", "confirmed"])
+                guard case .bool(true) = p["confirmed"]! else { throw NASError.invalidSchema }
+                try writable()
+                return try response(api.beginFixtureFileCopy(copyID: p.text("copyID", maximum: 36), confirmed: true, session: session), id: id)
+            case "copyFileChunk":
+                let p = try params.fields(required: ["copyID", "offset"])
+                try writable()
+                return try response(api.fixtureFileCopyChunk(copyID: p.text("copyID", maximum: 36), offset: p.integer("offset", range: 0...FixtureTransferLimits.fileBytes), session: session), id: id)
+            case "fileCopyStatus":
+                let p = try params.fields(required: ["copyID"])
+                return try response(api.fixtureFileCopyStatus(copyID: p.text("copyID", maximum: 36), session: session), id: id)
+            case "cancelFileCopy":
+                let p = try params.fields(required: ["copyID"])
+                return try response(api.cancelFixtureFileCopy(copyID: p.text("copyID", maximum: 36), session: session), id: id)
             default: throw NASError.unsupported
             }
         } catch {

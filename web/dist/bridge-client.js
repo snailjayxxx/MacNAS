@@ -1,7 +1,7 @@
 (function (root, factory) {
-  if (typeof module === "object" && module.exports) module.exports = factory(require("./model.js"),require("./file-operations.js"),require("./file-transfers.js"),require("./sha256.js"));
-  else root.MacNASBridgeClient = Object.freeze(factory(root.MacNASModel,root.MacNASFileOperations,root.MacNASFileTransfers,root.MacNASSHA256));
-})(globalThis, function (M,O,T,H) {
+  if (typeof module === "object" && module.exports) module.exports = factory(require("./model.js"),require("./file-operations.js"),require("./file-transfers.js"),require("./sha256.js"),require("./file-copies.js"));
+  else root.MacNASBridgeClient = Object.freeze(factory(root.MacNASModel,root.MacNASFileOperations,root.MacNASFileTransfers,root.MacNASSHA256,root.MacNASFileCopies));
+})(globalThis, function (M,O,T,H,C) {
   "use strict";
   const fail = code => { throw new M.ServiceError(code); };
   const check = (value, code = "invalidResponse") => { if (!value) fail(code); };
@@ -135,11 +135,12 @@
     const adapter=M.createBridgeAdapter(transport,{requestIdPrefix:"dc-"+uuid()}),pending=new Set(),consumers=new Map(),statusQueries=new Set(),pages=new Map(),busyPages=new Set(),directories=new Map(),busyDirectories=new Set(),fileOperations=new Map(),operationQueries=new Set();
     let operationHeads=0;
     const transfers=new Map(),busyTransfers=new Set();let transferHeads=0;
+    const copies=new Map(),busyCopies=new Set();let copyHeads=0;
     let closed=false,binding,eventBinding;
     function close() {
       if (closed) return;closed=true;binding=undefined;eventBinding=undefined;consumers.clear();statusQueries.clear();pages.clear();busyPages.clear();directories.clear();busyDirectories.clear();fileOperations.clear();operationQueries.clear();
       for (const entry of [...pending]) entry.cancel();
-      transfers.clear();busyTransfers.clear();
+      transfers.clear();busyTransfers.clear();copies.clear();busyCopies.clear();
       if (closeTransport) { try { Promise.resolve(closeTransport()).catch(()=>{}); } catch {} }
     }
     function caller(write = false, administrator = false) {
@@ -182,6 +183,11 @@
       O.id(id,"invalidInput");check(!busyTransfers.has(id),"busy");busyTransfers.add(id);
       try{return await operation();}finally{busyTransfers.delete(id);}
     }
+    async function copyCall(id,operation){
+      O.id(id,"invalidInput");check(!busyCopies.has(id),"busy");busyCopies.add(id);
+      try{return await operation();}finally{busyCopies.delete(id);}
+    }
+    function ownedCopy(id){O.id(id,"invalidInput");const saved=copies.get(id);check(saved,"denied");return saved;}
     function ownedTransfer(id,direction){
       O.id(id,"invalidInput");const saved=transfers.get(id);check(saved&&saved.expected.direction===direction,"denied");return saved;
     }
@@ -395,6 +401,39 @@
         },opts));
       },
       discardTransfer(transferID){O.id(transferID,"invalidInput");check(!busyTransfers.has(transferID),"busy");return transfers.delete(transferID);},
+      async previewFileCopy(params,opts){
+        caller(true,true);const p=C.intent(params,true);check(copies.size+copyHeads<40,"budgetExceeded");copyHeads++;
+        try{return await invoke("previewFileCopy",p,value=>{
+          const v=C.preview(value,p);check(!copies.has(v.copyID));
+          if(v.state==="ready")copies.set(v.copyID,{expected:{intent:p,totalBytes:v.totalBytes},state:"ready",offset:0,blocked:false,lastOffset:null,last:null});return v;
+        },opts);}finally{copyHeads--;}
+      },
+      async beginFileCopy(copyID,opts){
+        caller(true,true);const saved=ownedCopy(copyID);check(saved.state==="ready"&&!saved.blocked,"denied");
+        return copyCall(copyID,()=>{saved.blocked=true;return invoke("beginFileCopy",{copyID,confirmed:true},value=>{
+          const v=C.status(value,copyID,saved.expected);check(["copying","failed","cancelled"].includes(v.state)&&v.copiedBytes===0);saved.state=v.state;saved.blocked=false;return v;
+        },opts);});
+      },
+      async copyFileChunk(params,opts){
+        caller(true,true);const p=fields(params,["copyID","offset"],[],"invalidInput"),saved=ownedCopy(p.copyID);integer(p.offset,0,C.fileBytes,"invalidInput");
+        const replay=saved.lastOffset===p.offset;check(!saved.blocked&&(replay||saved.state==="copying"&&p.offset===saved.offset),"denied");
+        return copyCall(p.copyID,()=>{saved.blocked=true;return invoke("copyFileChunk",{copyID:p.copyID,offset:p.offset},value=>{
+          const v=C.status(value,p.copyID,saved.expected);check(["copying","completed","cancelled","failed","uncertain"].includes(v.state));
+          if(replay)check(v.copiedBytes===saved.offset&&(JSON.stringify(v)===JSON.stringify(saved.last)||saved.state==="copying"&&["failed","cancelled"].includes(v.state)));
+          else if(["copying","completed"].includes(v.state))check(v.copiedBytes===Math.min(saved.expected.totalBytes,p.offset+C.chunkBytes));
+          if(v.state==="copying")check(v.copiedBytes<saved.expected.totalBytes);
+          saved.state=v.state;saved.offset=v.copiedBytes;saved.lastOffset=p.offset;saved.last=v;saved.blocked=false;return v;
+        },opts);});
+      },
+      async fileCopyStatus(copyID,opts){
+        caller();return copyCall(copyID,()=>invoke("fileCopyStatus",{copyID},value=>C.status(value,copyID,copies.get(copyID)?.expected),opts));
+      },
+      async cancelFileCopy(copyID,opts){
+        caller();const saved=ownedCopy(copyID);return copyCall(copyID,()=>invoke("cancelFileCopy",{copyID},value=>{
+          const v=C.status(value,copyID,saved.expected);check(["cancelled","failed","completed","uncertain"].includes(v.state));saved.state=v.state;saved.blocked=true;return v;
+        },opts));
+      },
+      discardFileCopy(copyID){O.id(copyID,"invalidInput");check(!busyCopies.has(copyID),"busy");return copies.delete(copyID);},
       async previewFile(params,opts) {
         caller();const v=fields(params,["libraryID","relativePath"],["maximumBytes"],"invalidInput");
         const libraryID=text(v.libraryID,128,{code:"invalidInput"}),relativePath=path(v.relativePath,false,"invalidInput"),maximumBytes=integer(Object.hasOwn(v,"maximumBytes")?v.maximumBytes:65536,1,65536,"invalidInput");

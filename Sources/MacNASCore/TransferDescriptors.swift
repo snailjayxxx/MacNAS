@@ -87,26 +87,31 @@ final class TransferStaging {
             throw NASError.unsafeFile
         }
         published = true
+        // rename changes ctime. Capture that expected transition before any post-publication work,
+        // then require the complete stamp to stay fixed (including ctime after a restored-mtime rewrite).
+        let publishedStamp = DirectoryStamp(try TransferIO.attributes(file))
+        try validatePublished(plan, expected: publishedStamp)
         try afterPublication()
-        try validatePublished(plan)
+        try validatePublished(plan, expected: publishedStamp)
         try require(fsync(plan.descriptor) == 0 && fsync(directory) == 0, .unsafeFile)
-        try validatePublished(plan)
+        try validatePublished(plan, expected: publishedStamp)
     }
-    private func validatePublished(_ plan: DescriptorMutation) throws {
+    private func validatePublished(_ plan: DescriptorMutation, expected: DirectoryStamp) throws {
         var target = stat(); let current = try TransferIO.attributes(file)
         let observed = DirectoryStamp(current)
         try require(fstatat(plan.descriptor, plan.intent.name, &target, AT_SYMLINK_NOFOLLOW) == 0
-                    && DirectoryStamp(target) == observed
+                    && DirectoryStamp(target) == observed && observed == expected
                     && observed.device == stamp.device && observed.inode == stamp.inode
                     && observed.mode == stamp.mode && observed.links == stamp.links && observed.size == stamp.size
                     && observed.modifiedSeconds == stamp.modifiedSeconds && observed.modifiedNanos == stamp.modifiedNanos, .staleState)
-        // A successful rename changes ctime; retain content/identity checks without rejecting that expected change.
+        // The first check still matches all content/identity fields from private staging; only rename's ctime transition is allowed.
     }
 }
 
 /// A pinned regular file; each read checks both its descriptor stamp and its original name.
 final class TransferDownload {
     let bytes: Int64
+    let device: dev_t
     private let file: Int32
     private let parent: Int32
     private let name: String
@@ -116,7 +121,7 @@ final class TransferDownload {
         let info = try TransferIO.attributes(file)
         try require((info.st_mode & S_IFMT) == S_IFREG && info.st_nlink == 1 && info.st_size >= 0, .unsafeFile)
         self.file = file; self.parent = parent; self.name = name; self.validateDirectory = validate
-        stamp = DirectoryStamp(info); bytes = Int64(info.st_size)
+        stamp = DirectoryStamp(info); bytes = Int64(info.st_size); device = info.st_dev
     }
     deinit { close(file); close(parent) }
     func validate() throws {

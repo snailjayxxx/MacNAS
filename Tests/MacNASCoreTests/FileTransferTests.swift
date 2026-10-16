@@ -23,6 +23,15 @@ class TransferLab: LabTest {
         try registry.append(id:id,offset:offset,parts:TransferEncoding.parts(data),caller:c.scope.directory.caller,validate:{_ in})
     }
     func stageNames(_ c:Context) throws ->[String] {try FileManager.default.contentsOfDirectory(atPath:c.root.appendingPathComponent("transfer-staging").path)}
+    func overwritePreservingModificationTime(_ file: URL, data: Data) throws {
+        let fd = open(file.path, O_WRONLY | O_NOFOLLOW); try require(fd >= 0, .unsafeFile); defer { close(fd) }
+        let before = try TransferIO.attributes(fd)
+        try data.withUnsafeBytes { try require(pwrite(fd, $0.baseAddress, data.count, 0) == data.count, .unsafeFile) }
+        let times = [before.st_atimespec, before.st_mtimespec]
+        try times.withUnsafeBufferPointer { try require(futimens(fd, $0.baseAddress) == 0, .unsafeFile) }
+        XCTAssertEqual(DirectoryStamp(try TransferIO.attributes(fd)).modifiedSeconds, before.st_mtimespec.tv_sec)
+        XCTAssertEqual(DirectoryStamp(try TransferIO.attributes(fd)).modifiedNanos, before.st_mtimespec.tv_nsec)
+    }
 }
 
 final class FileTransferRegistryTests:TransferLab {
@@ -104,6 +113,16 @@ final class FileTransferRegistryTests:TransferLab {
         try FileManager.default.moveItem(at:file,to:c.root.appendingPathComponent("library/old"));try Data(repeating:8,count:40000).write(to:file)
         XCTAssertThrowsError(try registry.download(id:p.transferID,offset:32768,caller:c.scope.directory.caller,validate:{_ in},render:{$0}))
         XCTAssertEqual(try registry.status(id:p.transferID,caller:c.scope.directory.caller,validate:{_ in}).state,"failed")
+    }
+    func testUploadPublicationSameLengthRewriteWithRestoredMTimeIsUncertain() throws {
+        let c = try context(), registry = FileTransferRegistry(), data = Data("data".utf8), p = try preview(registry, c)
+        try begin(registry, c, p.transferID); try append(registry, c, p.transferID, data)
+        let file = c.root.appendingPathComponent("library/uploaded.bin")
+        let result = try registry.finishUpload(id: p.transferID, expected: TransferEncoding.digest(data), caller: c.scope.directory.caller, validate: { _ in }, afterPublication: {
+            try self.overwritePreservingModificationTime(file, data: Data("evil".utf8))
+        })
+        XCTAssertEqual(result.state, "uncertain"); XCTAssertEqual(result.sha256, TransferEncoding.digest(data))
+        XCTAssertEqual(try Data(contentsOf: file), Data("evil".utf8)); XCTAssertEqual(try stageNames(c), [])
     }
     func testPartialWritesDiskFullAndStagingReplacementCleanupAreBounded() throws {
         let c=try context(),plan=try c.reader.prepareMutation(.init(libraryID:"library",kind:.createDirectory,name:"target")),id=UUID().uuidString.lowercased()

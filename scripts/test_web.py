@@ -112,4 +112,18 @@ class WebStaticTests(unittest.TestCase):
         js=(ROOT/'web/dist/file-transfer-view.js').read_text()
         self.assertIn('urls.revokeObjectURL(url)',js);self.assertIn('save.download=name',js)
         for marker in ['.click(','.innerHTML','window.open(','fetch(','localStorage']:self.assertNotIn(marker,js)
+    def test_copy_assets_load_before_directory_and_keep_host_approval_private(self):
+        scripts=re.findall(r'<script defer src="([^"]+)"',(ROOT/'web/dist/index.html').read_text())
+        for earlier,later in [('file-transfers.js','file-copies.js'),('file-copies.js','file-copy-fixture.js'),('file-copy-fixture.js','directory-view.js'),('file-copy-view.js','desktop.js')]:
+            self.assertLess(scripts.index(earlier),scripts.index(later))
+        for path in ['/file-copies.js','/file-copy-fixture.js','/file-copy-view.js']:self.assertEqual(exchange(path)[0],200)
+        js=(ROOT/'web/dist/desktop.js').read_text()
+        for marker in ['authorizeFixtureLibraryCopies','fetch(','XMLHttpRequest','WebSocket(']:self.assertNotIn(marker,js)
+        self.assertIn('win.fileCopy?.dispose()',js);self.assertIn('win.fileCopyPanel?.dispose()',js)
+        self.assertEqual(exchange('/transfer-staging/copy-test')[0],404)
+    def test_copy_view_uses_literal_text_and_explicit_source_pages(self):
+        js=(ROOT/'web/dist/file-copy-view.js').read_text()
+        for marker in ['innerHTML','outerHTML','insertAdjacentHTML','fetch(','localStorage','.click(']:self.assertNotIn(marker,js)
+        self.assertIn('source.page(',js);self.assertIn('source.discardCursor(',js)
+        self.assertIn('aria-valuetext',js);self.assertIn('pageSize:50',js)
 if __name__=='__main__':unittest.main()

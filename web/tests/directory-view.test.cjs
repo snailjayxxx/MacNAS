@@ -86,8 +86,8 @@ test("fixture sources borrow the registered session and reject forged or ended s
   const { api, session, source, pager } = await setup();
   await assert.rejects(F.createFixtureDirectorySource(api, { ...session }), code("denied"));
   await pager.open({ libraryID: "shared" }); await api.endSession(session);
-  await assert.rejects(pager.next(), code("denied")); assert.equal(pager.snapshot().requiresReload, true);
-  await assert.rejects(source.libraries(), code("denied"));
+  await assert.rejects(pager.next(), code("unavailable")); assert.equal(pager.snapshot().requiresReload, true);
+  await assert.rejects(source.libraries(), code("unavailable"));
 });
 test("directory and source disposal preserve shared task and notification providers", async () => {
   const { api, session, source, pager } = await setup(), tasks = await P.createFixtureTaskSource(api, session), notifications = await N.createFixtureNotificationView(api, session, { consumerID: "borrowed-directory" });

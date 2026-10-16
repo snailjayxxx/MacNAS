@@ -52,7 +52,7 @@
   function createFixtureAdapter({ now = () => new Date().toISOString(), monotonicNow = () => performance.now() } = {}) {
     check(typeof now === "function" && typeof monotonicNow === "function");
     const jobs = clone(initialJobs), events = clone(initialEvents);
-    const sessions = new Map(), consumers = new Map(), submissions = new Map(), pages = new Map(), consumedPages = new Map();
+    const sessions = new Map(), sessionEndObservers = new Map(), consumers = new Map(), submissions = new Map(), pages = new Map(), consumedPages = new Map();
     let nextSequence = 5, serial = 0;
     function caller(session) {
       const value = sessions.get(session);
@@ -72,7 +72,18 @@
         sessions.set(session, { id: scenario === "reader" ? "fixture-family" : "fixture-owner", role: scenario === "reader" ? "reader" : "administrator", mode: scenario === "recovery" ? "read_only_recovery" : "synthetic_development" });
         return session;
       },
-      async endSession(session) { sessions.delete(session); for (const [token, entry] of pages) if (entry.session === session) pages.delete(token); },
+      observeFixtureSessionEnd(session, observer) {
+        caller(session); check(typeof observer === "function", "invalidInput");
+        let observers = sessionEndObservers.get(session);
+        if (!observers) { observers = new Set(); sessionEndObservers.set(session, observers); }
+        check(observers.size < 64, "budgetExceeded"); observers.add(observer);
+        return () => { observers.delete(observer); if (!observers.size && sessionEndObservers.get(session) === observers) sessionEndObservers.delete(session); };
+      },
+      async endSession(session) {
+        sessions.delete(session); for (const [token, entry] of pages) if (entry.session === session) pages.delete(token);
+        const observers = sessionEndObservers.get(session); sessionEndObservers.delete(session);
+        for (const observer of observers || []) { try { observer(); } catch {} }
+      },
       async overview(session) {
         const user = caller(session), visible = jobs.filter(j => j.owner_user === user.id && j.app_id === null);
         return clone({ apiVersion: 1, source: "fixture", userID: user.id, role: user.role, mode: user.mode, languages: ["zh-CN", "ja-JP"], databaseSchema: 3,
@@ -244,7 +255,7 @@
   }
   function createBridgeAdapter(transport, { requestIdPrefix = "desktop" } = {}) {
     check(typeof requestIdPrefix === "string" && /^[A-Za-z0-9._-]{1,96}$/.test(requestIdPrefix));
-    const allowed = new Set(["overview", "authorizeApp", "listJobs", "listJobsPage", "submitLabelJob", "cancelJob", "pollEvents", "acknowledgeEvents", "eventConsumerStatus", "eventConsumerObservation", "listLibraries", "listFiles", "listFilesPage", "previewFile", "previewFileOperation", "commitFileOperation", "fileOperationStatus", "previewUpload", "beginUpload", "appendUpload", "finishUpload", "beginDownload", "readDownloadChunk", "transferStatus", "cancelTransfer"]);
+    const allowed = new Set(["overview", "authorizeApp", "listJobs", "listJobsPage", "submitLabelJob", "cancelJob", "pollEvents", "acknowledgeEvents", "eventConsumerStatus", "eventConsumerObservation", "listLibraries", "listFiles", "listFilesPage", "previewFile", "previewFileOperation", "commitFileOperation", "fileOperationStatus", "previewUpload", "beginUpload", "appendUpload", "finishUpload", "beginDownload", "readDownloadChunk", "transferStatus", "cancelTransfer", "previewFileCopy", "beginFileCopy", "copyFileChunk", "fileCopyStatus", "cancelFileCopy"]);
     const errors = new Set(["invalidInput","invalidResponse","unsupported","denied","readOnly","unavailable","budgetExceeded","replay","collision","missingVolume","unsafePath","unsafeFile","integrity","database","busy","expired","staleState","interrupted","timedOut","cancelled","pluginFailed"]);
     let serial = 0;
     return Object.freeze({

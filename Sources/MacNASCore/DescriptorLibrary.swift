@@ -280,8 +280,9 @@ final class DescriptorLibrary: @unchecked Sendable {
         retained = true; try value.validate(); return value
     }
     /// Called only for the instance's host-binding root, never a client-selected path.
-    func transferStaging(id: String, targetDevice: dev_t) throws -> TransferStaging {
+    func transferStaging(id: String, targetDevice: dev_t, prefix: String = "upload") throws -> TransferStaging {
         try require(UUID(uuidString: id)?.uuidString.lowercased() == id, .invalidSchema)
+        try require(["upload", "copy"].contains(prefix), .invalidSchema)
         try validateRoot(); try require(try Self.attributes(descriptor).st_dev == targetDevice, .unsupported)
         if mkdirat(descriptor, "transfer-staging", 0o700) != 0 { try require(errno == EEXIST, .unsafeFile) }
         let directory = openat(descriptor, "transfer-staging", Self.directoryFlags)
@@ -290,7 +291,7 @@ final class DescriptorLibrary: @unchecked Sendable {
         defer { if !retained { if file >= 0 { close(file) }; close(directory) } }
         let info = try Self.attributes(directory)
         try require(info.st_dev == targetDevice && info.st_uid == geteuid() && (info.st_mode & 0o077) == 0, .unsafeFile)
-        let name = "upload-" + id
+        let name = prefix + "-" + id
         file = openat(directory, name, O_RDWR | O_CREAT | O_EXCL | O_NOFOLLOW | O_CLOEXEC, 0o600)
         try require(file >= 0, .unsafeFile)
         let value = try TransferStaging(directory: directory, file: file, name: name, validate: {
@@ -337,11 +338,13 @@ final class FixtureContentRegistry: @unchecked Sendable {
     private var readers: [String: (UUID, DescriptorLibrary)] = [:]
     private var writers:[String:(UUID,UUID,UUID)]=[:]
     private var uploaders:[String:(UUID,UUID,UUID)]=[:]
+    private var copiers:[String:(UUID,UUID,UUID)]=[:]
     func register(_ reader: DescriptorLibrary, permit: FixtureVolumePermit) {
         lock.lock(); defer { lock.unlock() }
         readers[permit.reference.libraryID] = (permit.approvalID, reader)
         writers.removeValue(forKey:permit.reference.libraryID)
         uploaders.removeValue(forKey:permit.reference.libraryID)
+        copiers.removeValue(forKey:permit.reference.libraryID)
     }
     func reader(_ permit: FixtureVolumePermit) throws -> DescriptorLibrary {
         lock.lock(); defer { lock.unlock() }
@@ -349,7 +352,7 @@ final class FixtureContentRegistry: @unchecked Sendable {
         return value.1
     }
     func revoke(_ libraryID: String) {
-        lock.lock(); defer { lock.unlock() }; readers.removeValue(forKey: libraryID);writers.removeValue(forKey:libraryID);uploaders.removeValue(forKey:libraryID)
+        lock.lock(); defer { lock.unlock() }; readers.removeValue(forKey: libraryID);writers.removeValue(forKey:libraryID);uploaders.removeValue(forKey:libraryID);copiers.removeValue(forKey:libraryID)
     }
     func approveMutations(_ permit:FixtureVolumePermit) throws {
         lock.lock();defer{lock.unlock()}
@@ -372,5 +375,16 @@ final class FixtureContentRegistry: @unchecked Sendable {
         guard let reader = readers[permit.reference.libraryID], let writer = uploaders[permit.reference.libraryID],
               reader.0 == permit.approvalID && writer.0 == permit.approvalID && writer.1 == reader.1.identity else { throw NASError.denied }
         return (writer.2, reader.1)
+    }
+    func approveCopies(_ permit: FixtureVolumePermit) throws {
+        lock.lock(); defer { lock.unlock() }
+        guard let reader = readers[permit.reference.libraryID], reader.0 == permit.approvalID else { throw NASError.denied }
+        copiers[permit.reference.libraryID] = (permit.approvalID, reader.1.identity, UUID())
+    }
+    func copyReader(_ permit: FixtureVolumePermit) throws -> (UUID, DescriptorLibrary) {
+        lock.lock(); defer { lock.unlock() }
+        guard let reader = readers[permit.reference.libraryID], let copier = copiers[permit.reference.libraryID],
+              reader.0 == permit.approvalID && copier.0 == permit.approvalID && copier.1 == reader.1.identity else { throw NASError.denied }
+        return (copier.2, reader.1)
     }
 }

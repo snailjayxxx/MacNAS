@@ -1,6 +1,6 @@
 (function () {
   "use strict";
-  const M = window.MacNASModel, I = window.MacNASI18n, P = window.MacNASTaskPages, N = window.MacNASNotifications, F = window.MacNASDirectoryView, B = window.MacNASFileBrowser, O = window.MacNASFileOperations, T = window.MacNASFileTransfers, V = window.MacNASFileTransferView;
+  const M = window.MacNASModel, I = window.MacNASI18n, P = window.MacNASTaskPages, N = window.MacNASNotifications, F = window.MacNASDirectoryView, B = window.MacNASFileBrowser, O = window.MacNASFileOperations, T = window.MacNASFileTransfers, V = window.MacNASFileTransferView, C = window.MacNASFileCopies, CV = window.MacNASFileCopyView;
   const api = M.createFixtureAdapter();
   const $ = (query, root = document) => root.querySelector(query);
   const paths = {
@@ -80,7 +80,7 @@
     win.pager?.dispose();
     win.filePager?.dispose(); win.previewRequest = (win.previewRequest || 0) + 1;
     win.fileOperation?.dispose();
-    win.fileTransfer?.dispose();win.fileTransferPanel?.dispose();
+    win.fileTransfer?.dispose();win.fileTransferPanel?.dispose();win.fileCopy?.dispose();win.fileCopyPanel?.dispose();
     if (win.fileModal && state.modal === win.fileModal) closeModal(false);
     saveGeometry(win); win.element.remove(); state.windows.delete(id);
     if (state.active === id) state.active = [...state.windows.values()].filter(w => !w.minimized).at(-1)?.id || null;
@@ -360,6 +360,10 @@
       win.fileTransferPanel=V.createPanel({document,urls:window.URL,translate:t,onUpload:()=>fileUploadDraft(win),onDownload:()=>downloadSelectedFile(win),onCancel:()=>cancelFileTransfer(win),onCheck:()=>checkFileTransfer(win),onConfirm:()=>fileUploadPreview(win)});
       win.fileTransfer=T.createController(state.directorySource.fileTransfers,{onChange:()=>{if(currentWindow(win))renderFileTransferControls(win);}});
     }
+    if(!win.fileCopy&&state.directorySource.fileCopies){
+      win.fileCopyPanel=CV.createPanel({document,translate:t,onPrepare:()=>fileCopyDraft(win),onConfirm:()=>fileCopyPreview(win),onCancel:()=>cancelFileCopy(win),onCheck:()=>checkFileCopy(win)});
+      win.fileCopy=C.createController(state.directorySource.fileCopies,{onChange:()=>{if(currentWindow(win))renderFileTransferControls(win);}});
+    }
     const view = win.filePager.snapshot(), shell = el("div", "file-browser-shell"), side = el("aside", "file-browser-sidebar");
     side.setAttribute("aria-label", t("fileLocations")); side.append(el("h2", "", t("fileLocations")));
     win.libraryReload = button(t("reloadLibraries"), "text-button", () => loadFileLibraries(win), "refresh"); side.append(win.libraryReload);
@@ -394,6 +398,7 @@
     win.fileOperationPermission = el("span", "file-operation-hint"); operations.append(win.fileCreate, win.fileRename, win.fileOperationPermission); header.append(operations);
     win.fileOperationNotice = el("div", "file-operation-notice"); win.fileOperationNotice.setAttribute("role", "status"); win.fileOperationNotice.setAttribute("aria-live", "polite"); header.append(win.fileOperationNotice);
     if(win.fileTransferPanel)header.append(win.fileTransferPanel.element);
+    if(win.fileCopyPanel)header.append(win.fileCopyPanel.element);
     header.append(el("p", "file-scope", t("fileLoadedScope")));
     win.fileFailure = el("p", "readonly-note"); win.fileFailure.setAttribute("role", "alert"); header.append(win.fileFailure); main.append(header);
     const workspace = el("div", "file-workspace"), listing = el("div", "file-listing");
@@ -543,7 +548,7 @@
   function renderFileOperationControls(win, view, actionable) {
     const operation = win.fileOperation?.snapshot(), busy = operation && ["previewing", "committing", "checking"].includes(operation.phase);
     const transferPhase=win.fileTransfer?.snapshot().phase,transferBusy=V.busyPhases.includes(transferPhase)||transferPhase==="ready"||transferPhase==="uncertain";
-    const allowed = actionable && win.fileOperation?.canWrite && !busy && operation?.phase !== "uncertain"&&!transferBusy;
+    const allowed = actionable && win.fileOperation?.canWrite && !busy && operation?.phase !== "uncertain"&&!transferBusy&&!fileCopyBlocked(win);
     win.fileCreate.disabled = !allowed; win.fileRename.disabled = !allowed || view.selectedItems.length !== 1;
     win.fileOperationPermission.textContent = win.fileOperation?.canWrite ? t("fileOperationShortHint") : t("fileOperationReadOnly");
     win.fileOperationNotice.replaceChildren();
@@ -556,7 +561,7 @@
   function fileOperationDraft(win, kind, previousName) {
     if (!currentWindow(win) || !win.fileOperation?.canWrite) return;
     const view = win.filePager.snapshot(), operation = win.fileOperation.snapshot();
-    if (win.libraryPhase !== "ready" || view.phase !== "ready" || view.requiresReload || ["previewing", "committing", "checking", "uncertain"].includes(operation.phase)||V.busyPhases.includes(win.fileTransfer?.snapshot().phase)||["ready","uncertain"].includes(win.fileTransfer?.snapshot().phase)) return;
+    if (win.libraryPhase !== "ready" || view.phase !== "ready" || view.requiresReload || ["previewing", "committing", "checking", "uncertain"].includes(operation.phase)||V.busyPhases.includes(win.fileTransfer?.snapshot().phase)||["ready","uncertain"].includes(win.fileTransfer?.snapshot().phase)||fileCopyBlocked(win)) return;
     const selected = view.selectedItems[0]; if (kind === "rename" && view.selectedItems.length !== 1) return;
     const captured = Object.freeze({ libraryID: view.libraryID, parentPath: view.relativePath, kind, ...(kind === "rename" ? { sourceName: selected.name } : {}) });
     fileOperationInput(win, captured, previousName ?? (kind === "rename" ? selected.name : t("fileNewDirectoryName")));
@@ -626,13 +631,18 @@
     if(!win.fileTransferPanel||!win.filePager)return;
     const current=win.filePager.snapshot(),operation=win.fileOperation?.snapshot(),actionable=win.libraryPhase==="ready"&&current.phase==="ready"&&!current.requiresReload;
     win.fileTransferPanel.render(win.fileTransfer.snapshot(),{actionable,canUpload:win.fileTransfer.canUpload,canDownload:current.selectedItems.length===1&&current.selectedItems[0].kind==="file"&&current.selectedItems[0].bytes<=T.fileBytes,
-      otherBusy:["previewing","committing","checking","uncertain"].includes(operation?.phase)});
+      otherBusy:["previewing","committing","checking","uncertain"].includes(operation?.phase)||fileCopyBlocked(win)});
+    if(win.fileCopyPanel){
+      const transfer=win.fileTransfer.snapshot();
+      win.fileCopyPanel.render(win.fileCopy.snapshot(),{canCopy:win.fileCopy.canCopy,actionable,selected:current.selectedItems.length===1&&current.selectedItems[0].kind==="file"&&current.selectedItems[0].bytes<=T.fileBytes,
+        otherBusy:["previewing","committing","checking","uncertain"].includes(operation?.phase)||V.busyPhases.includes(transfer.phase)||["ready","uncertain"].includes(transfer.phase)});
+    }
     if(win.fileCreate)renderFileOperationControls(win,current,actionable);
   }
   function fileUploadDraft(win,previous) {
     if(!currentWindow(win)||!win.fileTransfer?.canUpload)return;
     const view=win.filePager.snapshot(),transfer=win.fileTransfer.snapshot();
-    if(win.libraryPhase!=="ready"||view.phase!=="ready"||view.requiresReload||V.busyPhases.includes(transfer.phase)||transfer.phase==="uncertain")return;
+    if(win.libraryPhase!=="ready"||view.phase!=="ready"||view.requiresReload||V.busyPhases.includes(transfer.phase)||transfer.phase==="uncertain"||fileCopyBlocked(win))return;
     const captured=Object.freeze({libraryID:view.libraryID,parentPath:view.relativePath}),content=el("div","file-upload-draft"),label=el("label","",t("fileChooseLocal")),picker=el("input"),nameLabel=el("label","",t("fileOperationName")),name=el("input"),summary=el("p");
     picker.type="file";picker.id="file-upload-picker";picker.multiple=false;label.htmlFor=picker.id;
     name.type="text";name.maxLength=255;name.id="file-upload-name";nameLabel.htmlFor=name.id;let selected=previous?.file||null;name.value=previous?.name||selected?.name||"";
@@ -686,7 +696,7 @@
   async function downloadSelectedFile(win) {
     if(!currentWindow(win)||!win.fileTransfer)return;
     const view=win.filePager.snapshot(),selected=view.selectedItems[0];
-    if(win.libraryPhase!=="ready"||view.phase!=="ready"||view.requiresReload||view.selectedItems.length!==1||selected.kind!=="file"||selected.bytes>T.fileBytes)return;
+    if(win.libraryPhase!=="ready"||view.phase!=="ready"||view.requiresReload||view.selectedItems.length!==1||selected.kind!=="file"||selected.bytes>T.fileBytes||fileCopyBlocked(win))return;
     const controller=win.fileTransfer,epoch=state.epoch,sink=V.createBlobSink();win.fileTransferPanel.clearDownload();win.uploadDraft=null;
     try{
       await controller.download({libraryID:view.libraryID,relativePath:selected.relativePath},sink);
@@ -694,6 +704,64 @@
       if(controller.snapshot().phase==="completed"&&sink.blob)win.fileTransferPanel.setDownload(sink.blob,selected.name);
     }catch{if(epoch===state.epoch&&currentWindow(win)&&controller===win.fileTransfer&&controller.snapshot().phase==="completed")toast(t("fileSaveFailed"));}
     finally{if(epoch===state.epoch&&currentWindow(win)&&controller===win.fileTransfer)renderFileTransferControls(win);}
+  }
+  function fileCopyBlocked(win) {
+    const view=win.fileCopy?.snapshot();return !!view&&(view.busy||CV.busyPhases.includes(view.phase)||["ready","uncertain"].includes(view.phase));
+  }
+  function fileCopyDraft(win,previous) {
+    if(!currentWindow(win)||!win.fileCopy?.canCopy)return;
+    const current=win.filePager.snapshot(),selected=current.selectedItems[0],controller=win.fileCopy;
+    if(win.libraryPhase!=="ready"||current.phase!=="ready"||current.requiresReload||controller.snapshot().busy||controller.snapshot().phase==="uncertain")return;
+    if(!previous&&(current.selectedItems.length!==1||selected.kind!=="file"||selected.bytes>T.fileBytes))return;
+    const captured=previous||{sourceLibraryID:current.libraryID,sourcePath:selected.relativePath,targetLibraryID:current.libraryID,parentPath:current.relativePath,name:selected.name};
+    const content=el("div"),label=el("label","",t("fileOperationName")),name=el("input");name.id="file-copy-name";label.htmlFor=name.id;name.value=captured.name;name.maxLength=255;
+    const picker=CV.createDestinationPicker({document,translate:t,source:state.directorySource,libraries:win.libraries,initial:{libraryID:captured.targetLibraryID,relativePath:captured.parentPath},libraryName:fileLibraryName});
+    content.append(el("p","",t("fileCopySource")+": "+fileLibraryName(captured.sourceLibraryID)+"/"+captured.sourcePath),picker.element,label,name,el("p","",t("fileCopyLimit")));
+    const epoch=state.epoch;
+    showModal(t("fileCopy"),content,[{key:"cancel",style:"secondary-button",action:closeModal},{key:"fileOperationPreview",style:"primary-button",action:async({isCurrent})=>{
+      const destination=picker.selection(),intent=C.intent({sourceLibraryID:captured.sourceLibraryID,sourcePath:captured.sourcePath,targetLibraryID:destination.libraryID,parentPath:destination.relativePath,name:name.value},true);
+      name.readOnly=true;
+      try{await controller.prepare(intent);}finally{name.readOnly=false;}
+      if(epoch!==state.epoch||!currentWindow(win)||controller!==win.fileCopy||!isCurrent()){if(!controller.closed)try{await controller.cancel();}catch{}return;}
+      fileCopyPreview(win);
+    }}],{onDispose:()=>picker.dispose()});win.fileModal=state.modal;void picker.load().catch(()=>{});
+  }
+  function fileCopyPreview(win) {
+    const controller=win.fileCopy,view=controller?.snapshot(),preview=view?.preview;
+    if(!currentWindow(win)||!preview||!["ready","conflict","unchanged"].includes(view.phase))return;
+    const p=preview.intent,content=el("div"),details=el("dl","detail-grid");let launching=false;
+    for(const[key,value]of[["fileCopySource",fileLibraryName(p.sourceLibraryID)+"/"+p.sourcePath],["fileCopyDestination",fileLibraryName(p.targetLibraryID)+"/"+(p.parentPath?p.parentPath+"/":"")+p.name],["fileSortSize",t("fileBytes",{bytes:new Intl.NumberFormat(prefs.locale).format(preview.totalBytes)})]])details.append(el("dt","",t(key)),el("dd","",value));
+    content.append(el("p","",t(preview.state==="ready"?"fileCopyConfirmHint":preview.state==="conflict"?"fileOperationConflict":"fileOperationUnchanged")),details);
+    const actions=[{key:"cancel",style:"secondary-button",action:closeModal},{key:"fileOperationEditName",style:"secondary-button",action:async({isCurrent})=>{
+      const epoch=state.epoch;launching=true;try{await controller.cancel();}catch{}
+      if(epoch!==state.epoch||!currentWindow(win)||controller!==win.fileCopy||!isCurrent())return;
+      closeModal(false);if(controller.snapshot().phase!=="uncertain")fileCopyDraft(win,p);else renderFileTransferControls(win);
+    }}];
+    if(preview.state==="ready")actions.push({key:"fileCopyConfirm",style:"primary-button",action:async({isCurrent})=>{
+      const epoch=state.epoch;launching=true;if(isCurrent())closeModal(false);
+      try{await controller.confirm();}catch{}
+      if(epoch!==state.epoch||!currentWindow(win)||controller!==win.fileCopy)return;
+      await refreshCopiedDirectory(win);renderFileTransferControls(win);
+    }});
+    showModal(t("fileCopyReview"),content,actions,{onDispose:()=>{if(!launching&&controller.snapshot().phase==="ready")void controller.cancel().catch(()=>{});}});win.fileModal=state.modal;
+  }
+  async function refreshCopiedDirectory(win) {
+    const copy=win.fileCopy?.snapshot(),current=win.filePager.snapshot(),intent=copy?.intent;
+    if(copy?.phase!=="completed"||!intent)return;
+    if(current.libraryID===intent.targetLibraryID&&current.relativePath===intent.parentPath&&current.phase!=="loading")await moveFilePage(win,"reload",undefined,false);
+    if(currentWindow(win))toast(t("fileCopyCompleted"));
+  }
+  async function cancelFileCopy(win) {
+    const controller=win.fileCopy,epoch=state.epoch;if(!controller)return;
+    try{await controller.cancel();}catch{}
+    if(epoch!==state.epoch||!currentWindow(win)||controller!==win.fileCopy)return;
+    await refreshCopiedDirectory(win);renderFileTransferControls(win);
+  }
+  async function checkFileCopy(win) {
+    const controller=win.fileCopy,epoch=state.epoch;if(!controller||controller.snapshot().phase!=="uncertain")return;
+    try{await controller.check();}catch{}
+    if(epoch!==state.epoch||!currentWindow(win)||controller!==win.fileCopy)return;
+    await refreshCopiedDirectory(win);renderFileTransferControls(win);
   }
   function renderFileDetails(win, view, actionable) {
     const pane = win.fileDetails; pane.replaceChildren(); pane.append(el("h2", "", t("fileDetails")));
@@ -769,10 +837,10 @@
       section.append(el("p", "setting-hint", t("settingsReadonly"))); page.append(section);
     }
   }
-  function showModal(title, content, actions) {
+  function showModal(title, content, actions, options = {}) {
     closeModal(false); hidePanels();
     const previousFocus = document.activeElement, backdrop = el("div", "modal-backdrop"), modal = el("section", "modal"), head = el("header", "modal-header"), heading = el("h2", "", title);
-    const modalState = { element: modal, previousFocus }, isCurrent = () => state.modal === modalState;
+    const modalState = { element: modal, previousFocus, onDispose: options.onDispose }, isCurrent = () => state.modal === modalState;
     heading.id = "modal-title"; modal.setAttribute("role", "dialog"); modal.setAttribute("aria-modal", "true"); modal.setAttribute("aria-labelledby", heading.id);
     head.append(heading, namedIconButton("close", "close", closeModal)); const footer = el("div", "modal-actions"), failure = el("p", "modal-error"); failure.setAttribute("role", "alert");
     for (const action of actions) {
@@ -787,7 +855,7 @@
     $("input,button,select", modal)?.focus();
   }
   function closeModal(restoreFocus = true) {
-    const previous = state.modal?.previousFocus; $("#modal-root").replaceChildren(); state.modal = null; state.modalEpoch++;
+    const previous = state.modal?.previousFocus, onDispose = state.modal?.onDispose; $("#modal-root").replaceChildren(); state.modal = null; state.modalEpoch++; if(onDispose)onDispose();
     if (restoreFocus !== false && previous?.isConnected) previous.focus();
   }
   function focusActiveHeading() { if (state.modal) return; const win = state.windows.get(state.active); const heading = win && $("h1", win.content); if (heading) { heading.tabIndex = -1; heading.focus(); } }
@@ -902,7 +970,7 @@
   async function switchScenario(scenario, showPreferences = false) {
     const epoch = ++state.epoch, old = state.session;
     document.body.dataset.ready = "false"; closeModal(false); hidePanels();
-    for (const win of state.windows.values()) { win.pager?.dispose(); win.filePager?.dispose(); win.fileOperation?.dispose();win.fileTransfer?.dispose();win.fileTransferPanel?.dispose(); win.element.remove(); }
+    for (const win of state.windows.values()) { win.pager?.dispose(); win.filePager?.dispose(); win.fileOperation?.dispose();win.fileTransfer?.dispose();win.fileTransferPanel?.dispose();win.fileCopy?.dispose();win.fileCopyPanel?.dispose(); win.element.remove(); }
     const oldSource = state.taskSource; state.notifications?.dispose();
     state.directorySource?.dispose();
     state.windows.clear(); state.active = null; state.previewJobs = []; state.notifications = null; state.overview = null; state.taskSource = null; state.directorySource = null; state.session = null;

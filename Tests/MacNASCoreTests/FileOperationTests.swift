@@ -96,8 +96,8 @@ final class FileOperationRegistryTests:LabTest {
 
 class FileOperationLab:LabTest {
     struct Context {let api:PrototypePlatformAPI;let owner:PrototypeSession;let family:PrototypeSession;let reference:VolumeReference;let observation:FixtureVolumeObservation;let library:URL}
-    func context(writeBinding:Bool=true,writeApproval:Bool=true) throws ->Context {
-        let root=child("instance");try PortableInstance.createSynthetic(at:root,databaseVersion:3)
+    func context(writeBinding:Bool=true,writeApproval:Bool=true,rootName:String="instance") throws ->Context {
+        let root=child(rootName);try PortableInstance.createSynthetic(at:root,databaseVersion:3)
         let api=try PrototypePlatformAPI(root:root),owner=try api.beginFixtureSession(userID:"fixture-owner"),family=try api.beginFixtureSession(userID:"fixture-family")
         let reference=try XCTUnwrap(api.fixtureVolumes.references.first),observation=FixtureVolumeObservation(volumeID:reference.volumeID,displayName:"synthetic",authorized:true)
         let library=root.appendingPathComponent("host-binding/fixtures/volumes/"+observation.mountID.uuidString.lowercased()).appendingPathComponent(reference.relativePath)

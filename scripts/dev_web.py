@@ -20,12 +20,12 @@ def run(name,command):
     print(name+(': PASS' if result.returncode==0 else ': FAIL'),flush=True)
     if result.returncode:print(result.stdout);raise RuntimeError(name)
 try:
-    for name in ['model.js','bridge-client.js','task-pages.js','notification-view.js','notification-reconciliation.js','directory-view.js','file-browser.js','file-operations.js','sha256.js','file-transfers.js','file-transfer-view.js','i18n.js','desktop.js']:run('syntax-'+name,[node,'--check','web/dist/'+name])
-    run('model-tests',[node,'--test','web/tests/model.test.cjs','web/tests/bridge.test.cjs','web/tests/client.test.cjs','web/tests/task-pages.test.cjs','web/tests/notification-view.test.cjs','web/tests/directory-pages.test.cjs','web/tests/directory-view.test.cjs','web/tests/event-consumer-status.test.cjs','web/tests/notification-reconciliation.test.cjs','web/tests/file-browser.test.cjs','web/tests/file-operations.test.cjs','web/tests/file-transfers.test.cjs','web/tests/file-transfer-view.test.cjs'])
+    for name in ['model.js','bridge-client.js','task-pages.js','notification-view.js','notification-reconciliation.js','directory-view.js','file-browser.js','file-operations.js','sha256.js','file-transfers.js','file-transfer-view.js','file-copies.js','file-copy-fixture.js','file-copy-view.js','i18n.js','desktop.js']:run('syntax-'+name,[node,'--check','web/dist/'+name])
+    run('model-tests',[node,'--test','web/tests/model.test.cjs','web/tests/bridge.test.cjs','web/tests/client.test.cjs','web/tests/task-pages.test.cjs','web/tests/notification-view.test.cjs','web/tests/directory-pages.test.cjs','web/tests/directory-view.test.cjs','web/tests/event-consumer-status.test.cjs','web/tests/notification-reconciliation.test.cjs','web/tests/file-browser.test.cjs','web/tests/file-operations.test.cjs','web/tests/file-transfers.test.cjs','web/tests/file-transfer-view.test.cjs','web/tests/file-copy-model.test.cjs','web/tests/file-copies.test.cjs','web/tests/file-copy-view.test.cjs'])
     run('static-http-policy-tests',['/usr/bin/python3','scripts/test_web.py'])
     run('requirements',['/usr/bin/python3','scripts/verify_requirements.py'])
     run('requirements-negative-tests',['/usr/bin/python3','scripts/test_requirements.py'])
-    baseline_path=next(path for path in [ROOT/'docs/evidence/n025-n026-2026-10-16.json',ROOT/'docs/evidence/n024-2026-10-16.json',ROOT/'docs/evidence/n022-2026-10-16.json',ROOT/'docs/evidence/n021-2026-10-15.json',ROOT/'docs/evidence/n020-2026-10-15.json',ROOT/'docs/evidence/n019-2026-10-15.json',ROOT/'docs/evidence/n016-2026-10-15.json',ROOT/'docs/evidence/n015-2026-10-15.json',ROOT/'docs/evidence/n014-2026-10-15.json',ROOT/'docs/evidence/n012-n013-2026-10-15.json',ROOT/'docs/evidence/n010-2026-10-15.json'] if path.exists())
+    baseline_path=next(path for path in [ROOT/'docs/evidence/n027-2026-10-16.json',ROOT/'docs/evidence/n025-n026-2026-10-16.json',ROOT/'docs/evidence/n024-2026-10-16.json',ROOT/'docs/evidence/n022-2026-10-16.json',ROOT/'docs/evidence/n021-2026-10-15.json',ROOT/'docs/evidence/n020-2026-10-15.json',ROOT/'docs/evidence/n019-2026-10-15.json',ROOT/'docs/evidence/n016-2026-10-15.json',ROOT/'docs/evidence/n015-2026-10-15.json',ROOT/'docs/evidence/n014-2026-10-15.json',ROOT/'docs/evidence/n012-n013-2026-10-15.json',ROOT/'docs/evidence/n010-2026-10-15.json'] if path.exists())
     baseline_report=json.loads(baseline_path.read_text())
     baseline=baseline_report['source_sha256']
     core={name:digest for name,digest in baseline.items() if name=='Package.swift' or name.startswith(('Sources/','Tests/','database/'))}
@@ -60,6 +60,20 @@ try:
         assert set(dependencies)=={'web/dist/model.js','web/dist/bridge-client.js','web/dist/directory-view.js','web/dist/file-operations.js','web/dist/file-transfers.js','web/dist/sha256.js','scripts/test_directory_bridge.cjs','scripts/test_file_operations_bridge.cjs','scripts/test_file_transfers_bridge.cjs'},'All three embedded scenarios and transitive transfer dependencies are required'
         regression=baseline_report['core_full_regression']
         assert regression['unfiltered'] is True and regression['new_unfiltered_execution'] is True and regression['reused_prior_suite'] is False and regression['swift_tests']==253,'A fresh complete transfer regression is required'
+    if baseline_report.get('task')=='N-027':
+        assert set(dependencies)=={'web/dist/model.js','web/dist/bridge-client.js','web/dist/directory-view.js','web/dist/file-operations.js','web/dist/file-transfers.js','web/dist/sha256.js','web/dist/file-copies.js','web/dist/file-copy-fixture.js','scripts/test_directory_bridge.cjs','scripts/test_file_operations_bridge.cjs','scripts/test_file_transfers_bridge.cjs','scripts/test_file_copy_bridge.cjs'},'All four embedded scenarios and transitive dependencies are required'
+        regression=baseline_report['core_full_regression']
+        assert regression['unfiltered'] is True and regression['new_unfiltered_execution'] is True and regression['reused_prior_suite'] is False and regression['swift_tests']>253,'Fresh complete copy regression is required'
+        run_id=regression['run_id']
+        assert len(run_id)==24 and all(c in '0123456789Tabcdef-' for c in run_id),'Invalid run receipt ID'
+        receipt_path=WORK/'Evidence/runs'/run_id
+        receipt=json.loads((receipt_path/'summary.json').read_text())
+        receipt_hashes=json.loads((receipt_path/'source-sha256.json').read_text())
+        assert receipt['status']=='PASS' and receipt['test_filter'] is None and receipt['sources_unchanged'] is True,'Raw unfiltered run receipt required'
+        assert all(receipt_hashes.get(name)==digest for name,digest in {**core,**dependencies}.items()),'Raw receipts do not match the reported sources'
+        test_log=(receipt_path/'swift-tests.log').read_text()
+        assert ('Executed '+str(regression['swift_tests'])+' tests, with 0 failures') in test_log,'Reported test total must match raw XCTest output'
+        assert any(r['name']=='postgres-stop' and r['exit_code']==0 for r in receipt['results']),'Successful database cleanup receipt required'
 except Exception as error:outcome='FAILED';print(str(error),flush=True)
 unchanged=all(hashlib.sha256((ROOT/name).read_bytes()).hexdigest()==digest for name,digest in hashes.items())
 if not unchanged:outcome='FAILED'

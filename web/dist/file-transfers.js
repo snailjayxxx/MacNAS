@@ -69,20 +69,44 @@
   }
   function createSource(context,operations){
     check(context&&["fixture","fixture-host"].includes(context.source)&&["administrator","reader"].includes(context.role));
-    const binding=freeze({...context});let closed=false;const alive=()=>check(!closed&&!operations.isClosed?.(),"unavailable");
+    const binding=freeze({...context}),owned=new Map(),busyIDs=new Map();let closed=false,heads=0;
+    const alive=()=>check(!closed&&!operations.isClosed?.(),"unavailable");
     const writable=()=>{alive();check(binding.mode==="synthetic_development","readOnly");check(binding.role==="administrator","denied");};
-    const call=async operation=>{alive();try{const value=await operation();alive();return value;}catch(error){throw new M.ServiceError(errorCode(error));}};
+    function trimReceipts(){
+      const receipts=[...owned].filter(([,entry])=>entry.terminal);let excess=receipts.length-32;
+      for(const [id,entry]of receipts){if(excess<=0)break;if(entry.cleaning||busyIDs.has(id))continue;try{operations.discard?.(id);owned.delete(id);excess--;}catch{}}
+    }
+    async function cleanup(id){
+      const entry=owned.get(id);if(!entry||entry.cleaning||busyIDs.has(id))return;entry.cleaning=true;
+      try{await operations.cancel(id);}catch{}finally{try{operations.discard?.(id);}catch{}owned.delete(id);}
+    }
+    async function call(operation,id,readOffset){
+      alive();const tracked=owned.has(id);if(tracked)busyIDs.set(id,(busyIDs.get(id)||0)+1);
+      try{let value=await operation();if(tracked){const entry=owned.get(id);value=readOffset===undefined?status(value,id,entry.expected):chunk(value,id,readOffset,entry.expected.totalBytes);entry.terminal=readOffset===undefined?["completed","cancelled","failed","uncertain","notVisible"].includes(value.state):value.eof;}alive();return value;}catch(error){throw new M.ServiceError(errorCode(error));}
+      finally{if(tracked){const count=busyIDs.get(id)-1;if(count)busyIDs.set(id,count);else busyIDs.delete(id);if(closed||operations.isClosed?.())await cleanup(id);else trimReceipts();}}
+    }
+    async function head(operation,decode,capability){
+      alive();trimReceipts();check(owned.size+heads<40,"budgetExceeded");heads++;
+      try{
+        const value=decode(await operation()),id=capability(value);
+        if(id){check(!owned.has(id));owned.set(id,{cleaning:false,terminal:false,expected:value.state==="ready"?{direction:"upload",libraryID:value.intent.libraryID,relativePath:target(value.intent),totalBytes:value.intent.totalBytes}:{direction:"download",libraryID:value.libraryID,relativePath:value.relativePath,totalBytes:value.totalBytes}});}
+        if(closed||operations.isClosed?.()){if(id)await cleanup(id);throw new M.ServiceError("unavailable");}return value;
+      }catch(error){throw new M.ServiceError(errorCode(error));}finally{heads--;}
+    }
     const source=Object.freeze({context:binding,get closed(){return closed||!!operations.isClosed?.();},get canUpload(){return !this.closed&&binding.mode==="synthetic_development"&&binding.role==="administrator";},
-      previewUpload(p){writable();return call(()=>operations.previewUpload(uploadIntent(p,true)));},
-      beginUpload(id){writable();O.id(id,"invalidInput");return call(()=>operations.beginUpload(id));},
-      appendUpload(id,offset,values){writable();O.id(id,"invalidInput");integer(offset,fileBytes,"invalidInput");return call(()=>operations.appendUpload(id,offset,values));},
-      finishUpload(id,digest){writable();O.id(id,"invalidInput");hash(digest,"invalidInput");return call(()=>operations.finishUpload(id,digest));},
-      beginDownload(p){alive();return call(()=>operations.beginDownload(downloadIntent(p)));},
-      readDownloadChunk(id,offset){alive();O.id(id,"invalidInput");integer(offset,fileBytes,"invalidInput");return call(()=>operations.readDownloadChunk(id,offset));},
-      status(id){alive();O.id(id,"invalidInput");return call(()=>operations.status(id));},
-      cancel(id){alive();O.id(id,"invalidInput");return call(()=>operations.cancel(id));},
-      discard(id){O.id(id,"invalidInput");try{return operations.discard?.(id)??false;}catch{return false;}},
-      dispose(){closed=true;operations.dispose?.();}
+      previewUpload(p){writable();const captured=uploadIntent(p,true);return head(()=>operations.previewUpload(captured),value=>preview(value,captured),value=>value.state==="ready"?value.transferID:null);},
+      beginUpload(id){writable();O.id(id,"invalidInput");return call(()=>operations.beginUpload(id),id);},
+      appendUpload(id,offset,values){writable();O.id(id,"invalidInput");integer(offset,fileBytes,"invalidInput");return call(()=>operations.appendUpload(id,offset,values),id);},
+      finishUpload(id,digest){writable();O.id(id,"invalidInput");hash(digest,"invalidInput");return call(()=>operations.finishUpload(id,digest),id);},
+      beginDownload(p){alive();const captured=downloadIntent(p);return head(()=>operations.beginDownload(captured),value=>{
+        const data=fields(value,["transferID"],["transferVersion","state","direction","libraryID","relativePath","totalBytes","transferredBytes","chunkBytes","sha256","lastChunkSHA256","error"]),v=status(data,O.id(data.transferID),{direction:"download",...captured});
+        check(v.state==="downloading"&&v.transferredBytes===0);return v;
+      },value=>value.transferID);},
+      readDownloadChunk(id,offset){alive();O.id(id,"invalidInput");integer(offset,fileBytes,"invalidInput");return call(()=>operations.readDownloadChunk(id,offset),id,offset);},
+      status(id){alive();O.id(id,"invalidInput");return call(()=>operations.status(id),id);},
+      cancel(id){alive();O.id(id,"invalidInput");return call(()=>operations.cancel(id),id);},
+      discard(id){O.id(id,"invalidInput");if(busyIDs.has(id))return false;try{const removed=operations.discard?.(id)??false,local=owned.get(id)?.terminal===true;if(removed||local)owned.delete(id);return removed||local;}catch{return false;}},
+      dispose(){if(closed)return;closed=true;for(const id of owned.keys())void cleanup(id);operations.dispose?.();}
     });sources.add(source);return source;
   }
   async function createClientSource(client){
@@ -96,7 +120,7 @@
     const entries=new Map();let closed=false;
     const clock=()=>{const value=monotonicNow();check(Number.isFinite(value)&&value>=0,"unavailable");return value;};
     const terminal=e=>["completed","cancelled","failed","uncertain"].includes(e.state);
-    function end(e,state,error=null){e.state=state;e.error=error;e.deadline=clock()+300000;e.buffer=null;e.file=null;e.reserved=0;if(state!=="completed")e.last=null;return e;}
+    function end(e,state,error=null){store.release?.(e.id);e.state=state;e.error=error;e.deadline=clock()+300000;e.buffer=null;e.file=null;e.reserved=0;if(state!=="completed")e.last=null;return e;}
     function reclaim(){const now=clock();for(const [id,e]of entries)if(now>=e.deadline||!terminal(e)&&now>=e.absolute){if(terminal(e))entries.delete(id);else end(e,"failed","expired");}
       const receipts=[...entries.values()].filter(terminal).sort((a,b)=>a.deadline-b.deadline);for(const e of receipts.slice(0,Math.max(0,receipts.length-32)))entries.delete(e.id);}
     const active=()=>[...entries.values()].filter(e=>!terminal(e)).length;
@@ -107,7 +131,7 @@
     function live(e){check(clock()<e.deadline&&clock()<e.absolute,"expired");}
     function read(e){check(store.read(e.intent)===e.file,"staleState");}
     return createSource(context,{
-      isClosed:()=>closed,dispose(){closed=true;entries.clear();},
+      isClosed:()=>closed,dispose(){closed=true;for(const e of entries.values())store.release?.(e.id);entries.clear();},
       async previewUpload(p){await store.authorizeUpload(p);reclaim();check(store.parentExists(p),"staleState");
         const e=entry("upload",p,p.totalBytes),state=store.exists(p)?"conflict":"ready";
         if(state==="ready"){check(active()<8,"budgetExceeded");e.version=store.version(p);entries.set(e.id,e);}
@@ -115,7 +139,7 @@
       },
       async beginUpload(id){const e=get(id);check(e.direction==="upload","denied");await store.authorizeUpload(e.intent);
         if(e.state!=="ready")return dto(e);
-        try{live(e);parent(e);check(e.totalBytes<=reservedBytes-[...entries.values()].reduce((sum,x)=>sum+x.reserved,0),"budgetExceeded");e.buffer=new Uint8Array(e.totalBytes);e.reserved=e.totalBytes;e.state="uploading";e.deadline=clock()+60000;}
+        try{live(e);parent(e);check(e.totalBytes<=reservedBytes-[...entries.values()].reduce((sum,x)=>sum+x.reserved,0),"budgetExceeded");store.reserve?.(e.id,e.totalBytes);e.buffer=new Uint8Array(e.totalBytes);e.reserved=e.totalBytes;e.state="uploading";e.deadline=clock()+60000;}
         catch(error){end(e,"failed",errorCode(error));}reclaim();return dto(e);
       },
       async appendUpload(id,offset,values){const bytes=decodeParts(values,false,"invalidInput"),e=get(id);check(e.direction==="upload","denied");await store.authorizeUpload(e.intent);
@@ -126,7 +150,7 @@
       },
       async finishUpload(id,digest){const e=get(id);check(e.direction==="upload","denied");await store.authorizeUpload(e.intent);
         if(e.expected)check(e.expected===digest,"collision");if(terminal(e))return dto(e);check(e.state==="uploading"&&e.offset===e.totalBytes,"invalidInput");e.expected=digest;
-        try{live(e);parent(e);check(H.digest(e.buffer)===digest,"integrity");check(!store.exists(e.intent),"collision");store.publish(e.intent,e.buffer);e.sha256=digest;end(e,"completed");}
+        try{live(e);parent(e);check(H.digest(e.buffer)===digest,"integrity");check(!store.exists(e.intent),"collision");store.publish(e.intent,e.buffer,e.id);e.sha256=digest;end(e,"completed");}
         catch(error){end(e,"failed",errorCode(error));}reclaim();return dto(e);
       },
       async beginDownload(p){await store.authorizeRead(p);reclaim();const bytes=store.read(p);check(bytes instanceof Uint8Array,"denied");check(bytes.length<=fileBytes&&active()<8,"budgetExceeded");
@@ -148,27 +172,31 @@
     });
   }
   function createController(source,{onChange=()=>{}}={}){
-    check(sources.has(source)&&!source.closed&&typeof onChange==="function","invalidInput");let busy=false,cancelled=false,closed=false,file=null,epoch=0;
+    check(sources.has(source)&&!source.closed&&typeof onChange==="function","invalidInput");let busy=false,cancelled=false,closed=false,file=null,epoch=0,localDownloadAborted=false;
     let view=freeze({phase:"idle",preview:null,result:null,transferID:null,direction:null,location:null,totalBytes:0,transferredBytes:0,error:null});
     function update(p){if(closed&&p.phase!=="closed")return view;view=freeze({...view,...p});try{onChange(view);}catch{}return view;}
     function ready(){check(!closed&&!source.closed,"unavailable");check(!busy,"busy");}
-    async function cancelOwned(){if(view.transferID&&!source.closed)try{const value=status(await source.cancel(view.transferID),view.transferID,expected());check(["cancelled","completed","failed","uncertain"].includes(value.state));return value;}catch{}return null;}
-    const expected=()=>view.direction==="upload"&&view.location?{direction:"upload",libraryID:view.location.libraryID,relativePath:view.location.relativePath,totalBytes:view.totalBytes}:null;
+    async function cancelID(id,binding){try{const value=status(await source.cancel(id),id,binding);check(["cancelled","completed","failed","uncertain"].includes(value.state));return value;}catch{}return null;}
+    async function cancelOwned(){return view.transferID?cancelID(view.transferID,expected()):null;}
+    async function releaseID(id,binding){const value=await cancelID(id,binding);source.discard(id);return value;}
+    const expected=()=>view.direction&&view.location?{direction:view.direction,libraryID:view.location.libraryID,relativePath:view.location.relativePath,totalBytes:view.totalBytes}:null;
+    const downloadEndPhase=result=>!result?"uncertain":result.state==="completed"?"cancelled":result.state;
     const yieldChunk=()=>new Promise(resolve=>setTimeout(resolve,0));
     return Object.freeze({snapshot:()=>view,get canUpload(){return source.canUpload;},
       async prepareUpload(params,blob){
         ready();check(view.phase!=="uncertain","staleState");check(blob instanceof Blob,"invalidInput");const p=uploadIntent(params,true);check(blob.size===p.totalBytes,"invalidInput");
         const previousReady=view.phase==="ready",previousID=view.transferID;busy=true;cancelled=false;const generation=++epoch;
-        if(previousReady)await cancelOwned();if(closed||cancelled){busy=false;return update({phase:closed?"closed":"cancelled"});}file=blob;
+        if(previousReady){const result=await cancelOwned();if(!result&&!closed){busy=false;return update({phase:"uncertain",error:"unavailable"});}}if(closed||cancelled){if(previousID)source.discard(previousID);busy=false;return update({phase:closed?"closed":"cancelled"});}file=blob;
         if(previousID)source.discard(previousID);
         update({phase:"previewing",preview:null,result:null,transferID:null,direction:"upload",location:{libraryID:p.libraryID,relativePath:target(p)},totalBytes:p.totalBytes,transferredBytes:0,error:null});
-        try{const value=preview(await source.previewUpload(p),p);if(closed||generation!==epoch){if(value.state==="ready")try{await source.cancel(value.transferID);}catch{}return view;}
-          if(cancelled){if(value.state==="ready")try{await source.cancel(value.transferID);}catch{}file=null;return update({phase:"cancelled",preview:null,transferID:null});}
+        try{const value=preview(await source.previewUpload(p),p);
+          if(closed||generation!==epoch||cancelled){const result=value.state==="ready"?await releaseID(value.transferID,{direction:"upload",libraryID:p.libraryID,relativePath:target(p),totalBytes:p.totalBytes}):null;file=null;
+            if(closed)return view;return update({phase:value.state==="ready"?(result?.state||"uncertain"):"cancelled",result,preview:!result&&value.state==="ready"?value:null,transferID:!result&&value.state==="ready"?value.transferID:null,error:value.state==="ready"&&!result?"unavailable":result?.error??null});}
           return update({phase:value.state,preview:value,transferID:value.transferID});}
         catch(error){update({phase:"failed",error:errorCode(error)});throw error;}finally{busy=false;}
       },
       async startUpload(){
-        ready();check(view.phase==="ready"&&file,"denied");busy=true;cancelled=false;const id=view.transferID,p=view.preview,blob=file;let submitted=false;
+        ready();check(view.phase==="ready"&&file,"denied");busy=true;cancelled=false;const id=view.transferID,p=view.preview,blob=file;let submitted=false,released=false;
         update({phase:"uploading",error:null});
         try{
           submitted=true;let value=status(await source.beginUpload(id),id,expected());check(["uploading","failed","cancelled"].includes(value.state));
@@ -182,21 +210,22 @@
             if(value.state!=="uploading")return update({phase:value.state,result:value,error:value.error});
             check(value.transferredBytes===offset+block.length&&value.lastChunkSHA256===H.digest(block));digest.update(block);update({transferredBytes:value.transferredBytes});await yieldChunk();
           }
-          if(cancelled||closed){value=await cancelOwned();return update({phase:value?.state||"uncertain",result:value,error:value?null:"unavailable"});}
+          if(cancelled||closed){value=await cancelOwned();if(closed){source.discard(id);released=true;}return update({phase:value?.state||"uncertain",result:value,error:value?value.error:"unavailable"});}
           update({phase:"verifying"});value=status(await source.finishUpload(id,digest.hex()),id,expected());check(["completed","failed","uncertain"].includes(value.state));
           if(value.state==="completed")check(value.sha256===digest.hex(),"integrity");return update({phase:value.state,result:value,transferredBytes:value.transferredBytes,error:value.error});
-        }catch(error){update({phase:submitted?"uncertain":"failed",error:errorCode(error)});throw error;}finally{busy=false;file=null;if(closed)source.discard(id);}
+        }catch(error){update({phase:submitted?"uncertain":"failed",error:errorCode(error)});throw error;}finally{busy=false;file=null;if(closed&&!released)await releaseID(id,expected());}
       },
       async download(params,sink){
         ready();check(view.phase!=="uncertain","staleState");const p=downloadIntent(params);check(sink&&["write","finish","abort"].every(key=>typeof sink[key]==="function"),"invalidInput");
-        const previousReady=view.phase==="ready",previousID=view.transferID;busy=true;cancelled=false;if(previousReady)await cancelOwned();file=null;
-        if(closed||cancelled){await sink.abort();busy=false;return update({phase:closed?"closed":"cancelled"});}
+        const previousReady=view.phase==="ready",previousID=view.transferID;busy=true;cancelled=false;localDownloadAborted=false;
+        if(previousReady){const result=await cancelOwned();if(!result&&!closed){localDownloadAborted=true;await sink.abort();busy=false;return update({phase:"uncertain",error:"unavailable"});}}file=null;
+        if(closed||cancelled){if(previousID)source.discard(previousID);localDownloadAborted=true;await sink.abort();busy=false;return update({phase:closed?"closed":"cancelled"});}
         if(previousID)source.discard(previousID);let ownedID=null;
         update({phase:"startingDownload",preview:null,result:null,transferID:null,direction:"download",location:p,totalBytes:0,transferredBytes:0,error:null});
         try{
           const begun=await source.beginDownload(p),id=O.id(begun.transferID);status(begun,id,{direction:"download",...p});check(begun.state==="downloading"&&begun.transferredBytes===0);
           ownedID=id;
-          if(closed||cancelled){try{await source.cancel(id);}catch{}await sink.abort();return update({phase:"cancelled"});}
+          if(closed||cancelled){const result=await releaseID(id,{direction:"download",...p,totalBytes:begun.totalBytes});ownedID=null;localDownloadAborted=true;await sink.abort();return update({phase:downloadEndPhase(result),result,transferID:!result||result.state==="uncertain"?id:null,totalBytes:begun.totalBytes,error:result?result.error:"unavailable"});}
           update({phase:"downloading",transferID:id,totalBytes:begun.totalBytes});const digest=new H.SHA256();let offset=0;
           do{
             if(cancelled||closed)break;
@@ -207,20 +236,20 @@
               const result=status(await source.status(id),id,{direction:"download",...p,totalBytes:begun.totalBytes});check(result.state==="completed"&&result.sha256===digest.hex(),"integrity");
               if(cancelled||closed)break;await sink.finish();return update({phase:"completed",result});}
           }while(true);
-          await sink.abort();const result=await cancelOwned();return update({phase:"cancelled",result,error:null});
-        }catch(error){try{await sink.abort();}catch{}await cancelOwned();update({phase:"failed",error:errorCode(error)});throw error;}finally{busy=false;if(closed&&ownedID)source.discard(ownedID);}
+          localDownloadAborted=true;await sink.abort();const result=await cancelOwned();if(closed&&ownedID){source.discard(ownedID);ownedID=null;}return update({phase:downloadEndPhase(result),result,error:result?result.error:"unavailable"});
+        }catch(error){try{localDownloadAborted=true;await sink.abort();}catch{}await cancelOwned();update({phase:"failed",error:errorCode(error)});throw error;}finally{busy=false;if(closed&&ownedID)await releaseID(ownedID,{direction:"download",...p});}
       },
       async cancel(){
         check(!closed,"unavailable");cancelled=true;if(busy)return update({phase:"cancelling"});
-        if(view.transferID&&["ready","uploading","downloading","uncertain"].includes(view.phase)){busy=true;try{const value=await cancelOwned();file=null;return update({phase:value?.state||"uncertain",result:value,error:value?null:"unavailable"});}finally{busy=false;}}return view;
+        if(view.transferID&&["ready","uploading","downloading","uncertain"].includes(view.phase)){busy=true;try{const value=await cancelOwned();file=null;return update({phase:view.direction==="download"&&localDownloadAborted?downloadEndPhase(value):value?.state||"uncertain",result:value,error:value?value.error:"unavailable"});}finally{busy=false;}}return view;
       },
       async check(){
         ready();check(view.phase==="uncertain"&&view.transferID,"denied");busy=true;
         try{const value=status(await source.status(view.transferID),view.transferID,expected());
-          return update({phase:["completed","failed","cancelled"].includes(value.state)?value.state:"uncertain",result:value,transferredBytes:value.transferredBytes??view.transferredBytes,error:value.error});}
+          return update({phase:["completed","failed","cancelled"].includes(value.state)?(view.direction==="download"&&localDownloadAborted?downloadEndPhase(value):value.state):"uncertain",result:value,transferredBytes:value.transferredBytes??view.transferredBytes,error:value.error});}
         finally{busy=false;}
       },
-      dispose(){if(closed)return;const id=view.transferID;cancelled=true;closed=true;epoch++;file=null;if(!busy&&id){if(["ready","uncertain"].includes(view.phase))void cancelOwned().finally(()=>source.discard(id));else source.discard(id);}update({phase:"closed",preview:null,result:null});}
+      dispose(){if(closed)return;const id=view.transferID;cancelled=true;closed=true;epoch++;file=null;if(!busy&&id){if(["ready","uncertain"].includes(view.phase))void releaseID(id,expected());else source.discard(id);}update({phase:"closed",preview:null,result:null});}
     });
   }
   return {chunkBytes,fileBytes,reservedBytes,uploadIntent,downloadIntent,preview,status,chunk,parts,decodeParts,target,createSource,createClientSource,createFixtureSource,createController};

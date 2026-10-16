@@ -1,9 +1,9 @@
 (function (root, factory) {
-  if (typeof module === "object" && module.exports) module.exports = factory(require("./model.js"),require("./file-operations.js"),require("./file-transfers.js"));
-  else root.MacNASDirectoryView = Object.freeze(factory(root.MacNASModel,root.MacNASFileOperations,root.MacNASFileTransfers));
-})(globalThis, function (M,O,T) {
+  if (typeof module === "object" && module.exports) module.exports = factory(require("./model.js"),require("./file-operations.js"),require("./file-transfers.js"),require("./file-copies.js"),require("./file-copy-fixture.js"));
+  else root.MacNASDirectoryView = Object.freeze(factory(root.MacNASModel,root.MacNASFileOperations,root.MacNASFileTransfers,root.MacNASFileCopies,root.MacNASFileCopyFixture));
+})(globalThis, function (M,O,T,C,F) {
   "use strict";
-  const sources = new WeakSet(), encoder = new TextEncoder();
+  const sources = new WeakSet(), encoder = new TextEncoder(), fixtureTreeBytes = 64 * 1024 * 1024;
   const errors = new Set(["invalidInput","invalidResponse","unsupported","denied","readOnly","unavailable","budgetExceeded","replay","collision","missingVolume","unsafePath","unsafeFile","integrity","database","busy","expired","staleState","interrupted","timedOut","cancelled","pluginFailed","invalidSchema"]);
   const volumeStates = ["missing","ambiguous","systemVolume","authorizationRequired","readOnly","needsBinding","identityChanged","readyReadOnly","readyReadWrite"];
   const check = (value, code = "invalidResponse") => { if (!value) throw new M.ServiceError(code); };
@@ -80,12 +80,13 @@
       if (!cursors.has(cursor) || busy.has(cursor)) return false;
       cursors.delete(cursor); try { return operations.discard(cursor); } catch { return false; }
     }
-    function dispose() { if (closed) return; closed = true; for (const cursor of cursors.keys()) discard(cursor); fileOperations?.dispose();fileTransfers?.dispose(); operations.dispose?.(); }
+    function dispose() { if (closed) return; closed = true; for (const cursor of cursors.keys()) discard(cursor); fileOperations?.dispose();fileTransfers?.dispose();fileCopies?.dispose(); operations.dispose?.(); }
     const binding = context(await call(operations.overview), kind), fixture = kind === "fixture";
     const fileOperations=operations.previewOperation ? O.createSource(binding,{preview:operations.previewOperation,commit:operations.commitOperation,status:operations.operationStatus,discard:operations.discardOperation,isClosed:()=>closed||!!operations.isClosed?.()}) : null;
     const fileTransfers=operations.transferStore?T.createFixtureSource(binding,operations.transferStore,{monotonicNow:operations.transferClock}):operations.transferMethods?T.createSource(binding,operations.transferMethods):null;
+    const fileCopies=operations.copyStore?F.createFixtureSource(binding,operations.copyStore,{monotonicNow:operations.transferClock}):operations.copyMethods?C.createSource(binding,operations.copyMethods):null;
     const source = Object.freeze({
-      context: binding, fileOperations,fileTransfers, get closed() { return closed || !!operations.isClosed?.(); }, dispose, discardCursor: discard,
+      context: binding, fileOperations,fileTransfers,fileCopies, get closed() { return closed || !!operations.isClosed?.(); }, dispose, discardCursor: discard,
       async libraries() {
         const raw = await call(operations.libraries);
         try {
@@ -149,18 +150,24 @@
       transferMethods:{previewUpload:p=>client.previewUpload(p),beginUpload:id=>client.beginUpload(id),appendUpload:(transferID,offset,parts)=>client.appendUpload({transferID,offset,parts}),finishUpload:(transferID,sha256)=>client.finishUpload({transferID,sha256}),
         beginDownload:p=>client.beginDownload(p),readDownloadChunk:(transferID,offset)=>client.readDownloadChunk({transferID,offset}),status:id=>client.transferStatus(id),cancel:id=>client.cancelTransfer(id),discard:id=>client.discardTransfer(id),isClosed:()=>client.closed}
     }:{};
+    const copyMethods=["previewFileCopy","beginFileCopy","copyFileChunk","fileCopyStatus","cancelFileCopy"].every(key=>typeof client[key]==="function")?{
+      copyMethods:{preview:p=>client.previewFileCopy(p),begin:id=>client.beginFileCopy(id),chunk:(id,offset)=>client.copyFileChunk({copyID:id,offset}),status:id=>client.fileCopyStatus(id),cancel:id=>client.cancelFileCopy(id),discard:id=>client.discardFileCopy?.(id),isClosed:()=>client.closed}
+    }:{};
     return makeSource("fixture-host", { overview: () => client.overview(), libraries: () => client.listLibraries(), page: p => client.listFilesPage(p),
-      preview: p => client.previewFile(p), discard: cursor => client.discardFilePage(cursor), isClosed: () => client.closed,...mutation,...transferMethods });
+      preview: p => client.previewFile(p), discard: cursor => client.discardFilePage(cursor), isClosed: () => client.closed,...mutation,...transferMethods,...copyMethods });
   }
   async function createFixtureDirectorySource(api, session, options = {}) {
     check(api?.source === "fixture" && typeof api.overview === "function", "unavailable");
-    const config = fields(options, [], ["monotonicNow"], "invalidInput");
+    const config = fields(options, [], ["monotonicNow", "maximumTreeBytes"], "invalidInput");
     const now = Object.hasOwn(config, "monotonicNow") ? config.monotonicNow : (() => performance.now()); check(typeof now === "function", "invalidInput");
-    let who;
+    const maximumTreeBytes = Object.hasOwn(config, "maximumTreeBytes") ? integer(config.maximumTreeBytes, 1, fixtureTreeBytes, "invalidInput") : fixtureTreeBytes;
+    let who, revoke = () => {}, unsubscribe = () => {};
     try { who = context(await api.overview(session), "fixture"); } catch (error) { throw new M.ServiceError(errorCode(error)); }
     async function authorized() {
-      const info = await api.overview(session), current = context(info, "fixture");
-      check(["userID", "role", "mode"].every(key => who[key] === current[key]), "denied"); return info;
+      try {
+        const info = await api.overview(session), current = context(info, "fixture");
+        check(["userID", "role", "mode"].every(key => who[key] === current[key]), "denied"); return info;
+      } catch (error) { revoke(); throw error; }
     }
     // Fixed synthetic tree, independent of the legacy translated fixture files. No disk approval, scan or timestamps.
     const data = new Map(), directories = new Set(["shared/", "shared/Notes", "shared/Empty", "personal/", "personal/Travel"]);
@@ -175,28 +182,54 @@
       ["personal/Private.txt", "仅所有者的合成文字 / オーナー用のサンプル\n"],
       ["personal/Travel/List.txt", "合成旅行清单 / 旅行リストのサンプル\n"]
     ]) data.set(id, encoder.encode(value));
-    const pending = new Map(), consumed = new Map(),revisions=new Map(),operationPreviews=new Map(),operationReceipts=new Map();
+    let publishedBytes = [...data.values()].reduce((sum, bytes) => sum + bytes.length, 0), reservedBytes = 0;
+    const reservations = new Map();
+    check(publishedBytes <= maximumTreeBytes, "budgetExceeded");
+    function reserve(id, bytes) {
+      integer(bytes, 0, T.fileBytes, "invalidInput");
+      const previous = reservations.get(id);
+      if (previous !== undefined) { check(previous === bytes, "collision"); return; }
+      check(bytes <= maximumTreeBytes - publishedBytes - reservedBytes, "budgetExceeded");
+      reservations.set(id, bytes); reservedBytes += bytes;
+    }
+    function release(id) { if (reservations.has(id)) { reservedBytes -= reservations.get(id); reservations.delete(id); } }
+    const pending = new Map(), consumed = new Map(),revisions=new Map(),directoryIdentities=new Map([...directories].map(key=>[key,crypto.randomUUID()])),operationPreviews=new Map(),operationReceipts=new Map();
     const visible = libraryID => libraryID === "shared" || libraryID === "personal" && who.role === "administrator";
     function clock() { const time = now(); check(Number.isFinite(time) && time >= 0, "unavailable"); return time; }
     function reclaim(time) { for (const [id, item] of pending) if (time >= item.expires) { pending.delete(id); consumed.set(id, "expired"); } while (consumed.size > 64) consumed.delete(consumed.keys().next().value); }
     async function mutationAuthorized(p) {await authorized();check(who.mode==="synthetic_development","readOnly");check(who.role==="administrator"&&visible(p.libraryID),"denied");}
     const directoryKey=p=>p.libraryID+"/"+p.parentPath;
+    const directoryVersion = key => directoryIdentities.get(key) + ":" + (revisions.get(key) || 0);
     function saveOperation(value){if(operationReceipts.size>=32)operationReceipts.delete(operationReceipts.keys().next().value);operationReceipts.set(value.operationID,{value,expires:clock()+300000});return value;}
     function reclaimOperations(){const time=clock();for(const [id,item]of operationReceipts)if(time>=item.expires)operationReceipts.delete(id);for(const [id,item]of operationPreviews)if(time>=item.expires){operationPreviews.delete(id);saveOperation({resultVersion:1,operationID:id,state:"failed",intent:item.intent,error:"expired"});}}
     function operationResult(id,p,state,error=null){return {resultVersion:1,operationID:id,state,intent:p,error};}
     function collision(p){const key=directoryKey(p)+(p.parentPath?"/":""),wanted=p.name.normalize("NFC").toLowerCase();return [...directories,...data.keys()].some(value=>{if(!value.startsWith(key))return false;const name=value.slice(key.length);return name&&!name.includes("/")&&name.normalize("NFC").toLowerCase()===wanted;});}
-    return makeSource("fixture", {
+    function publish(p, bytes, reservationID) {
+      check(bytes instanceof Uint8Array && reservations.has(reservationID) && reservations.get(reservationID) === bytes.length, "integrity");
+      check(directories.has(directoryKey(p)), "staleState"); check(!collision(p), "collision");
+      check(directories.size + data.size < 4096, "budgetExceeded");
+      const key = directoryKey(p), revision = (revisions.get(key) || 0) + 1;
+      check(Number.isSafeInteger(revision) && publishedBytes + reservedBytes <= maximumTreeBytes, "budgetExceeded");
+      data.set(p.libraryID + "/" + T.target(p), bytes); release(reservationID); publishedBytes += bytes.length; revisions.set(key, revision);
+    }
+    const targetIntent = p => ({ libraryID: p.targetLibraryID, parentPath: p.parentPath, name: p.name });
+    const sourceParent = p => p.sourceLibraryID + "/" + p.sourcePath.split("/").slice(0,-1).join("/");
+    const source = await makeSource("fixture", {
       overview: authorized,
       transferClock:now,
       transferStore:{authorizeSession:authorized,authorizeUpload:mutationAuthorized,async authorizeRead(p){await authorized();check(visible(p.libraryID),"denied");},
-        parentExists:p=>directories.has(directoryKey(p)),version:p=>revisions.get(directoryKey(p))||0,exists:collision,
-        read:p=>data.get(p.libraryID+"/"+p.relativePath),publish(p,bytes){check(directories.size+data.size<4096,"budgetExceeded");data.set(p.libraryID+"/"+T.target(p),bytes);const key=directoryKey(p);revisions.set(key,(revisions.get(key)||0)+1);}},
+        parentExists:p=>directories.has(directoryKey(p)),version:p=>directoryVersion(directoryKey(p)),exists:collision,
+        read:p=>data.get(p.libraryID+"/"+p.relativePath), reserve, release, publish},
+      copyStore:{authorizeSession:authorized, async authorizeCopy(p){await mutationAuthorized({libraryID:p.targetLibraryID});check(visible(p.sourceLibraryID),"denied");},
+        readSource:p=>data.get(p.sourceLibraryID+"/"+p.sourcePath), sourceVersion:p=>directoryVersion(sourceParent(p)),
+        parentExists:p=>directories.has(directoryKey(targetIntent(p))), targetVersion:p=>directoryVersion(directoryKey(targetIntent(p))),
+        exists:p=>collision(targetIntent(p)),readTarget:p=>data.get(p.targetLibraryID+"/"+T.target(p)), reserve, release, publish:(p,bytes,id)=>publish(targetIntent(p),bytes,id)},
       async libraries() { await authorized(); return ["shared", "personal"].filter(visible).map(libraryID => ({ libraryID, state: "synthetic", estimatedBytes: null })); },
       async page(p) {
         await authorized(); check(visible(p.libraryID), "denied");
-        const directory = p.libraryID + "/" + p.relativePath; check(directories.has(directory), "denied");
+        const directory = p.libraryID + "/" + p.relativePath; check(directories.has(directory), "denied");const version=directoryVersion(directory);
         const time = clock(); reclaim(time); let after, expires = time + 60000;
-        if (p.cursor !== undefined) { const saved = pending.get(p.cursor); check(saved, consumed.get(p.cursor) || "denied"); check(sameLocation(saved, p), "denied");check(saved.revision===(revisions.get(directory)||0),"staleState"); after = saved.after; expires = saved.expires; }
+        if (p.cursor !== undefined) { const saved = pending.get(p.cursor); check(saved, consumed.get(p.cursor) || "denied"); check(sameLocation(saved, p), "denied");check(saved.revision===directoryVersion(directory),"staleState"); after = saved.after; expires = saved.expires; }
         const prefix = directory + (p.relativePath ? "/" : ""), items = [];
         for (const id of [...directories, ...data.keys()]) {
           if (!id.startsWith(prefix)) continue;
@@ -208,16 +241,16 @@
         const remaining = items.filter(item => after === undefined || byteOrder(item.name, after) > 0), page = remaining.slice(0, p.pageSize);
         let nextCursor = null;
         if (remaining.length > p.pageSize) { check(pending.size - (p.cursor ? 1 : 0) < 64, "budgetExceeded"); nextCursor = crypto.randomUUID(); }
-        await authorized(); check(clock() < expires, "expired");
+        await authorized(); check(clock() < expires, "expired");check(directories.has(directory)&&directoryVersion(directory)===version,"staleState");
         if (p.cursor !== undefined) { pending.delete(p.cursor); consumed.set(p.cursor, "replay"); }
-        if (nextCursor) pending.set(nextCursor, { ...p, after: page.at(-1).name, expires,revision:revisions.get(directory)||0 });
+        if (nextCursor) pending.set(nextCursor, { ...p, after: page.at(-1).name, expires,revision:version });
         reclaim(clock());
         return { pageVersion: 1, order: "name-utf8", consistency: "synthetic-fixed-directory", libraryID: p.libraryID, relativePath: p.relativePath, pageSize: p.pageSize, items: page, nextCursor };
       },
       async preview(p) {
         await authorized(); check(visible(p.libraryID), "denied");
         const value = data.get(p.libraryID + "/" + p.relativePath); check(value !== undefined, "denied");
-        check(value.length <= p.maximumBytes, "budgetExceeded"); await authorized();let decoded;
+        check(value.length <= p.maximumBytes, "budgetExceeded"); await authorized();check(data.get(p.libraryID + "/" + p.relativePath)===value,"staleState");let decoded;
         try{decoded=new TextDecoder("utf-8",{fatal:true}).decode(value);}catch{throw new M.ServiceError("unsupported");}
         return { libraryID: p.libraryID, relativePath: p.relativePath, text: decoded, utf8Bytes: value.length };
       },
@@ -226,7 +259,7 @@
         const prefix=directoryKey(p)+(p.parentPath?"/":""),old=p.sourceName===null?null:prefix+p.sourceName;
         if(old!==null)check(directories.has(old)||data.has(old),"staleState");
         const state=p.sourceName===p.name?"unchanged":collision(p)?"conflict":"ready",operationID=crypto.randomUUID();
-        if(state==="ready"){check(operationPreviews.size<32,"budgetExceeded");operationPreviews.set(operationID,{intent:p,revision:revisions.get(directoryKey(p))||0,expires:clock()+30000});}
+        if(state==="ready"){check(operationPreviews.size<32,"budgetExceeded");operationPreviews.set(operationID,{intent:p,revision:directoryVersion(directoryKey(p)),expires:clock()+30000});}
         return {previewVersion:1,operationID,intent:p,state,expiresInSeconds:state==="ready"?30:0};
       },
       async commitOperation(id){
@@ -237,20 +270,25 @@
         check(operationPreviews.get(id)===saved,"replay");operationPreviews.delete(id);const p=saved.intent;
         try{
           check(clock()<saved.expires,"expired");const parent=directoryKey(p),prefix=parent+(p.parentPath?"/":""),target=prefix+p.name;
-          check(directories.has(parent)&&(revisions.get(parent)||0)===saved.revision,"staleState");check(!collision(p),"collision");
+          check(directories.has(parent)&&directoryVersion(parent)===saved.revision,"staleState");check(!collision(p),"collision");
           check(directories.size+data.size<4096,"budgetExceeded");const revision=(revisions.get(parent)||0)+1;check(Number.isSafeInteger(revision),"budgetExceeded");
-          if(p.kind==="createDirectory")directories.add(target);
+          if(p.kind==="createDirectory"){const identity=crypto.randomUUID();directories.add(target);directoryIdentities.set(target,identity);}
           else{
             const old=prefix+p.sourceName;check(directories.has(old)||data.has(old),"staleState");
             const affected=[...directories,...data.keys()].filter(value=>value===old||value.startsWith(old+"/"));
-            for(const value of affected){const next=target+value.slice(old.length);if(directories.delete(value))directories.add(next);else{const text=data.get(value);data.delete(value);data.set(next,text);}}
+            for(const value of affected){const next=target+value.slice(old.length);if(directories.delete(value)){directories.add(next);directoryIdentities.set(next,directoryIdentities.get(value));directoryIdentities.delete(value);if(revisions.has(value)){revisions.set(next,revisions.get(value));revisions.delete(value);}}else{const text=data.get(value);data.delete(value);data.set(next,text);}}
           }
           revisions.set(parent,revision);return saveOperation(operationResult(id,p,"completed"));
         }catch(error){return saveOperation(operationResult(id,p,"failed",errorCode(error)));}
       },
       async operationStatus(id){await authorized();reclaimOperations();const record=operationReceipts.get(id);if(record){check(visible(record.value.intent.libraryID),"denied");return record.value;}const saved=operationPreviews.get(id);return saved?operationResult(id,saved.intent,"ready"):operationResult(id,null,"notVisible");},
-      discard: cursor => pending.delete(cursor),dispose:()=>{pending.clear();consumed.clear();operationPreviews.clear();operationReceipts.clear();}
+      discard: cursor => pending.delete(cursor),dispose:()=>{unsubscribe();pending.clear();consumed.clear();operationPreviews.clear();operationReceipts.clear();data.clear();directories.clear();reservations.clear();revisions.clear();directoryIdentities.clear();publishedBytes=0;reservedBytes=0;}
     });
+    revoke = () => source.dispose();
+    if (typeof api.observeFixtureSessionEnd === "function") {
+      try { unsubscribe = api.observeFixtureSessionEnd(session, revoke); } catch (error) { source.dispose(); throw error; }
+    }
+    return source;
   }
   function createDirectoryPager({ source, pageSize = 50 } = {}) {
     check(sources.has(source), "invalidInput"); integer(pageSize, 1, 100, "invalidInput");
@@ -297,5 +335,5 @@
     const query = search.trim().toLocaleLowerCase();
     return items.filter(item => (filter === "all" || item.kind === filter) && item.name.toLocaleLowerCase().includes(query));
   }
-  return { createFixtureDirectorySource, createClientDirectorySource, createDirectoryPager, filterFiles };
+  return { createFixtureDirectorySource, createClientDirectorySource, createDirectoryPager, filterFiles, fixtureTreeBytes };
 });

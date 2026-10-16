@@ -59,7 +59,7 @@ test("parent revisions invalidate previews and pinned downloads do not reopen re
 });
 test("eight active streams and 64 MiB upload reservations are reclaimed by cancel and expiry",async()=>{
  let time=0;const {source}=await fixture("owner",{monotonicNow:()=>time}),ids=[];
- for(let n=0;n<8;n++)ids.push((await source.previewUpload(input("file"+n,16*1024*1024))).transferID);
+ for(let n=0;n<8;n++)ids.push((await source.previewUpload(input("file"+n,16*1024*1024-1024))).transferID);
  await assert.rejects(source.previewUpload(input("ninth")),code("budgetExceeded"));
  for(const id of ids.slice(0,4))assert.equal((await source.beginUpload(id)).state,"uploading");assert.equal((await source.beginUpload(ids[4])).error,"budgetExceeded");
  await source.cancel(ids[0]);assert.equal((await source.beginUpload(ids[5])).state,"uploading");time=60000;
@@ -76,7 +76,7 @@ test("download backpressure waits for the sink and cancellation cleans partial b
 });
 test("ended fixture sessions reject even unknown status and source disposal drops outstanding handles",async()=>{
  const {api,session,source,directory}=await fixture();const p=await source.previewUpload(input());await source.beginUpload(p.transferID);await api.endSession(session);
- await assert.rejects(source.status(id(99)),code("denied"));await assert.rejects(source.finishUpload(p.transferID,"0".repeat(64)),code("denied"));directory.dispose();assert.equal(source.closed,true);
+ await assert.rejects(async()=>source.status(id(99)),code("unavailable"));await assert.rejects(async()=>source.finishUpload(p.transferID,"0".repeat(64)),code("unavailable"));directory.dispose();assert.equal(source.closed,true);
 });
 test("strict DTOs reject extra fields mismatched targets invalid progress and malformed final hashes",()=>{
  for(const bad of [{...preview(),chunkBytes:65536},{...preview(),extra:true},{...preview(),intent:input("other")},{...preview(),expiresInSeconds:0}])assert.throws(()=>T.preview(bad,input()),code("invalidResponse"));
@@ -133,4 +133,48 @@ test("a long-lived typed controller releases old local capabilities instead of e
  }),controller=T.createController(await T.createClientSource(p.client));
  for(let i=0;i<45;i++){await controller.prepareUpload(input("empty-"+i,0),new Blob([]));await controller.startUpload();assert.equal(controller.snapshot().phase,"completed");}
  assert.equal(p.client.closed,false);assert.equal((await p.client.transferStatus(controller.snapshot().transferID)).state,"completed");controller.dispose();p.client.close();
+});
+async function until(predicate){for(let n=0;n<1000;n++){if(predicate())return;await new Promise(r=>setImmediate(r));}assert.fail("deferred fixture did not reach its operation boundary");}
+test("closing repeated windows reclaims late upload and download heads on a shared typed connection",async()=>{
+ const {source}=await fixture();let current;const p=await client(async r=>{
+  if(r.method==="previewUpload"||r.method==="beginDownload"){const value=r.method==="previewUpload"?await source.previewUpload(r.params):await source.beginDownload(r.params);current.captured=value;await current.gate.promise;return value;}
+  if(r.method==="cancelTransfer")return source.cancel(r.params.transferID);throw Error("unexpected operation");
+ }),shared=await T.createClientSource(p.client);
+ for(let n=0;n<45;n++)for(const direction of ["upload","download"]){
+  current={gate:deferred()};const controller=T.createController(shared),out=sink(),pending=direction==="upload"?controller.prepareUpload(input("late-"+n),new Blob(["data"])):controller.download({libraryID:"shared",relativePath:"01-Welcome.txt"},out);
+  await until(()=>current.captured);controller.dispose();current.gate.resolve();await pending;assert.equal(controller.snapshot().phase,"closed");assert.equal(controller.snapshot().result,null);if(direction==="download"){assert.equal(out.state.finished,0);assert.equal(out.state.aborted,1);}
+ }
+ assert.equal(p.client.closed,false);assert.equal(p.calls.filter(r=>r.method==="cancelTransfer").length,90);p.client.close();
+});
+test("cancelling a delayed download aborts local bytes and reports uncertain when host cancellation is unavailable",async()=>{
+ const {source}=await fixture(),gate=deferred();let captured,discards=0;const wrapped=borrowed(source,{async beginDownload(p){captured=await source.beginDownload(p);await gate.promise;return captured;},async cancel(){throw new M.ServiceError("unavailable");},discard(){discards++;return true;}}),controller=T.createController(wrapped),out=sink();
+ const pending=controller.download({libraryID:"shared",relativePath:"01-Welcome.txt"},out);await until(()=>captured);await controller.cancel();gate.resolve();await pending;assert.equal(controller.snapshot().phase,"uncertain");assert.equal(controller.snapshot().error,"unavailable");assert.equal(out.state.finished,0);assert.equal(out.state.aborted,1);assert.equal(discards,1);
+});
+test("cancelling a delayed upload preview preserves a readable uncertain reference when host cancellation fails",async()=>{
+ const {source}=await fixture(),gate=deferred();let captured;const wrapped=borrowed(source,{async previewUpload(p){captured=await source.previewUpload(p);await gate.promise;return captured;},async cancel(){throw new M.ServiceError("unavailable");}}),controller=T.createController(wrapped);
+ const pending=controller.prepareUpload(input(),new Blob(["data"]));await until(()=>captured);await controller.cancel();gate.resolve();await pending;assert.equal(controller.snapshot().phase,"uncertain");assert.equal(controller.snapshot().transferID,captured.transferID);assert.equal(controller.snapshot().error,"unavailable");await controller.check();assert.equal(controller.snapshot().phase,"uncertain");
+});
+test("cancelling after host EOF aborts the local save and never labels it saved",async()=>{
+ const {source}=await fixture();let controller;controller=T.createController(source,{onChange:view=>{if(view.phase==="downloading"&&view.transferredBytes===view.totalBytes&&view.totalBytes>0)void controller.cancel();}});const out=sink();
+ await controller.download({libraryID:"shared",relativePath:"01-Welcome.txt"},out);assert.equal(out.state.finished,0);assert.equal(out.state.aborted,1);assert.equal(controller.snapshot().phase,"cancelled");assert.equal(controller.snapshot().result.state,"completed");
+});
+test("disposing transfer sources reclaims late upload and download heads without closing their shared client",async()=>{
+ const {source:host}=await fixture();let current;const p=await client(async r=>{
+  if(r.method==="previewUpload"||r.method==="beginDownload"){const value=r.method==="previewUpload"?await host.previewUpload(r.params):await host.beginDownload(r.params);current.captured=value;await current.gate.promise;return value;}
+  if(r.method==="cancelTransfer")return host.cancel(r.params.transferID);throw Error("unexpected operation");
+ });
+ for(let n=0;n<45;n++)for(const direction of ["upload","download"]){
+  current={gate:deferred()};const source=await T.createClientSource(p.client),controller=T.createController(source),out=sink(),pending=direction==="upload"?controller.prepareUpload(input("source-dispose-"+n),new Blob(["data"])):controller.download({libraryID:"shared",relativePath:"01-Welcome.txt"},out);
+  await until(()=>current.captured);source.dispose();controller.dispose();current.gate.resolve();await assert.rejects(pending,code("unavailable"));assert.equal((await host.status(current.captured.transferID)).state,"cancelled");await assert.rejects(p.client.cancelTransfer(current.captured.transferID),code("denied"));assert.equal(p.client.closed,false);assert.equal(controller.snapshot().phase,"closed");if(direction==="download")assert.equal(out.state.aborted,1);
+ }
+ assert.equal(p.calls.filter(r=>r.method==="cancelTransfer").length,90);p.client.close();
+});
+test("disposing transfer sources cancels ready uploads and active downloads but leaves observed IDs alone",async()=>{
+ const {source:host}=await fixture(),p=await client(r=>r.method==="previewUpload"?host.previewUpload(r.params):r.method==="beginDownload"?host.beginDownload(r.params):r.method==="transferStatus"?host.status(r.params.transferID):host.cancel(r.params.transferID)),source=await T.createClientSource(p.client);
+ const owned=await source.previewUpload(input("owned.bin")),download=await source.beginDownload({libraryID:"shared",relativePath:"01-Welcome.txt"}),foreign=await p.client.previewUpload(input("foreign.bin"));await source.status(foreign.transferID);source.dispose();await new Promise(r=>setImmediate(r));
+ assert.equal((await host.status(owned.transferID)).state,"cancelled");assert.equal((await host.status(download.transferID)).state,"cancelled");assert.equal((await host.status(foreign.transferID)).state,"ready");await assert.rejects(p.client.cancelTransfer(owned.transferID),code("denied"));assert.equal(p.client.closed,false);await p.client.cancelTransfer(foreign.transferID);p.client.discardTransfer(foreign.transferID);p.client.close();
+});
+test("disposing during an in-flight upload append waits for that ID then cancels and discards",async()=>{
+ const {source:host,directory}=await fixture(),gate=deferred();let captured,cancels=0;const p=await client(async r=>{if(r.method==="previewUpload")return host.previewUpload(r.params);if(r.method==="beginUpload")return host.beginUpload(r.params.transferID);if(r.method==="appendUpload"){captured=await host.appendUpload(r.params.transferID,r.params.offset,r.params.parts);await gate.promise;return captured;}if(r.method==="cancelTransfer"){cancels++;return host.cancel(r.params.transferID);}throw Error("unexpected operation");}),source=await T.createClientSource(p.client),head=await source.previewUpload(input("partial.bin",70001));await source.beginUpload(head.transferID);
+ const pending=source.appendUpload(head.transferID,0,T.parts(bytes(32768)));await until(()=>captured);source.dispose();assert.equal(cancels,0);gate.resolve();await assert.rejects(pending,code("unavailable"));assert.equal(cancels,1);assert.equal((await host.status(head.transferID)).state,"cancelled");await assert.rejects(p.client.cancelTransfer(head.transferID),code("denied"));assert.ok(!(await directory.page({libraryID:"shared"})).items.some(x=>x.name==="partial.bin"));assert.equal(p.client.closed,false);p.client.close();
 });
