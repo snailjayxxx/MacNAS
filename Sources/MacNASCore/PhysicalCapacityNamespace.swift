@@ -12,8 +12,8 @@ struct PhysicalCapacityRegistration: Codable, Equatable {
 }
 
 enum PhysicalCapacityPurpose: String {
-    case receive, copy, recycle, restore, inspect, cancelIncoming
-    var writes: Bool { self != .inspect }
+    case receive, copy, recycle, restore, inspect, ledgerRead, cancelIncoming
+    var writes: Bool { ![.inspect, .ledgerRead].contains(self) }
 }
 
 struct PhysicalCapacityDeclaration: Equatable {
@@ -177,10 +177,12 @@ final class FixturePhysicalCapacityNamespace {
     private struct Held { let grant: PhysicalCapacityGrant; let expires: TimeInterval }
     private var grants: [UUID: Held] = [:]
     private let now: () -> TimeInterval
+    private let additionalContextCheck: () throws -> Void
 
-    init(root: URL, userID: Data, now: @escaping () -> TimeInterval = { ProcessInfo.processInfo.systemUptime }) throws {
+    init(root: URL, userID: Data, now: @escaping () -> TimeInterval = { ProcessInfo.processInfo.systemUptime },
+         additionalContextCheck: @escaping () throws -> Void = {}) throws {
         try RecycleVault.requireLabRoot(root); try FileEffectMetadata.subject(userID)
-        self.root = root; self.userID = userID; self.now = now
+        self.root = root; self.userID = userID; self.now = now; self.additionalContextCheck = additionalContextCheck
         store = try PortableInstance.store(root)
         registry = try FileEffectMetadata.decode(RecycleVaultRegistration.self,
             from: SafeFS.readData(SafeFS.resolve(root, RecycleVault.registrationPath), maximumBytes: 8192))
@@ -211,6 +213,7 @@ final class FixturePhysicalCapacityNamespace {
             stagingInode: registration.stagingInode)))
     }
     private func checkContext(write: Bool) throws {
+        try additionalContextCheck()
         let identity = try PortableInstance.strictRead(InstanceIdentity.self, SafeFS.resolve(root, "instance.json"))
         let binding = try PortableInstance.strictRead(HostBinding.self, SafeFS.resolve(root, "host-binding/binding.json"))
         let config = try PortableInstance.strictRead(PortableConfig.self, SafeFS.resolve(root, "config/platform.json"))
@@ -280,6 +283,7 @@ final class FixturePhysicalCapacityNamespace {
         return try issue(.receive, declaration: declaration, confirmed: true)
     }
     func approveInspect(confirmed: Bool) throws -> PhysicalCapacityGrant { try issue(.inspect, confirmed: confirmed) }
+    func approveLedgerRead(confirmed: Bool) throws -> PhysicalCapacityGrant { try issue(.ledgerRead, confirmed: confirmed) }
     func approveRecycle(allocationID: UUID, confirmed: Bool) throws -> PhysicalCapacityGrant {
         try issue(.recycle, allocationID: allocationID, confirmed: confirmed)
     }
@@ -340,6 +344,23 @@ final class FixturePhysicalCapacityNamespace {
         return try issue(.copy, declaration: declaration, allocationID: source, confirmed: true)
     }
     func withPermit<T>(_ grant: PhysicalCapacityGrant, _ body: (PhysicalCapacityPermit) throws -> T) throws -> T {
+        try require(grant.purpose != .ledgerRead, .denied)
+        return try withLockedPermit(grant) { permit in
+            _ = try PhysicalCapacityFiles.audit(permit, requireClean: grant.purpose != .inspect)
+            return try body(permit)
+        }
+    }
+    /// Only this separately approved read purpose omits payload inspection. Its seal
+    /// rejects every write transition and cannot enter the execution/audit helpers.
+    func withLedgerRead<T>(_ grant: PhysicalCapacityGrant, _ body: (PhysicalCapacityPermit) throws -> T) throws -> T {
+        try require(grant.purpose == .ledgerRead, .denied)
+        return try withLockedPermit(grant) { permit in
+            let result = try body(permit)
+            try checkDatabaseScope()
+            return result
+        }
+    }
+    private func withLockedPermit<T>(_ grant: PhysicalCapacityGrant, _ body: (PhysicalCapacityPermit) throws -> T) throws -> T {
         try validate(grant); try checkDatabaseScope()
         let gate = try InstanceLock(root, mode: .shared, timeout: 1)
         try validate(grant)
@@ -347,7 +368,6 @@ final class FixturePhysicalCapacityNamespace {
         let staging = try RecycleDirectory(root.appendingPathComponent(Self.stagingPath), privateMode: true)
         let permit = makePermit(grant, vault: vault, staging: staging, retaining: [gate,serial], lockCheck: { try serial.validate() })
         try permit.check()
-        _ = try PhysicalCapacityFiles.audit(permit, requireClean: grant.purpose != .inspect)
         let result = try body(permit); try permit.check(); return result
     }
     private func makePermit(_ grant: PhysicalCapacityGrant, vault: RecycleVault, staging: RecycleDirectory,

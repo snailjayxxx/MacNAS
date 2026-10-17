@@ -292,3 +292,7 @@ observation沿用[只读正文契约](RECYCLE_OBSERVATION_MODEL.md)：精确obse
 实际验证见[C2阶段证据](../evidence/n029-c2-2026-10-16.json)：新391 Swift、16独立CLI管道及306 Node，含0/4字节/16MiB真实Node→Swift只读摘要及载荷检查、实际CLI默认/明确批准/读者拒绝。静态网页没有加载/提供具名客户端和观察模块，未新增DOM、执行/列表/结算RPC或共享容量接线；本轮按用户要求无浏览器/预览。后续执行批准、列表和整树容量单独实现，不从只读状态、ID或scopeID推导写权限。
 
 C3B仅为未管理的Schema6回收fixture验证既有只读桥接兼容。已注册的容量范围拒绝旧无封闭许可的批准路径；独立管理范围的观察/列表/执行消息仍待后续接入，不把Schema6版本支持视为该范围已接上桌面。
+
+## N-029 C3C2 容量账目读取
+
+新增第32/33个只读方法capacityLedgerContext（精确空参数）和listCapacityLedger（精确scopeID/sourceID）。只限Schema6既有私有TestLab管理范围，独立宿主批准，CLI显式--approve-synthetic-capacity-ledger-read；不创建/认领范围，不自动继承旧观察或执行批准。返回版本化公开来源context及ledgerOnly完整账目，规格见[容量契约](CAPACITY_LEDGER_VIEW.md)和[ADR-030](../decisions/ADR-030-host-approved-capacity-ledger-read.md)。新完整回归通过；见[C3C2证据](../evidence/n029-c3c2-2026-10-17.json)，提交推送以Git/外部发布收据为准。

@@ -1,4 +1,5 @@
 import Foundation
+import Darwin
 
 enum CapacityOrigin: String, Codable, Sendable { case initial, upload, copy }
 enum CapacityAllocationState: String, Codable, Sendable { case reserved, armed, owned, cancelled }
@@ -281,6 +282,33 @@ final class DurableCapacityLedger {
         default: throw NASError.denied
         }
         try witness.check(); return result
+    }
+    /// One bounded read-only snapshot; totals are derived from these exact rows.
+    /// This does not consult ownership payloads or adopt/release any allocation.
+    func completeReadOnlyList(sourceID: String) throws -> CapacityLedgerListView {
+        guard let physicalPermit, physicalPermit.grant.purpose == .ledgerRead else { throw NASError.denied }
+        try checkContext(write: false)
+        let r = physicalPermit.registry, p = physicalPermit.registration
+        let output = try store.tools.sql("""
+        BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY;
+        SET LOCAL lock_timeout='5000ms'; SET LOCAL statement_timeout='10000ms';
+        WITH bound AS (SELECT s.scope_id FROM macnas.capacity_scopes s WHERE \(scopePredicate) AND s.byte_limit=67108864
+          AND EXISTS(SELECT 1 FROM macnas.physical_capacity_scopes p WHERE p.scope_id=s.scope_id
+            AND p.binding_version=1 AND p.registry_sha256='\(p.registrySHA256)' AND p.device='\(r.device)'
+            AND p.library_inode='\(r.libraryInode)' AND p.vault_inode='\(r.vaultInode)'
+            AND p.staging_inode='\(p.stagingInode)' AND p.owner_uid=\(getuid()))),
+        bounded AS (SELECT a.* FROM macnas.capacity_allocations a JOIN bound b ON a.scope_id=b.scope_id
+          ORDER BY a.allocation_id LIMIT 65)
+        SELECT jsonb_build_object('scopeCount',(SELECT count(*) FROM bound),
+          'records',coalesce((SELECT jsonb_agg(\(Self.allocationJSON) ORDER BY a.allocation_id) FROM bounded a),'[]'::jsonb))::text;
+        COMMIT;
+        """, database: store.databaseName)
+        struct Snapshot: Decodable { let scopeCount: Int; let records: [CapacityAllocation] }
+        let snapshot = try JSONDecoder().decode(Snapshot.self, from: Data(output.utf8))
+        try require(snapshot.scopeCount == 1, .denied)
+        let view = try CapacityLedgerListView(scopeID: scopeID, ownerUserID: scope.userID, sourceID: sourceID, records: snapshot.records)
+        try checkContext(write: false)
+        return view
     }
     func allocations() throws -> [CapacityAllocation] {
         try checkContext(write: false); _ = try totals()

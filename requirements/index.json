@@ -2190,6 +2190,28 @@
             "docs/plans/N-029-C3C1-ACCEPTANCE.md",
             "docs/decisions/ADR-029-bounded-capacity-ledger-view.md"
           ]
+        },
+        {
+          "id": "FIL-01.host_approved_capacity_ledger_read",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "Independently approved synthetic Schema6 ledgerRead; API/session/rawUTF8 administrator/mode/instance/generation/DB/host/registration and fresh source marker fixed. Actual locks/private binding and single bounded read-only snapshot; no payload matching, filesystem free space, adoption, cancellation or execution authority.",
+          "evidence": [
+            "docs/evidence/n029-c3c2-2026-10-17.json",
+            "docs/plans/N-029-C3C2-ACCEPTANCE.md",
+            "docs/decisions/ADR-030-host-approved-capacity-ledger-read.md",
+            "docs/contracts/CAPACITY_LEDGER_VIEW.md"
+          ]
+        },
+        {
+          "id": "FIL-01.typed_managed_capacity_ledger_pipe",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "Actual typed Node-Swift managed ledger reads for denied/empty/zero/16MiB/64MiB/retained/released/zero-byte cancelled-reserved-armed history, unchanged full16-table digests; strict client lifecycle and source equality. Current same-device TestLab only, no DOM/browser or production NAS/authentication/fencing.",
+          "evidence": [
+            "docs/evidence/n029-c3c2-2026-10-17.json",
+            "docs/plans/N-029-C3C2-ACCEPTANCE.md",
+            "docs/decisions/ADR-030-host-approved-capacity-ledger-read.md",
+            "docs/contracts/CAPACITY_LEDGER_VIEW.md"
+          ]
         }
       ]
     },

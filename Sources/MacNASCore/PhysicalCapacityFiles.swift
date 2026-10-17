@@ -189,6 +189,7 @@ enum PhysicalCapacityFiles {
         try file.validateBefore { try permit.check() }
     }
     static func visibleFile(_ permit: PhysicalCapacityPermit, record: CapacityAllocation) throws -> RecyclePinnedFile {
+        try require(permit.grant.purpose != .ledgerRead, .denied)
         try permit.check()
         try require(record.scopeID == permit.registration.scopeID && record.state == .owned, .denied)
         let file = try RecyclePinnedFile(source: permit.vault.library, name: record.allocationID.uuidString.lowercased(),
@@ -197,6 +198,7 @@ enum PhysicalCapacityFiles {
         return file
     }
     static func audit(_ permit: PhysicalCapacityPermit, requireClean: Bool) throws -> PhysicalCapacityInventory {
+        try require(permit.grant.purpose != .ledgerRead, .denied)
         try permit.check(); try permit.vault.validate()
         let ledger = try permit.ledger(), declared = try ledger.totals(), records = try ledger.allocations()
         let byID = Dictionary(uniqueKeysWithValues: records.map { ($0.allocationID,$0) })
