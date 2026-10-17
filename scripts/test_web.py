@@ -126,4 +126,25 @@ class WebStaticTests(unittest.TestCase):
         for marker in ['innerHTML','outerHTML','insertAdjacentHTML','fetch(','localStorage','.click(']:self.assertNotIn(marker,js)
         self.assertIn('source.page(',js);self.assertIn('source.discardCursor(',js)
         self.assertIn('aria-valuetext',js);self.assertIn('pageSize:50',js)
+    def test_default_downloaders_are_local_assets_with_explicit_fixture_boundary(self):
+        html=(ROOT/'web/dist/index.html').read_text()
+        scripts=re.findall(r'<script defer src="([^"]+)"',html)
+        self.assertLess(scripts.index('model.js'),scripts.index('downloaders.js'))
+        self.assertLess(scripts.index('downloaders.js'),scripts.index('desktop.js'))
+        self.assertEqual(exchange('/downloaders.js')[0],200)
+        self.assertEqual(exchange('/packages/downloaders.json')[0],404)
+        js=(ROOT/'web/dist/desktop.js').read_text()
+        for marker in ['createFixturePackageCenter(api)','packageSource?.dispose()','packageRemoveConfirm','packageDataRetained']:
+            self.assertIn(marker,js)
+        for marker in ['manage_downloaders.py','window.open(','fetch(']:
+            self.assertNotIn(marker,js)
+    def test_downloader_catalog_matches_reviewed_native_versions(self):
+        import json
+        catalog=json.loads((ROOT/'packages/downloaders.json').read_text())
+        js=(ROOT/'web/dist/downloaders.js').read_text()
+        self.assertEqual({p['id'] for p in catalog['packages']},{'qbittorrent','transmission'})
+        for package in catalog['packages']:
+            self.assertTrue(package['bundled_by_default'] and package['removable'])
+            self.assertIn('version: "'+package['version']+'"',js)
+            self.assertEqual(len(package['sha256']),64)
 if __name__=='__main__':unittest.main()

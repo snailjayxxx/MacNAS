@@ -2,6 +2,7 @@
   "use strict";
   const M = window.MacNASModel, I = window.MacNASI18n, P = window.MacNASTaskPages, N = window.MacNASNotifications, F = window.MacNASDirectoryView, B = window.MacNASFileBrowser, O = window.MacNASFileOperations, T = window.MacNASFileTransfers, V = window.MacNASFileTransferView, C = window.MacNASFileCopies, CV = window.MacNASFileCopyView;
   const api = M.createFixtureAdapter();
+  const packageCenter = window.MacNASDownloaders.createFixturePackageCenter(api);
   const $ = (query, root = document) => root.querySelector(query);
   const paths = {
     nas:"M5 3h14v18H5z M8 7h6m-6 5h6m-6 5h6m3-10h.01m-.01 5h.01m-.01 5h.01",
@@ -25,6 +26,7 @@
     folder:"M3 7V5h6l2 2h10v13H3z",list:"M8 5h13M8 12h13M8 19h13M3 5h.01M3 12h.01M3 19h.01",
     resize:"m7 20 13-13m-6 13 6-6",error:"m12 3 10 18H2z M12 9v5m0 3h.01",
     waiting:"M7 3h10v3l-4 6 4 6v3H7v-3l4-6-4-6z",
+    downloads:"M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5",
     diagnostics:"M4 5h16v14H4z M7 12h2l2-4 2 8 2-4h2"
   };
   function el(tag, className = "", text) {
@@ -44,7 +46,7 @@
   let storage;
   try { storage = window.localStorage; } catch { storage = { getItem: () => null, setItem: () => { throw new Error("unavailable"); } }; }
   const prefs = M.readPreferences(storage);
-  const state = { prefs, session: null, taskSource: null, directorySource: null, overview: null, previewJobs: [], notifications: null, scenario: "owner", epoch: 0, dataRequest: 0, z: 10, windows: new Map(), active: null, panel: null, modal: null, modalEpoch: 0 };
+  const state = { prefs, session: null, packageSource: null, taskSource: null, directorySource: null, overview: null, previewJobs: [], notifications: null, scenario: "owner", epoch: 0, dataRequest: 0, z: 10, windows: new Map(), active: null, panel: null, modal: null, modalEpoch: 0 };
   const t = (key, vars) => I.t(prefs.locale, key, vars);
   const appIDs = ["overview", "files", "storage", "apps", "tasks", "settings"];
   const canWrite = () => state.overview?.mode === "synthetic_development";
@@ -227,6 +229,9 @@
     page.append(el("p", "content-note", t("taskPreviewHint")), recent);
     page.append(sectionTitle("installedApps", () => openWindow("apps")));
     const cards = el("div", "app-cards"); cards.append(sampleAppCard("diagnostics"), sampleAppCard("fileIndex")); page.append(cards);
+    const downloads = el("div", "app-cards");
+    for (const item of window.MacNASDownloaders.catalog) { const card = button("", "app-card", () => openWindow("apps")); const copy = el("div"); copy.append(el("strong", "", item.name), el("p", "", t("bundledPackage"))); card.append(appIcon("downloads"), copy); downloads.append(card); }
+    page.append(downloads);
   }
   function sampleAppCard(app) {
     const node = button("", "app-card", () => showAppDetail(app)), mark = appIcon(app === "diagnostics" ? "overview" : "files"), copy = el("div");
@@ -806,11 +811,44 @@
     page.append(stages, el("p", "content-note", t("storageNotice")));
   }
   function renderApps(win) {
-    const { page } = buildPage(win, "appIntro"), cards = el("div", "app-cards"); cards.append(sampleAppCard("diagnostics"), sampleAppCard("fileIndex")); page.append(cards, el("p", "content-note", t("sampleAppHint")));
-    const grid = el("div", "permission-grid");
-    for (const [name, title, desc] of [["shield", "permissions", "noSandbox"], ["lock", "identity", "mockSession"]]) {
-      const card = el("div", "permission-card"); card.append(icon(name), el("h3", "", t(title)), el("p", "", t(desc)), el("span", "pill", t("demoShort"))); grid.append(card);
-    } page.append(grid);
+    const { page } = buildPage(win, "appIntro"), epoch = state.epoch, source = state.packageSource;
+    page.append(sectionTitle("bundledDownloaders"), el("p", "content-note", t("downloaderIntro")));
+    const downloads = el("div", "downloader-cards"), status = el("p", "content-note", t("packageLoading"));
+    status.setAttribute("role", "status"); status.setAttribute("aria-live", "polite");
+    page.append(downloads, status, el("p", "content-note", t("packageDataRetained")), el("p", "content-note", t("packageDemoHint")));
+    if (!isOwner() || !canWrite()) page.append(el("p", "readonly-note", t(isOwner() ? "packageReadOnly" : "packageAdminOnly")));
+    const current = () => currentWindow(win) && epoch === state.epoch && source === state.packageSource && downloads.isConnected;
+    void (async () => {
+      try {
+        const list = await source.list(); if (!current()) return;
+        status.textContent = "";
+        for (const item of list) {
+          const card = el("article", "downloader-card"), head = el("div", "downloader-head"), copy = el("div");
+          card.dataset.packageId = item.id;
+          copy.append(el("h3", "", item.name), el("p", "", t(item.descriptionKey)));
+          const badge = el("span", "package-mark " + item.id, item.id === "qbittorrent" ? "qB" : "Tr"); badge.setAttribute("aria-hidden", "true");
+          head.append(badge, copy); card.append(head, el("span", "pill", t("bundledPackage")), el("p", "package-status", t(item.state === "installed" ? "packageInstalled" : "packageRemoved")), el("p", "content-note", t("version") + " " + item.version));
+          const installed = item.state === "installed";
+          const control = button(t(installed ? "packageUninstall" : "packageInstall"), installed ? "secondary-button" : "primary-button", () => {
+            if (!current() || !isOwner() || !canWrite()) return;
+            async function apply() {
+              if (!current()) return; control.disabled = true; status.textContent = t("packageBusy");
+              try {
+                await source[installed ? "uninstall" : "install"](item.id);
+                if (current()) { renderApps(win); toast(t(installed ? "packageRemovedToast" : "packageInstalledToast")); }
+              } catch (error) { if (current()) { status.textContent = errorMessage(error); control.disabled = false; } }
+            }
+            if (installed) {
+              const content = el("p", "", t("packageRemoveConfirm", { name: item.name }));
+              showModal(t("packageRemoveTitle"), content, [{ key: "cancel", style: "secondary-button", action: closeModal }, { key: "packageUninstall", style: "primary-button", action: async ({ isCurrent }) => { if (!isCurrent() || !current()) return; closeModal(); await apply(); } }]);
+            } else void apply();
+          });
+          control.dataset.packageAction = installed ? "uninstall" : "install"; control.disabled = !isOwner() || !canWrite();
+          card.append(control); downloads.append(card);
+        }
+      } catch (error) { if (current()) status.textContent = errorMessage(error); }
+    })();
+    const cards = el("div", "app-cards"); cards.append(sampleAppCard("diagnostics"), sampleAppCard("fileIndex")); page.append(sectionTitle("trustedSample"), cards, el("p", "content-note", t("sampleAppHint")));
   }
   function showAppDetail(app) {
     const content = el("div"), head = el("div", "app-detail"), copy = el("div"); copy.append(el("h3", "", t(app)), el("p", "", t("firstParty"))); head.append(appIcon(app === "diagnostics" ? "overview" : "files"), copy);
@@ -972,8 +1010,8 @@
     document.body.dataset.ready = "false"; closeModal(false); hidePanels();
     for (const win of state.windows.values()) { win.pager?.dispose(); win.filePager?.dispose(); win.fileOperation?.dispose();win.fileTransfer?.dispose();win.fileTransferPanel?.dispose();win.fileCopy?.dispose();win.fileCopyPanel?.dispose(); win.element.remove(); }
     const oldSource = state.taskSource; state.notifications?.dispose();
-    state.directorySource?.dispose();
-    state.windows.clear(); state.active = null; state.previewJobs = []; state.notifications = null; state.overview = null; state.taskSource = null; state.directorySource = null; state.session = null;
+    state.directorySource?.dispose(); state.packageSource?.dispose();
+    state.windows.clear(); state.active = null; state.previewJobs = []; state.notifications = null; state.overview = null; state.taskSource = null; state.directorySource = null; state.packageSource = null; state.session = null;
     if (oldSource) await oldSource.close(); else await api.endSession(old);
     const session = await api.beginFixtureSession(scenario);
     if (epoch !== state.epoch) { await api.endSession(session); return; }
@@ -983,7 +1021,7 @@
     try { notifications = await N.createFixtureNotificationView(api, session, { consumerID: "desktop-preview-" + source.context.userID }); directorySource = await F.createFixtureDirectorySource(api, session); }
     catch (error) { notifications?.dispose(); directorySource?.dispose(); await source.close(); throw error; }
     if (epoch !== state.epoch) { notifications.dispose(); directorySource.dispose(); await source.close(); return; }
-    state.session = session; state.taskSource = source; state.directorySource = directorySource; state.notifications = notifications; state.scenario = scenario; await refreshData();
+    state.session = session; state.packageSource = packageCenter.forSession(session); state.taskSource = source; state.directorySource = directorySource; state.notifications = notifications; state.scenario = scenario; await refreshData();
     if (epoch !== state.epoch) return;
     await openWindow("overview", { route: true });
     if (showPreferences) await openWindow("preferences");

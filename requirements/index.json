@@ -4565,6 +4565,17 @@
           "id": "APP-01.owner_acceptance",
           "status": "NOT_STARTED",
           "evidence": []
+        },
+        {
+          "id": "APP-01.bundled_downloader_catalog",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "Two explicitly requested official macOS packages, both default bundled and removable; pinned metadata and actual bundle identity/arm64/signature checks on current Mac.",
+          "evidence": [
+            "docs/evidence/n030-2026-10-17.json",
+            "docs/contracts/BUILTIN_DOWNLOADERS.md",
+            "docs/decisions/ADR-034-bundled-removable-downloaders.md",
+            "docs/plans/N-030-ACCEPTANCE.md"
+          ]
         }
       ]
     },
@@ -4611,6 +4622,17 @@
           "id": "APP-02.owner_acceptance",
           "status": "NOT_STARTED",
           "evidence": []
+        },
+        {
+          "id": "APP-02.verified_downloader_offline_cache",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "Actual official HTTPS downloads and SHA256; reinstall from local fixed-version DMGs. No source/signature bypass or system app installation.",
+          "evidence": [
+            "docs/evidence/n030-2026-10-17.json",
+            "docs/contracts/BUILTIN_DOWNLOADERS.md",
+            "docs/decisions/ADR-034-bundled-removable-downloaders.md",
+            "docs/plans/N-030-ACCEPTANCE.md"
+          ]
         }
       ]
     },
@@ -4889,6 +4911,17 @@
             "docs/evidence/n009-2026-10-15.json"
           ],
           "scope": "Synthetic prototype on current Mac; production/OS authorization unverified"
+        },
+        {
+          "id": "APP-06.removable_default_downloader_lifecycle",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "Two real official apps installed/uninstalled/reinstalled in a new private sandbox;12 CLI steps, new-process removal persists and init does not reinsert. Apps never launched; no production host bridge.",
+          "evidence": [
+            "docs/evidence/n030-2026-10-17.json",
+            "docs/contracts/BUILTIN_DOWNLOADERS.md",
+            "docs/decisions/ADR-034-bundled-removable-downloaders.md",
+            "docs/plans/N-030-ACCEPTANCE.md"
+          ]
         }
       ]
     },
@@ -4944,6 +4977,17 @@
           "id": "APP-07.owner_acceptance",
           "status": "NOT_STARTED",
           "evidence": []
+        },
+        {
+          "id": "APP-07.uninstall_preserves_downloader_data",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "Five synthetic configuration/resume/download files keep byte digests across actual app removal/reinstall. No real NAS/home/torrent payload accessed.",
+          "evidence": [
+            "docs/evidence/n030-2026-10-17.json",
+            "docs/contracts/BUILTIN_DOWNLOADERS.md",
+            "docs/decisions/ADR-034-bundled-removable-downloaders.md",
+            "docs/plans/N-030-ACCEPTANCE.md"
+          ]
         }
       ]
     },
@@ -5241,6 +5285,17 @@
           "id": "APP-10.owner_acceptance",
           "status": "NOT_STARTED",
           "evidence": []
+        },
+        {
+          "id": "APP-10.downloader_package_center_fixture",
+          "status": "MOCK_PASS",
+          "scope": "Chinese/Japanese explicit fixture UI default packages, confirmation/cancel/remove/reinstall, reader/recovery controls; no actual native install through browser.",
+          "evidence": [
+            "docs/evidence/n030-2026-10-17.json",
+            "docs/contracts/BUILTIN_DOWNLOADERS.md",
+            "docs/decisions/ADR-034-bundled-removable-downloaders.md",
+            "docs/plans/N-030-ACCEPTANCE.md"
+          ]
         }
       ]
     },

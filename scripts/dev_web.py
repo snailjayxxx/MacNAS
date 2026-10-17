@@ -10,6 +10,7 @@ node=shutil.which('node');assert node,'Existing Node.js required; no automatic i
 runid=datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))).strftime('%Y%m%dT%H%M%S')+'-'+uuid.uuid4().hex[:8]
 evidence=WORK/'Evidence/web-runs'/runid;evidence.mkdir(parents=True)
 paths=sorted([p for p in (ROOT/'web').rglob('*') if p.is_file() and p.suffix in ['.html','.css','.js','.svg','.cjs']]+[ROOT/'scripts'/name for name in ['dev_web.py','preview_web.py','test_web.py','verify_requirements.py','test_requirements.py']])
+paths.extend([ROOT/'packages/downloaders.json',ROOT/'packages/NOTICES.md',ROOT/'scripts/manage_downloaders.py',ROOT/'scripts/test_downloaders.py'])
 hashes={str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest() for p in paths}
 (evidence/'source-sha256.json').write_text(json.dumps(hashes,indent=2)+'\n')
 results=[];outcome='PASS'
@@ -20,8 +21,9 @@ def run(name,command):
     print(name+(': PASS' if result.returncode==0 else ': FAIL'),flush=True)
     if result.returncode:print(result.stdout);raise RuntimeError(name)
 try:
-    for name in ['model.js','managed-recycle-observation.js','capacity-ledger-view.js','recycle-observation.js','bridge-client.js','task-pages.js','notification-view.js','notification-reconciliation.js','directory-view.js','file-browser.js','file-operations.js','sha256.js','file-transfers.js','file-transfer-view.js','file-copies.js','file-copy-fixture.js','file-copy-view.js','i18n.js','desktop.js']:run('syntax-'+name,[node,'--check','web/dist/'+name])
-    run('model-tests',[node,'--test','web/tests/model.test.cjs','web/tests/bridge.test.cjs','web/tests/client.test.cjs','web/tests/task-pages.test.cjs','web/tests/notification-view.test.cjs','web/tests/directory-pages.test.cjs','web/tests/directory-view.test.cjs','web/tests/event-consumer-status.test.cjs','web/tests/notification-reconciliation.test.cjs','web/tests/file-browser.test.cjs','web/tests/file-operations.test.cjs','web/tests/file-transfers.test.cjs','web/tests/file-transfer-view.test.cjs','web/tests/file-copy-model.test.cjs','web/tests/file-copies.test.cjs','web/tests/file-copy-view.test.cjs','web/tests/schema4-compatibility.test.cjs','web/tests/recycle-observation.test.cjs','web/tests/recycle-observation-client.test.cjs','web/tests/capacity-ledger-view.test.cjs','web/tests/capacity-ledger-client.test.cjs','web/tests/managed-recycle-observation.test.cjs'])
+    for name in ['downloaders.js','model.js','managed-recycle-observation.js','capacity-ledger-view.js','recycle-observation.js','bridge-client.js','task-pages.js','notification-view.js','notification-reconciliation.js','directory-view.js','file-browser.js','file-operations.js','sha256.js','file-transfers.js','file-transfer-view.js','file-copies.js','file-copy-fixture.js','file-copy-view.js','i18n.js','desktop.js']:run('syntax-'+name,[node,'--check','web/dist/'+name])
+    run('model-tests',[node,'--test','web/tests/model.test.cjs','web/tests/bridge.test.cjs','web/tests/client.test.cjs','web/tests/task-pages.test.cjs','web/tests/notification-view.test.cjs','web/tests/directory-pages.test.cjs','web/tests/directory-view.test.cjs','web/tests/event-consumer-status.test.cjs','web/tests/notification-reconciliation.test.cjs','web/tests/file-browser.test.cjs','web/tests/file-operations.test.cjs','web/tests/file-transfers.test.cjs','web/tests/file-transfer-view.test.cjs','web/tests/file-copy-model.test.cjs','web/tests/file-copies.test.cjs','web/tests/file-copy-view.test.cjs','web/tests/schema4-compatibility.test.cjs','web/tests/recycle-observation.test.cjs','web/tests/recycle-observation-client.test.cjs','web/tests/capacity-ledger-view.test.cjs','web/tests/capacity-ledger-client.test.cjs','web/tests/managed-recycle-observation.test.cjs','web/tests/downloaders.test.cjs'])
+    run('downloader-package-tests',['/usr/bin/python3','scripts/test_downloaders.py'])
     run('static-http-policy-tests',['/usr/bin/python3','scripts/test_web.py'])
     run('requirements',['/usr/bin/python3','scripts/verify_requirements.py'])
     run('requirements-negative-tests',['/usr/bin/python3','scripts/test_requirements.py'])
@@ -97,7 +99,8 @@ try:
             independent=regression.get('independent_cli_pipe_dependencies',{})
             assert set(independent)=={'scripts/test_desktop_bridge.cjs','web/dist/task-pages.js','web/dist/notification-view.js','web/dist/notification-reconciliation.js'},'Schema4 independent typed-reader pipe dependencies required'
             assert all(hashlib.sha256((ROOT/name).read_bytes()).hexdigest()==digest and receipt_hashes.get(name)==digest for name,digest in independent.items()),'Independent Schema4 pipe sources must match the raw full receipt'
-            assert all(hashlib.sha256((ROOT/name).read_bytes()).hexdigest()==digest and receipt_hashes.get(name)==digest for name,digest in baseline.items() if name!='scripts/dev_web.py' and (name=='Package.swift' or name.startswith(('Sources/','Tests/','database/','scripts/')))),'All native, SQL, tests and runner sources must match the raw full receipt'
+            assert not {'scripts/dev_web.py','scripts/preview_web.py','scripts/test_web.py'}.intersection(set(dependencies)|set(independent)), 'QA-only exclusions cannot be native execution dependencies'
+            assert all(hashlib.sha256((ROOT/name).read_bytes()).hexdigest()==digest and receipt_hashes.get(name)==digest for name,digest in baseline.items() if name not in {'scripts/dev_web.py','scripts/preview_web.py','scripts/test_web.py'} and (name=='Package.swift' or name.startswith(('Sources/','Tests/','database/','scripts/')))),'All native, SQL, tests and runner sources must match the raw full receipt'
 except Exception as error:outcome='FAILED';print(str(error),flush=True)
 unchanged=all(hashlib.sha256((ROOT/name).read_bytes()).hexdigest()==digest for name,digest in hashes.items())
 if not unchanged:outcome='FAILED'

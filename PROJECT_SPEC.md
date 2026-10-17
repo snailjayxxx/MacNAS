@@ -1,5 +1,7 @@
 # MacNAS 工程约束
 
+2026-10-17接续：N-030按用户新指令增加qBittorrent和Transmission两个默认内置、可卸载及离线重装的原生下载器。固定官方macOS归档/版本/SHA256、bundle身份/arm64和原签名；私有新目录默认安装两者，实际12步CLI验证分别卸载、移除选择跨进程保持、init拒绝重新插入和离线重装，5份合成配置/恢复/下载文件摘要不变。22项Python故障测试、383项Node、20语法、17静态策略和9需求负测通过；中日包中心明确为fixture；已实测隔离页面全部实际加载资产与本次主树逐字节一致，复用该12项浏览器功能记录，没有声称新的主树浏览器执行。未启动下载器/BT任务，未修改系统Applications、服务或网络。网页尚未接生产安装宿主。 旧核心94份及全部实际16内嵌/4独立依赖保持，复用已发布N-029 C3C2的471Swift/16独立管道和PG停止精确收据，本阶段没有新Swift全量。前端/预览/策略QA改动由新检查覆盖；原29规划/5来源/111父和97-13-1不变，913基线子项；SYS09仍很后期另1父7子。两轮DMG挂载/lipo参数失败及源码均保留，修复以真实包验证确认。当前Mac26.5.2私有工具结果不等于macOS15、跨Mac、生产认证或NAS发布。 见[N-030证据](docs/evidence/n030-2026-10-17.json)及[内置下载器契约](docs/contracts/BUILTIN_DOWNLOADERS.md)。
+
 2026-10-17接续：C3C2实际账目列表已发布，C3C3A补齐观察模型。C3C3A新增管理范围操作观察的严格只读呈现模型：固定scope/source/原始UTF8主体/模式及operation，可预先固定entry/allocation；可见必须是完整owned记录，entry released后owned继续收费。两种意图和revision独立，未知费用为null，身份与声明不可替换、终态不复活。显式单次读取、并发拒绝、有限错误码、关闭清空和迟到隔离。 本切片为MOCK；当前宿主没有该管理观察外壳的批准/来源生成器/RPC/客户端适配器，网页不加载或提供模块。matchingReported只代表报告，filesystemVerified/executionAuthorized/capacityReleaseAuthorized均为false。整体费用取C3C2完整列表，不能相加多次操作观察。没有新的文件效果、DOM/浏览器、生产认证/fencing、macOS15运行或跨Mac证明。用户要求自动连续推进、中文阶段提交/正常推送dev/bootstrap，浏览器已获准按需使用；旧迁移及正式资料边界保持。 [C3C3A证据](docs/evidence/n029-c3c3a-2026-10-17.json)记录有限结果，父需求和原始来源字节不变。
 
 目标与优先级以 `docs/planning/v0.6/` 的只读原件及当前用户补充指令为依据。111 父需求：97 首版、13 后续、1 暂不需要；全部保留在 `requirements/index.json`。
@@ -14,7 +16,7 @@ Apple Silicon / macOS 15+，Swift 原生核心、自研中文日文网页桌面�
 
 控制面板与网络管理按[详细功能对照](docs/plans/DSM-CONTROL-PANEL-NETWORK-REFERENCE.md)逐页补齐。用户另增SYS-09“网页内控制Mac桌面”，并明确放在**很后期**；只登记于[补充账目](requirements/user-additions.json)和[未来计划](docs/plans/FUTURE-WEB-MAC-REMOTE-CONTROL.md)，当前不开发/启用。v0.6基线111项及97/13/1保持原样；含用户新增的当前有效范围为112项、97/14/1，不把新增项混写进历史原件。
 
-开发盘仅供源码、构建、合成测试；生产数据池独立。禁止擦盘、sudo、擅改共享/账户/ACL/系统服务/公网、读取家庭照片或自动推送 main。第三方运行依赖目前仅新增用户明确选定的 PostgreSQL 18；其它依赖另行审查。
+开发盘仅供源码、构建、合成测试；生产数据池独立。禁止擦盘、sudo、擅改共享/账户/ACL/系统服务/公网、读取家庭照片或自动推送 main。已明确准入的第三方组件为PostgreSQL18，以及用户2026-10-17直接指定的qBittorrent和Transmission；两下载器只按版本化官方包准备和独立生命周期管理。其它依赖另行审查。
 
 所有证据区分模拟、当前 Mac、本机 macOS15、跨 Mac 和物理盘。`MOCK_PASS` 不得替代生产验收。
 

@@ -1,22 +1,9 @@
-# 接续任务：N-029 C3C3B，管理范围物理观察宿主接线
+# 接续任务：N-029 C3C3B宿主修复与新完整回归；两个内置下载器已完成有限安装支持
 
-C3C2实际宿主容量列表已发布；C3C3A严格管理观察模型完成新的前端自动验收。见[模型证据](docs/evidence/n029-c3c3a-2026-10-17.json)、Git及仓库外Evidence/n029-c3c3a-publication-2026-10-17.json。原生完整基线来自逐字节复核不变的C3C2，本模型没有重新执行原生套件。
+N-030按用户新指令增加qBittorrent和Transmission两个默认内置、可卸载及离线重装的原生下载器。固定官方macOS归档/版本/SHA256、bundle身份/arm64和原签名；私有新目录默认安装两者，实际12步CLI验证分别卸载、移除选择跨进程保持、init拒绝重新插入和离线重装，5份合成配置/恢复/下载文件摘要不变。22项Python故障测试、383项Node、20语法、17静态策略和9需求负测通过；中日包中心明确为fixture；已实测隔离页面全部实际加载资产与本次主树逐字节一致，复用该12项浏览器功能记录，没有声称新的主树浏览器执行。未启动下载器/BT任务，未修改系统Applications、服务或网络。网页尚未接生产安装宿主。 旧核心94份及全部实际16内嵌/4独立依赖保持，复用已发布N-029 C3C2的471Swift/16独立管道和PG停止精确收据，本阶段没有新Swift全量。前端/预览/策略QA改动由新检查覆盖；原29规划/5来源/111父和97-13-1不变，913基线子项；SYS09仍很后期另1父7子。两轮DMG挂载/lipo参数失败及源码均保留，修复以真实包验证确认。当前Mac26.5.2私有工具结果不等于macOS15、跨Mac、生产认证或NAS发布。 见[N-030证据](docs/evidence/n030-2026-10-17.json)。用户要求无新决定自动连续推进，中文阶段提交并正常推送dev/bootstrap；浏览器按需使用。
 
-外部Evidence/n029-c3c3-draft/manifest.json保留纯Native投影草稿、15项拒绝和6份虚构JSON的独立Swift→Node验证；没有并入主树，不是宿主批准/PG/物理观察或新完整回归。复用前核对源码和原始收据。原投影的意图摘要仅为虚构MOCK，不可把Swift紧凑JSON摘要当作PostgreSQL jsonb::text摘要。
+下一步先完成N-029 C3C3B当前外部13通过/1数据库错误的诊断和修复，再以新未过滤485/全部CLI/16独立管道/停库接入宿主观察；随后C3C4A执行确认模型，再在新TestLab同设备合成范围中实现独立执行批准、真实预览摘要、明确一次确认、恢复目标授权和不确定结果，不把观察grant当作写授权。Evidence/n029-c3c4b-native-draft仍只是41负测/4预览8结果的纯DTO草稿，未接宿主/PG/效果；执行延迟须先实测，不盲目延长既有客户端时限。
 
-另有Evidence/n029-c3c3b-host-draft实际宿主接线副本，尚未并入主树；首轮7通过/2失败的规范摘要误比较已保留在Evidence/n029-c3c3b-initial-failure。摘要核验应在同一次只读SQL中完成，保留已发布算法和迁移；后续定向状态见Evidence/n029-c3c3b-draft-state-v3.json，仍须新的完整回归才可接入和发布。
+下载器后续需真实主机会话/安装消息、进程监督、独立配置目录与任务界面；当前网页fixture不安装本机应用，私有CLI不启动下载器。保留用户卸载选择，升级不得默认补装或删除下载数据。
 
-用户要求无新决定自动连续推进、中文阶段提交/正常推送dev/bootstrap，浏览器已获准按需使用，不合并main、不强推或改历史。
-
-## 后续实现顺序
-
-1. 管理观察另发独立宿主批准、新只读purpose/来源域/每API随机密钥，固定会话/原始管理员/角色/模式、实例/代次/DB/宿主/Schema/登记与fresh grant身份。C3C2 ledgerRead、旧未管理observe和可见ID都不能代替；当前标准audit/visibleFile已明确拒绝ledgerRead。
-2. 在真实gate/vault flock及载荷身份/SHA检查下，连接旧观察正文和同范围owned allocation，验证原UUID路径、owner/library/vault/volume、pre/post字节及SHA。原操作originScopeSHA包含原写grant，不能错误地与新观察grant的origin相等比较；受众/当前范围由实际日志读取和宿主锚点固定。
-3. 按[严格模型契约](docs/contracts/MANAGED_RECYCLE_OBSERVATION_MODEL.md)接独立context/观察消息、固定来源适配器及真实Node→Swift。覆盖0/16MiB/64MiB、未批准/异源/恢复只读/撤权/过期/锁替换、retained/released和未知/改变；完整16表摘要与payload前后相同。released entry不释放owned，armed incoming不认领或重放。
-4. 核心/测试或内嵌依赖改变须新未过滤全量、全部CLI/16独立管道、PG停止，再新无监听前端/需求冻结。随后独立接执行预览、明确确认、一次效果和恢复目标批准，再接网页，按需补浏览器实测。
-
-## 固定边界
-
-PG18.6-only；先核对APFS UUID C1755FBB-FCA8-4EA4-BEE2-AA6BF3258B6C。只用新建TestLab同设备私有合成范围。0001–0006及Migration5/6保留原字节，MacNAS-C3B旧测试工作树/运行路径继续保留。原29规划/5来源、111父/97-13-1不变；908基线子项，SYS09很后期另1父7子，合并112父/97-14-1/915子项，Intel以后。
-
-不sudo，不访问真实NAS/家庭资料，不永久清理，不改正式共享/账户/ACL/helper/服务/网络/公网或引入新依赖。旧Schema3网页内存树及fixtures/volumes仍独立。没有管理物理观察/执行RPC、DOM、生产认证/fencing、macOS15运行、跨Mac、断电或物理池证明。保留C3B/C3C1/C3C2全部早期失败；本模型MOCK不替代这些真实边界。
+PG18.6-only；核对APFS UUID C1755FBB-FCA8-4EA4-BEE2-AA6BF3258B6C。保留0001–0006、Migration5/6、原29规划5来源和旧MacNAS-C2/C3B工作树。只用新合成范围，不sudo、不访问真实NAS/家庭资料，不改正式共享/账户/ACL/helper/服务/网络，不合并main、不强推或改历史。
