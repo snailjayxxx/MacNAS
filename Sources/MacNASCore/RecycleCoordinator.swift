@@ -301,7 +301,8 @@ final class FixtureRecycleCoordinator {
             }
         }
     }
-    private func classify(_ value: FileEffectExecutionSnapshot, _ permit: FileEffectExecutionPermit) throws -> (String, RecycleDirectory, RecycleDirectory) {
+    private func classify(_ value: FileEffectExecutionSnapshot, _ permit: FileEffectExecutionPermit,
+                          capture: ((RecyclePinnedFile, RecycleDirectory, RecycleDirectory, String, String, Bool) -> Void)? = nil) throws -> (String, RecycleDirectory, RecycleDirectory) {
         try permit.check(permit.action)
         try require(value.vaultID == permit.registration.vaultID && value.volumeID == permit.registration.volumeID
                     && Data(value.intent.libraryID.utf8) == Data(permit.registration.libraryID.utf8), .denied)
@@ -326,12 +327,14 @@ final class FixtureRecycleCoordinator {
             let matches = RecycleDirectory.sameStamp(file.before, value.preEvidence.object) && file.sha256 == value.preEvidence.sha256
             let classification = value.record.phase == .completed ? "changed"
                 : matches ? ([FileEffectPhase.prepared, .cancelled].contains(value.record.phase) ? "notObserved" : "sourceOnly") : "ambiguous"
+            capture?(file, source, target, name, destinationName, true)
             return (classification, source, target)
         }
         if sourceName == nil && targetName != nil {
             let file = try RecyclePinnedFile(source: target, name: destinationName, validate: { try permit.check(permit.action) })
             try require(try source.named(name) == nil, .staleState)
             try file.validateBefore { try permit.check(permit.action) }
+            capture?(file, source, target, name, destinationName, false)
             if let post = value.postEvidence {
                 let matches = RecycleDirectory.sameStamp(file.before, post.object) && file.sha256 == post.sha256
                 return (matches ? "matchedPost" : "ambiguous", source, target)
@@ -351,6 +354,51 @@ final class FixtureRecycleCoordinator {
                 try permit.check(.observe)
                 return .init(snapshot: value, classification: "ambiguous")
             }
+        }
+    }
+    /// A managed read may project and encode while the same actual locks are held.
+    /// Rendering failures propagate and cannot be reclassified as ambiguous data.
+    func withObservation<T>(operationID: UUID, grant: RecycleHostGrant,
+                            _ render: (RecycleFileObservation, FileEffectExecutionPermit, ManagedRecycleIntentDigest?) throws -> T) throws -> T {
+        try authority.withLockedVault(grant, action: .observe) { permit in
+            let journal = try self.journal(permit)
+            let (snapshot, digest) = try journal.managedExecutionSnapshot(operationID: operationID)
+            let value: RecycleFileObservation
+            var fileFence: (() throws -> Void)?
+            if let snapshot {
+                let classification: String
+                do {
+                    classification = try classify(snapshot, permit) { file, source, target, name, destinationName, sourcePresent in
+                        let absent = sourcePresent ? target : source, absentName = sourcePresent ? destinationName : name
+                        let slot = snapshot.record.kind == .recycle ? target : source
+                        let slotHasPayload = snapshot.record.kind == .recycle ? !sourcePresent : sourcePresent
+                        let slotNames: Set<String> = slotHasPayload ? ["payload"] : []
+                        // The SHA was computed from this retained FD, with the
+                        // original per-block grant/session checks. Full ctime,
+                        // mtime, inode, size, mode, uid and link-count checks
+                        // reject changes without hashing the same bytes again.
+                        fileFence = {
+                            try permit.check(.observe)
+                            try file.validateBefore { try permit.check(.observe) }
+                            try absent.validate(privateMode: true)
+                            try require(try absent.named(absentName) == nil, .staleState)
+                            do { try require(Set(try slot.names(maximum: 1)) == slotNames, .staleState) }
+                            catch { try permit.check(.observe); throw NASError.staleState }
+                        }
+                    }.0
+                }
+                catch { try permit.check(.observe); classification = "ambiguous" }
+                value = .init(snapshot: snapshot, classification: classification)
+            } else { value = .init(snapshot: nil, classification: "notVisible") }
+            let result = try render(value, permit, digest)
+            if let fileFence { try fileFence() }
+            else if let snapshot = value.snapshot {
+                let current: String
+                do { current = try classify(snapshot, permit).0 }
+                catch { try permit.check(.observe); current = "ambiguous" }
+                try require(current == value.classification, .staleState)
+            }
+            return result
         }
     }
     func settle(operationID: UUID, grant: RecycleHostGrant, destinationGrant: RecycleHostGrant? = nil) throws -> FileEffectJournalRecord {

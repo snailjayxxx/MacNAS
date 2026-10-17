@@ -25,7 +25,7 @@ MacNAS 0.1 synthetic prototype (no listener or system services)
   macnas migrate cutover                        unavailable, always refuses
   macnas jobs demo --source PATH               fixture sessions only; schema 3/4
   macnas jobs work-once --source PATH          trusted synthetic jobs only
-  macnas bridge fixture --source PATH --user LOGICAL-ID [--approve-synthetic-recycle-observation] [--approve-synthetic-capacity-ledger-read]    schema 3/4/5/6, stdin/stdout JSON only
+  macnas bridge fixture --source PATH --user LOGICAL-ID [--approve-synthetic-recycle-observation] [--approve-synthetic-capacity-ledger-read] [--approve-synthetic-managed-recycle-observation]    schema 3/4/5/6, stdin/stdout JSON only
   macnas storage demo --source PATH            creates and reads synthetic files only
   macnas photo-smoke --dest NEW-DIRECTORY        generates synthetic images only
 """
@@ -104,10 +104,11 @@ do {
         if let last=events.last { try api.acknowledgeJobEvents(consumerID:"demo-consumer",through:last.sequence,session:session) }
         try json(try api.durableJobs(session:session))
     } else if args.prefix(2) == ["bridge", "fixture"] {
-        try checkOptions(prefix: 2, valued: ["--source", "--user"], flags: ["--approve-synthetic-recycle-observation", "--approve-synthetic-capacity-ledger-read"])
+        try checkOptions(prefix: 2, valued: ["--source", "--user"], flags: ["--approve-synthetic-recycle-observation", "--approve-synthetic-capacity-ledger-read", "--approve-synthetic-managed-recycle-observation"])
         try DesktopBridgeCLI.run(root: path(option("--source")), fixtureUser: option("--user"),
             recycleObservationConfirmed: args.contains("--approve-synthetic-recycle-observation"),
-            capacityLedgerReadConfirmed: args.contains("--approve-synthetic-capacity-ledger-read"))
+            capacityLedgerReadConfirmed: args.contains("--approve-synthetic-capacity-ledger-read"),
+            managedRecycleObservationConfirmed: args.contains("--approve-synthetic-managed-recycle-observation"))
     } else if args.prefix(2) == ["storage", "demo"] {
         try checkOptions(prefix: 2, valued: ["--source"])
         try json(FixtureStorageDemo.run(root: path(option("--source"))))

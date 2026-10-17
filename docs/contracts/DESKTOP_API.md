@@ -296,3 +296,9 @@ C3B仅为未管理的Schema6回收fixture验证既有只读桥接兼容。已注
 ## N-029 C3C2 容量账目读取
 
 新增第32/33个只读方法capacityLedgerContext（精确空参数）和listCapacityLedger（精确scopeID/sourceID）。只限Schema6既有私有TestLab管理范围，独立宿主批准，CLI显式--approve-synthetic-capacity-ledger-read；不创建/认领范围，不自动继承旧观察或执行批准。返回版本化公开来源context及ledgerOnly完整账目，规格见[容量契约](CAPACITY_LEDGER_VIEW.md)和[ADR-030](../decisions/ADR-030-host-approved-capacity-ledger-read.md)。新完整回归通过；见[C3C2证据](../evidence/n029-c3c2-2026-10-17.json)，提交推送以Git/外部发布收据为准。
+
+## N-029 C3C3B 管理范围物理观察
+
+managedRecycleObservationContext要求空参数。observeManagedRecycleOperation要求精确scopeID/sourceID/operationID，不接受confirmed或隐藏路径/FD/宿主能力。只返回managedObservationVersion/context/allocation/observation；公开精确形状和费用含义见[呈现契约](MANAGED_RECYCLE_OBSERVATION_MODEL.md)。两消息均需独立宿主managedObserve批准，CLI开关--approve-synthetic-managed-recycle-observation不默认开启。sourceID仅是等值标记，不授权执行、结算/取消或释放费用。
+
+新的完整自动验收见[C3C3B证据](../evidence/n029-c3c3b-2026-10-17.json)；执行和恢复目标批准仍是后续独立消息。

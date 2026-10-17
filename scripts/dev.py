@@ -8,7 +8,7 @@ actual=plistlib.loads(subprocess.check_output(['/usr/sbin/diskutil','info','-pli
 assert actual['VolumeUUID']==expected['volume_uuid'] and actual['MountPoint']=='/Volumes/MacNAS-Dev' and actual['FilesystemType']=='apfs' and not actual['Internal'], 'BLOCKED: development volume identity changed'
 assert ROOT.is_relative_to(Path('/Volumes/MacNAS-Dev')) and ROOT.resolve()==ROOT, 'BLOCKED: unsafe project path'
 dev_build_namespace=os.environ.get('MACNAS_DEV_BUILD_NAMESPACE','')
-assert dev_build_namespace in ['', 'n029-c2', 'n029-c3b', 'n029-c3c2'], 'Unknown development build namespace'
+assert dev_build_namespace in ['', 'n029-c2', 'n029-c3b', 'n029-c3c2', 'n029-c3c3b'], 'Unknown development build namespace'
 def dev_build_dir(name): return WORK/'Build'/(name+('-'+dev_build_namespace if dev_build_namespace else ''))
 runid=datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))).strftime('%Y%m%dT%H%M%S')+'-'+uuid.uuid4().hex[:8]
 evidence=WORK/'Evidence/runs'/runid; evidence.mkdir(parents=True)
@@ -23,7 +23,7 @@ env.update({'MACNAS_TESTLAB':str(lab),'MACNAS_PG_BIN':str(pgbin),'MACNAS_PG_SOCK
 node=shutil.which('node');assert node,'Existing Node.js required; no automatic installation'
 env['MACNAS_NODE_BINARY']=node
 flags=['--scratch-path',str(dev_build_dir('swift')),'--cache-path',str(dev_build_dir('swift-cache')),'--config-path',str(dev_build_dir('swift-config')),'--security-path',str(dev_build_dir('swift-security'))]
-tracked_sources=[ROOT/'Package.swift',ROOT/'web/dist/model.js',ROOT/'web/dist/capacity-ledger-view.js',ROOT/'web/dist/recycle-observation.js',ROOT/'web/dist/bridge-client.js',ROOT/'web/dist/task-pages.js',ROOT/'web/dist/notification-view.js',ROOT/'web/dist/notification-reconciliation.js',ROOT/'web/dist/directory-view.js',ROOT/'web/dist/file-operations.js',ROOT/'web/dist/file-transfers.js',ROOT/'web/dist/sha256.js',ROOT/'web/dist/file-copies.js',ROOT/'web/dist/file-copy-fixture.js']+[p for folder in ['Sources','Tests','database','scripts'] for p in (ROOT/folder).rglob('*') if p.is_file() and p.suffix in ['.swift','.sql','.py','.cjs']]
+tracked_sources=[ROOT/'Package.swift',ROOT/'web/dist/model.js',ROOT/'web/dist/managed-recycle-observation.js',ROOT/'web/dist/capacity-ledger-view.js',ROOT/'web/dist/recycle-observation.js',ROOT/'web/dist/bridge-client.js',ROOT/'web/dist/task-pages.js',ROOT/'web/dist/notification-view.js',ROOT/'web/dist/notification-reconciliation.js',ROOT/'web/dist/directory-view.js',ROOT/'web/dist/file-operations.js',ROOT/'web/dist/file-transfers.js',ROOT/'web/dist/sha256.js',ROOT/'web/dist/file-copies.js',ROOT/'web/dist/file-copy-fixture.js']+[p for folder in ['Sources','Tests','database','scripts'] for p in (ROOT/folder).rglob('*') if p.is_file() and p.suffix in ['.swift','.sql','.py','.cjs']]
 source_hashes={str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(tracked_sources)}
 (evidence/'source-sha256.json').write_text(json.dumps(source_hashes,indent=2)+'\n')
 git_head=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip()
@@ -37,9 +37,10 @@ def run(name,command,input=None,check=True,expected_exit=0):
     with log.open('w') as output:
         process=subprocess.Popen([str(c) for c in command],cwd=ROOT,env=env,stdin=subprocess.PIPE if input is not None else subprocess.DEVNULL,text=True,stdout=output,stderr=subprocess.STDOUT,start_new_session=True)
         # C3B unfiltered456 measured9476.862s; new C3C2 focused15 measured1485.062s.
-        # Bound the expanded471-test suite to240 minutes with I/O margin.
+        # Expanded485 includes14 managed tests; external focused suites measured before promotion.
+        # Bound the new complete suite to300 minutes with I/O margin.
         # Product/SQL/client/CLI and individual functional deadlines are unchanged.
-        try:process.communicate(input=input,timeout=14400 if name=='swift-tests' else 420)
+        try:process.communicate(input=input,timeout=18000 if name=='swift-tests' else 420)
         except subprocess.TimeoutExpired:
             os.killpg(process.pid,signal.SIGTERM)
             try:process.communicate(timeout=5)

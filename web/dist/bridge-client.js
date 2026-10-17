@@ -1,7 +1,7 @@
 (function (root, factory) {
-  if (typeof module === "object" && module.exports) module.exports = factory(require("./model.js"),require("./file-operations.js"),require("./file-transfers.js"),require("./sha256.js"),require("./file-copies.js"),require("./recycle-observation.js"),require("./capacity-ledger-view.js"));
-  else root.MacNASBridgeClient = Object.freeze(factory(root.MacNASModel,root.MacNASFileOperations,root.MacNASFileTransfers,root.MacNASSHA256,root.MacNASFileCopies,root.MacNASRecycleObservation,root.MacNASCapacityLedgerView));
-})(globalThis, function (M,O,T,H,C,R,K) {
+  if (typeof module === "object" && module.exports) module.exports = factory(require("./model.js"),require("./file-operations.js"),require("./file-transfers.js"),require("./sha256.js"),require("./file-copies.js"),require("./recycle-observation.js"),require("./capacity-ledger-view.js"),require("./managed-recycle-observation.js"));
+  else root.MacNASBridgeClient = Object.freeze(factory(root.MacNASModel,root.MacNASFileOperations,root.MacNASFileTransfers,root.MacNASSHA256,root.MacNASFileCopies,root.MacNASRecycleObservation,root.MacNASCapacityLedgerView,root.MacNASManagedRecycleObservation));
+})(globalThis, function (M,O,T,H,C,R,K,V) {
   "use strict";
   const fail = code => { throw new M.ServiceError(code); };
   const check = (value, code = "invalidResponse") => { if (!value) fail(code); };
@@ -136,9 +136,9 @@
     let operationHeads=0;
     const transfers=new Map(),busyTransfers=new Set();let transferHeads=0;
     const copies=new Map(),busyCopies=new Set();let copyHeads=0;
-    let closed=false,binding,eventBinding,recycleObservationBinding,capacityLedgerBinding,capacityLedgerBusy=false;
+    let closed=false,binding,eventBinding,recycleObservationBinding,capacityLedgerBinding,capacityLedgerBusy=false,managedObservationBinding,managedObservationBusy=false;
     function close() {
-      if (closed) return;closed=true;binding=undefined;eventBinding=undefined;recycleObservationBinding=undefined;capacityLedgerBinding=undefined;consumers.clear();statusQueries.clear();pages.clear();busyPages.clear();directories.clear();busyDirectories.clear();fileOperations.clear();operationQueries.clear();
+      if (closed) return;closed=true;binding=undefined;eventBinding=undefined;recycleObservationBinding=undefined;capacityLedgerBinding=undefined;managedObservationBinding=undefined;consumers.clear();statusQueries.clear();pages.clear();busyPages.clear();directories.clear();busyDirectories.clear();fileOperations.clear();operationQueries.clear();
       for (const entry of [...pending]) entry.cancel();
       transfers.clear();busyTransfers.clear();copies.clear();busyCopies.clear();recycleObservationQueries.clear();
       if (closeTransport) { try { Promise.resolve(closeTransport()).catch(()=>{}); } catch {} }
@@ -304,6 +304,26 @@
         try{return await invoke("listCapacityLedger",{scopeID,sourceID:context.sourceID},value=>
           K.listSnapshot(value,{scopeID,sourceID:context.sourceID,ownerUserID:who.userID}),opts);
         }finally{capacityLedgerBusy=false;}
+      },
+      // Separate host-approved managed observation reads; no execution authority.
+      async managedRecycleObservationContext(opts) {
+        const who=caller(false,true);check(who.databaseSchema===6,"unsupported");check(V,"unavailable");check(!managedObservationBusy,"busy");managedObservationBusy=true;
+        try{return await invoke("managedRecycleObservationContext",{},value=>{
+          const v=fields(value,["contextVersion","source","scopeID","sourceID","userID","role","mode"]);
+          check(v.contextVersion===1&&v.source==="fixture-host");cursorToken(v.scopeID);check(typeof v.sourceID==="string"&&/^[0-9a-f]{64}$/.test(v.sourceID));
+          text(v.userID);check(!/[\r\n]/.test(v.userID));
+          check(["userID","role","mode"].every(key=>v[key]===who[key]),"denied");
+          if(managedObservationBinding)check(v.scopeID===managedObservationBinding.scopeID&&v.sourceID===managedObservationBinding.sourceID,"denied");
+          else managedObservationBinding=Object.freeze(v);
+          return v;
+        },opts);}finally{managedObservationBusy=false;}
+      },
+      async observeManagedRecycleOperation(operationID,opts) {
+        const who=caller(false,true);check(who.databaseSchema===6,"unsupported");check(V,"unavailable");cursorToken(operationID,"invalidInput");
+        const context=managedObservationBinding;check(context,"denied");check(!managedObservationBusy,"busy");managedObservationBusy=true;
+        try{return await invoke("observeManagedRecycleOperation",{scopeID:context.scopeID,sourceID:context.sourceID,operationID},value=>
+          V.observationSnapshot(value,{scopeID:context.scopeID,sourceID:context.sourceID,ownerUserID:who.userID,mode:who.mode,operationID}),opts);
+        }finally{managedObservationBusy=false;}
       },
       async observeRecycleOperation(operationID,opts) {
         const who=caller(false,true);check([4,5,6].includes(who.databaseSchema),"unsupported");cursorToken(operationID,"invalidInput");
@@ -501,5 +521,16 @@
     return K.createReadOnlyModel({scopeID:context.scopeID,sourceID:context.sourceID,ownerUserID:who.userID,
       read:id=>client.listCapacityLedger(id),...(Object.hasOwn(opts,"onChange")?{onChange:opts.onChange}:{})});
   }
-  return {createDesktopClient,prepareLabelJob,createRecycleObservationModel,createCapacityLedgerModel};
+  async function createManagedRecycleObservationModel(client,params,rawOptions={}) {
+    const p=fields(params,["operationID"],["entryID","allocationID"],"invalidInput"),opts=fields(rawOptions,[],["onChange"],"invalidInput");
+    cursorToken(p.operationID,"invalidInput");for(const key of ["entryID","allocationID"])if(Object.hasOwn(p,key))cursorToken(p[key],"invalidInput");
+    check(!Object.hasOwn(opts,"onChange")||typeof opts.onChange==="function","invalidInput");
+    check(V&&client?.source==="fixture-host-client"&&!client.closed&&typeof client.overview==="function"&&typeof client.managedRecycleObservationContext==="function"&&typeof client.observeManagedRecycleOperation==="function","unavailable");
+    const who=await client.overview();check(!client.closed,"unavailable");check(who.databaseSchema===6,"unsupported");check(who.role==="administrator","denied");
+    const context=await client.managedRecycleObservationContext();check(!client.closed,"unavailable");
+    return V.createReadOnlyModel({scopeID:context.scopeID,sourceID:context.sourceID,ownerUserID:who.userID,mode:who.mode,operationID:p.operationID,
+      ...(Object.hasOwn(p,"entryID")?{entryID:p.entryID}:{}),...(Object.hasOwn(p,"allocationID")?{allocationID:p.allocationID}:{}),
+      read:id=>client.observeManagedRecycleOperation(id),...(Object.hasOwn(opts,"onChange")?{onChange:opts.onChange}:{})});
+  }
+  return {createDesktopClient,prepareLabelJob,createRecycleObservationModel,createCapacityLedgerModel,createManagedRecycleObservationModel};
 });

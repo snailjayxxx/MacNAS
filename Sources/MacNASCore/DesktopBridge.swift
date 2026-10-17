@@ -296,6 +296,14 @@ public final class DesktopBridge: @unchecked Sendable {
                 let library=try p.text("libraryID"),path=try p.text("relativePath",maximum:4096,fallback:"",allowEmpty:true)
                 let size=try p.integer("pageSize",range:1...100,fallback:50),cursor=try p["cursor"].map { try $0.text(maximumBytes:36) }
                 return try api.withFixtureLibraryPage(libraryID:library,relativePath:path,pageSize:Int(size),cursor:cursor,session:session) { try self.response(DesktopDirectoryPage($0),id:id) }
+            case "managedRecycleObservationContext":
+                _ = try params.fields(required: [])
+                return try api.withFixtureManagedRecycleObservationContext(session: session) { try self.response($0, id: id) }
+            case "observeManagedRecycleOperation":
+                let p = try params.fields(required: ["scopeID", "sourceID", "operationID"])
+                return try api.withFixtureManagedRecycleOperationObservation(scopeID: p.text("scopeID", maximum: 36),
+                    sourceID: p.text("sourceID", maximum: 64), operationID: p.text("operationID", maximum: 36),
+                    session: session) { try self.response($0, id: id) }
             case "capacityLedgerContext":
                 _ = try params.fields(required: [])
                 return try api.withFixtureCapacityLedgerContext(session: session) { try self.response($0, id: id) }
@@ -395,13 +403,15 @@ public final class DesktopBridge: @unchecked Sendable {
 
 /// NDJSON transport over the caller-owned stdin/stdout only. No listener or browser is opened.
 public enum DesktopBridgeCLI {
-    public static func run(root: URL, fixtureUser: String, recycleObservationConfirmed: Bool = false, capacityLedgerReadConfirmed: Bool = false) throws {
+    public static func run(root: URL, fixtureUser: String, recycleObservationConfirmed: Bool = false, capacityLedgerReadConfirmed: Bool = false,
+                           managedRecycleObservationConfirmed: Bool = false) throws {
         let api = try PrototypePlatformAPI(root: root)
         let session = try api.beginFixtureSession(userID: fixtureUser)
         let bridge: DesktopBridge
         do {
             if recycleObservationConfirmed { try api.authorizeFixtureRecycleObservation(session: session, confirmed: true) }
             if capacityLedgerReadConfirmed { try api.authorizeFixtureCapacityLedgerRead(session: session, confirmed: true) }
+            if managedRecycleObservationConfirmed { try api.authorizeFixtureManagedRecycleObservation(session: session, confirmed: true) }
             bridge = try DesktopBridge(api: api, session: session)
         }
         catch { api.endSession(session); throw error }

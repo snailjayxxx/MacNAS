@@ -12,8 +12,8 @@ struct PhysicalCapacityRegistration: Codable, Equatable {
 }
 
 enum PhysicalCapacityPurpose: String {
-    case receive, copy, recycle, restore, inspect, ledgerRead, cancelIncoming
-    var writes: Bool { ![.inspect, .ledgerRead].contains(self) }
+    case receive, copy, recycle, restore, inspect, ledgerRead, managedObserve, cancelIncoming
+    var writes: Bool { ![.inspect, .ledgerRead, .managedObserve].contains(self) }
 }
 
 struct PhysicalCapacityDeclaration: Equatable {
@@ -139,7 +139,7 @@ final class PhysicalCapacityLegacyAccess {
         switch purpose {
         case .recycle: allowed = action == .recycle
         case .restore: allowed = [.restore, .restoreDestination].contains(action)
-        case .inspect: allowed = action == .observe
+        case .inspect, .managedObserve: allowed = action == .observe
         default: allowed = false
         }
         try require(allowed, .denied)
@@ -284,6 +284,7 @@ final class FixturePhysicalCapacityNamespace {
     }
     func approveInspect(confirmed: Bool) throws -> PhysicalCapacityGrant { try issue(.inspect, confirmed: confirmed) }
     func approveLedgerRead(confirmed: Bool) throws -> PhysicalCapacityGrant { try issue(.ledgerRead, confirmed: confirmed) }
+    func approveManagedObserve(confirmed: Bool) throws -> PhysicalCapacityGrant { try issue(.managedObserve, confirmed: confirmed) }
     func approveRecycle(allocationID: UUID, confirmed: Bool) throws -> PhysicalCapacityGrant {
         try issue(.recycle, allocationID: allocationID, confirmed: confirmed)
     }
@@ -346,7 +347,7 @@ final class FixturePhysicalCapacityNamespace {
     func withPermit<T>(_ grant: PhysicalCapacityGrant, _ body: (PhysicalCapacityPermit) throws -> T) throws -> T {
         try require(grant.purpose != .ledgerRead, .denied)
         return try withLockedPermit(grant) { permit in
-            _ = try PhysicalCapacityFiles.audit(permit, requireClean: grant.purpose != .inspect)
+            _ = try PhysicalCapacityFiles.audit(permit, requireClean: ![.inspect, .managedObserve].contains(grant.purpose))
             return try body(permit)
         }
     }
@@ -357,6 +358,39 @@ final class FixturePhysicalCapacityNamespace {
         return try withLockedPermit(grant) { permit in
             let result = try body(permit)
             try checkDatabaseScope()
+            return result
+        }
+    }
+    func withManagedObservationContext<T>(_ grant: PhysicalCapacityGrant, _ body: () throws -> T) throws -> T {
+        try require(grant.purpose == .managedObserve, .denied)
+        // Context carries binding data only. Do not hash unrelated payloads to
+        // return an identity marker; selected-operation observation is separate.
+        return try withLockedPermit(grant) { _ in
+            let result = try body(); try checkDatabaseScope(); return result
+        }
+    }
+    /// Projection/encoding and the owned row read remain inside the actual executor
+    /// gate and vault flock. The old observe/write/ledger purposes cannot enter here.
+    func withManagedObservation<T>(_ grant: PhysicalCapacityGrant, operationID: UUID,
+                                  _ render: (RecycleFileObservation, CapacityAllocation?, ManagedRecycleIntentDigest?) throws -> T) throws -> T {
+        try require(grant.purpose == .managedObserve, .denied)
+        let access = try legacyAccess(grant)
+        let authority = try FixtureRecycleAuthority(root: root, userID: userID, physicalAccess: access)
+        let native = try authority.approve(.observe, confirmed: true)
+        return try FixtureRecycleCoordinator(authority: authority).withObservation(operationID: operationID, grant: native) { value, nativePermit, digest in
+            let staging = try RecycleDirectory(self.root.appendingPathComponent(Self.stagingPath), privateMode: true)
+            let permit = self.makePermit(grant, vault: nativePermit.vault, staging: staging, retaining: [nativePermit],
+                                        lockCheck: { try nativePermit.validateHeldLock() })
+            try permit.check()
+            let row: CapacityAllocation?
+            if let snapshot = value.snapshot {
+                guard let id = UUID(uuidString: snapshot.intent.sourcePath),
+                      snapshot.intent.sourcePath == id.uuidString.lowercased(),
+                      let owned = try permit.ledger().allocation(id), owned.state == .owned else { throw NASError.denied }
+                row = owned
+            } else { row = nil }
+            let result = try render(value, row, digest)
+            try permit.check(); try self.checkDatabaseScope(); try nativePermit.check(.observe)
             return result
         }
     }
@@ -401,7 +435,7 @@ final class FixturePhysicalCapacityNamespace {
     }
     func legacyAccess(_ grant: PhysicalCapacityGrant) throws -> PhysicalCapacityLegacyAccess {
         try validate(grant); try checkDatabaseScope()
-        try require([PhysicalCapacityPurpose.recycle,.restore,.inspect].contains(grant.purpose), .denied)
+        try require([PhysicalCapacityPurpose.recycle,.restore,.inspect,.managedObserve].contains(grant.purpose), .denied)
         return PhysicalCapacityLegacyAccess(root: root, userID: userID, allocationID: grant.allocationID, entryID: grant.entryID,
             purpose: grant.purpose, validate: { try self.validate(grant) },
             locked: { nativePermit in
@@ -411,7 +445,14 @@ final class FixturePhysicalCapacityNamespace {
                 let staging = try RecycleDirectory(self.root.appendingPathComponent(Self.stagingPath), privateMode: true)
                 let permit = self.makePermit(grant, vault: nativePermit.vault, staging: staging, retaining: [nativePermit],
                     lockCheck: { try nativePermit.validateHeldLock() })
-                _ = try PhysicalCapacityFiles.audit(permit, requireClean: grant.purpose != .inspect)
+                if grant.purpose == .managedObserve {
+                    // No whole-inventory matching claim is returned by a single
+                    // operation read. Its own pinned pre/post payload is checked
+                    // by the coordinator, while binding/locks stay authoritative.
+                    try permit.check(); try self.checkDatabaseScope()
+                } else {
+                    _ = try PhysicalCapacityFiles.audit(permit, requireClean: grant.purpose != .inspect)
+                }
                 if grant.purpose == .recycle {
                     guard let id = grant.allocationID, let row = try permit.ledger().allocation(id),
                           row.state == .owned else { throw NASError.denied }

@@ -1,6 +1,6 @@
 # 管理范围回收观察只读模型
 
-N-029 C3C3A只实现严格呈现模型。拟定的Native投影另在仓库外以虚构记录编译和验证；当前主树宿主没有该外壳的批准、来源生成器、消息或客户端适配器。模型及样例均为MOCK，网页不加载或提供该模块。实际管理范围物理观察由C3C3B接线和新全量另行证明。
+N-029 C3C3A先完成严格呈现模型；C3C3B现接通独立宿主批准/来源、Native投影、只读消息与客户端适配器。原22项模型及6份独立投影样例仍为MOCK，实际新全量和真实Node→Swift证据另见[C3C3B](../evidence/n029-c3c3b-2026-10-17.json)。网页仍未加载或提供该模块。
 
 ## 固定范围和外壳
 
@@ -29,3 +29,9 @@ createReadOnlyModel({...expected,read,onChange?})只公开snapshot、refresh、d
 同一模型固定可见allocation的全部七字段和操作/entry/kind/owner/意图，revision与entryRevision分别不倒退，相同revision不能改变相应状态；终态不能复活，released不能重新收费。notVisible仍标未知，后续重新可见须继承原固定身份。分类可以随着现场变化而改变，不推导数据库写转换。
 
 失败仅显示有限错误码，保留旧外壳并标stale；任意错误消息或code getter不会进入视图。dispose清空当前外壳/错误/过期标记并忽略迟到成功或失败；reading回调立即关闭时不发送尚未发出的读取。回调异常不滞留busy。dispose只结束本地视图，不取消已执行效果、关闭借用连接或释放费用。
+
+## C3C3B实际宿主
+
+C3C3B接通Schema6管理范围独立managedObserve宿主批准、不同域HMAC来源、只读物理观察及具名客户端。固定API/会话/原始UTF8管理员/模式、实例/代次/DB/宿主/Schema/登记及fresh grant；真实gate/vault锁内核对日志、owned allocation和pre/post身份/SHA。操作摘要在同一次只读SQL按既有PG jsonb::text算法核验，读取证据私有构造；来源context不扫描全库存，单项读取只核对所选载荷，编码后复核保留FD的完整stamp/反向缺失/slot布局，载荷变化拒绝旧匹配。写/inspect完整audit及32KiB逐块检查保持。未知明确null，entry released仍owned收费，不授权执行、结算、取消或释放费用。
+
+10个真实管理观察管道场景直接核对未批准/账目不可替代、unknown、0/16MiB、满64MiB真实copy、released后owned收费、恢复只读、改变载荷ambiguous和candidateMoved未结算；每次完整16表摘要及payload SHA不变。CLI4种开关/主体组合独立验证。旧回收/恢复各3次、物理容量4次真实SIGKILL在本次完整套件重跑；candidate场景只是注入中断。

@@ -373,7 +373,45 @@ struct FileEffectExecutionSnapshot: Codable {
     let activeOperationID: UUID?
 }
 
+/// Read evidence only. Construction is confined to this file after one consistent
+/// PostgreSQL canonical-json digest check; it authorizes no mutation or execution.
+struct ManagedRecycleIntentDigest {
+    let operationID: UUID
+    let sha256: String
+    fileprivate init(operationID: UUID, sha256: String) { self.operationID = operationID; self.sha256 = sha256 }
+}
+
 extension DurableFileEffectJournal {
+    func managedExecutionSnapshot(operationID: UUID) throws -> (FileEffectExecutionSnapshot?, ManagedRecycleIntentDigest?) {
+        try require(physicalAccess?.purpose == .managedObserve, .denied)
+        try validateScope(write: false)
+        let sql = """
+        BEGIN READ ONLY; SET LOCAL statement_timeout='10000ms';
+        SELECT coalesce((SELECT jsonb_build_object('snapshot',jsonb_build_object('record',\(Self.resultSQL),
+          'intent',o.intent,'preEvidence',o.pre_evidence,'postEvidence',o.post_evidence,
+          'volumeID',e.volume_id,'vaultID',e.vault_id,'payloadID',e.payload_id,
+          'originScopeSHA256',o.origin_scope_sha256,'activeOperationID',e.active_operation_id),
+          'intentVerified',o.intent_sha256=encode(sha256(convert_to(o.intent::text,'UTF8')),'hex'))
+          FROM macnas.file_effect_operations o JOIN macnas.recycle_entries e USING(entry_id)
+          WHERE o.operation_id=\(FileEffectMetadata.uuidSQL(operationID)) AND \(ownerPredicate)),
+          jsonb_build_object('snapshot',NULL,'intentVerified',true))::text; COMMIT;
+        """
+        let output = try store.tools.sql(sql, database: store.databaseName)
+        try require(output.utf8.count <= 16384, .budgetExceeded)
+        struct Reply: Decodable { let snapshot: FileEffectExecutionSnapshot?; let intentVerified: Bool }
+        let reply = try JSONDecoder().decode(Reply.self, from: Data(output.utf8))
+        try require(reply.intentVerified, .integrity)
+        let proof: ManagedRecycleIntentDigest?
+        if let snapshot = reply.snapshot {
+            try snapshot.intent.validate(); try snapshot.preEvidence.validate(bytes: snapshot.preEvidence.object.bytes)
+            try snapshot.postEvidence?.validate(bytes: snapshot.preEvidence.object.bytes)
+            try FileEffectMetadata.hash(snapshot.originScopeSHA256); try FileEffectMetadata.hash(snapshot.record.intentSHA256)
+            try require(snapshot.record.operationID == operationID && snapshot.intent.kind == snapshot.record.kind
+                        && snapshot.record.ownerUserHex == FileEffectMetadata.hex(scope.userID), .denied)
+            proof = .init(operationID: operationID, sha256: snapshot.record.intentSHA256)
+        } else { proof = nil }
+        try validateScope(write: false); return (reply.snapshot, proof)
+    }
     func executionSnapshot(operationID: UUID) throws -> FileEffectExecutionSnapshot? {
         try validateScope(write: false)
         let sql = """

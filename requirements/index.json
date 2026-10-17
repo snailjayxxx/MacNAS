@@ -2223,6 +2223,28 @@
             "docs/decisions/ADR-031-managed-recycle-observation-model.md",
             "docs/plans/N-029-C3C3A-ACCEPTANCE.md"
           ]
+        },
+        {
+          "id": "FIL-01.host_approved_managed_recycle_observation",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "Independent Schema6 managedObserve read purpose/source and raw administrator/session/anchor; actual held locks, PostgreSQL canonical intent proof and final encoding FD/full-stamp/layout checks; unknown remains null. No execution/settlement/capacity release.",
+          "evidence": [
+            "docs/evidence/n029-c3c3b-2026-10-17.json",
+            "docs/decisions/ADR-032-host-approved-managed-physical-observation.md",
+            "docs/plans/N-029-C3C3B-ACCEPTANCE.md",
+            "docs/contracts/MANAGED_RECYCLE_OBSERVATION_MODEL.md"
+          ]
+        },
+        {
+          "id": "FIL-01.typed_managed_recycle_observation_pipe",
+          "status": "LOCAL_MAC_PASS",
+          "scope": "Actual strict client/Node-Swift reads for denied/ledger-substitution/unknown/zero/16MiB/64MiB real-copy/entry-released/recovery/changed/candidate cases, identical full16-table and payload digests; separate CLI flag. Synthetic current Mac only, no DOM/browser or production authentication/fencing.",
+          "evidence": [
+            "docs/evidence/n029-c3c3b-2026-10-17.json",
+            "docs/decisions/ADR-032-host-approved-managed-physical-observation.md",
+            "docs/plans/N-029-C3C3B-ACCEPTANCE.md",
+            "docs/contracts/MANAGED_RECYCLE_OBSERVATION_MODEL.md"
+          ]
         }
       ]
     },
