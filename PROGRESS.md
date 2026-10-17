@@ -1,5 +1,19 @@
 # MacNAS
 
+## 已完成：N-029 C3C4A，执行预览与一次确认模型（2026-10-17）
+
+C3C4A新增管理执行预览/明确一次确认的严格呈现模型：不同executionContextVersion和managed-execution purpose，固定来源/原始主体/模式、选中声明/摘要/意图及预览身份；0..16MiB、1..60000ms预览，时效从请求起点计算，小数单调时钟/倒退保护。确认仅显式confirmed:true，在派发前本地消费；之后任何错误保守uncertain且不能重试，关闭清空并隔离迟到。只读模式在时钟/服务前拒绝；旧nonce拒绝、最多16次预览和同步/异步回调隔离。
+
+新无监听前端20261017T191835-a72a0fcd通过431Node（新增30）、21语法、17静态策略和9需求负测，另26项下载器安装器检查；联合168份当前源码及需求前后冻结一致。
+
+完整核心100份及全部实际内嵌/独立管道依赖逐字节复核与已发布C3C3B e99652b一致，明确复用其485Swift/16独立管道/全部CLI精确收据，本切片没有重新执行原生套件。只有dev_web语法/模型QA入口更新，由新前端覆盖。
+
+首轮28项、复核30项及原外部全416项均通过，N030合并预检另通过431项，本模型无实际失败；C3C3B及更早所有原始失败继续保留。
+
+本切片全部MOCK，没有该执行context的宿主批准/来源生成器/RPC/客户端适配器或DOM；filesystemVerified/executionAuthorized/capacityReleaseAuthorized恒false。本地一次消费不替代跨窗口/宿主持久幂等，不能以读取sourceID或观察分类授权执行；恢复目标批准单独处理，没有容量释放或永久清理。没有真实效果、浏览器点击、生产认证/fencing、macOS15运行或跨Mac证明。浏览器允许按需使用；继续自动中文提交/正常推送dev/bootstrap，旧迁移、父需求和原始资料保持。 N-030两个可移除下载器和离线安装已独立发布；包中心维持显式fixture，真实安装工具不启动应用。
+
+只追加一条有限MOCK_PASS，基线915→916子项，SYS09很后期另7条，合并923；原111父/97-13-1及合并112父/97-14-1、29规划/5来源保持。见[C3C4A证据](docs/evidence/n029-c3c4a-2026-10-17.json)、[模型契约](docs/contracts/MANAGED_EXECUTION_CONFIRMATION_MODEL.md)和[验收矩阵](docs/plans/N-029-C3C4A-ACCEPTANCE.md)。
+
 ## 已完成：N-029 C3C3B，独立宿主管理范围物理观察（2026-10-17）
 
 C3C3B接通Schema6管理范围独立managedObserve宿主批准、不同域HMAC来源、只读物理观察及具名客户端。固定API/会话/原始UTF8管理员/模式、实例/代次/DB/宿主/Schema/登记及fresh grant；真实gate/vault锁内核对日志、owned allocation和pre/post身份/SHA。操作摘要在同一次只读SQL按既有PG jsonb::text算法核验，读取证据私有构造；来源context不扫描全库存，单项读取只核对所选载荷，编码后复核保留FD的完整stamp/反向缺失/slot布局，载荷变化拒绝旧匹配。写/inspect完整audit及32KiB逐块检查保持。未知明确null，entry released仍owned收费，不授权执行、结算、取消或释放费用。

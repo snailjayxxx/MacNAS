@@ -2245,6 +2245,17 @@
             "docs/plans/N-029-C3C3B-ACCEPTANCE.md",
             "docs/contracts/MANAGED_RECYCLE_OBSERVATION_MODEL.md"
           ]
+        },
+        {
+          "id": "FIL-01.managed_execution_confirmation_model",
+          "status": "MOCK_PASS",
+          "scope": "Proposed separate execution context, fixed selected intent/declaration, bounded monotonic preview, explicit confirmation consumed at dispatch, post-dispatch uncertainty with no retry, disposal/late isolation. Mock only; no actual host execution approval/source/RPC/client adapter, DOM or capacity-release authority.",
+          "evidence": [
+            "docs/evidence/n029-c3c4a-2026-10-17.json",
+            "docs/contracts/MANAGED_EXECUTION_CONFIRMATION_MODEL.md",
+            "docs/decisions/ADR-033-managed-execution-confirmation-model.md",
+            "docs/plans/N-029-C3C4A-ACCEPTANCE.md"
+          ]
         }
       ]
     },
