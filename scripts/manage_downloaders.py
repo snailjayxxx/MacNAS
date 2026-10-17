@@ -174,7 +174,7 @@ def extract_app(archive, destination, package):
     # pinned public archive; the installed application stays in the owned root.
     with tempfile.TemporaryDirectory(prefix='macnas-downloader-', dir='/private/tmp') as temporary:
         local_archive = Path(temporary) / package['archive']
-        shutil.copyfile(archive, local_archive)
+        run(['/usr/bin/ditto', '--rsrc', '--extattr', '--qtn', str(archive), str(local_archive)])
         verify_archive(local_archive, package)
         mount = Path(temporary) / 'mount'
         mount.mkdir()
@@ -239,7 +239,7 @@ class DownloaderPackages:
             receipt = {'schema': SCHEMA, 'catalog_sha256': self.catalog_sha, 'packages': {}}
             for identity, package in self.packages.items():
                 cached = temporary / 'offline-cache' / package['archive']
-                shutil.copyfile(cache / package['archive'], cached)
+                run(['/usr/bin/ditto', '--rsrc', '--extattr', '--qtn', str(cache / package['archive']), str(cached)])
                 verify_archive(cached, package)
                 home = temporary / 'installed' / identity
                 home.mkdir()
@@ -266,7 +266,10 @@ class DownloaderPackages:
             result = []
             for identity, package in self.packages.items():
                 location = safe_path(self.root / 'installed' / identity)
-                present = location.is_dir()
+                app = location / package['app_name']
+                executable = app / 'Contents/MacOS' / package['executable']
+                present = (location.is_dir() and not app.is_symlink() and app.is_dir()
+                           and not executable.is_symlink() and executable.is_file())
                 state = receipt['packages'][identity]['state']
                 require(state in ['installed', 'removed'], 'invalidReceipt')
                 result.append({'id': identity, 'name': package['name'],
@@ -279,6 +282,10 @@ class DownloaderPackages:
         package = self.package(identity)
         with self.locked() as receipt:
             target = safe_path(self.root / 'installed' / identity)
+            # Finder may remove only the app, leaving our empty package slot.
+            # An explicit reinstall may remove that empty directory only.
+            if target.is_dir() and not any(target.iterdir()):
+                target.rmdir()
             if target.exists():
                 require(receipt['packages'][identity]['state'] == 'installed', 'unexpectedPackageDirectory')
                 verify_app(target / package['app_name'], package)
@@ -302,7 +309,7 @@ class DownloaderPackages:
                 result = subprocess.run(['/usr/sbin/lsof', '-t', '+D', str(target)],
                                         capture_output=True, timeout=30)
                 require(result.returncode in [0, 1] and not result.stdout.strip(), 'appRunning')
-                require(set(p.name for p in target.iterdir()) == {package['app_name']}, 'unexpectedPackageContent')
+                require(set(p.name for p in target.iterdir()) in [set(), {package['app_name']}], 'unexpectedPackageContent')
                 with tempfile.TemporaryDirectory(prefix='remove-', dir=self.root / 'work') as temporary:
                     os.rename(target, Path(temporary) / identity)
                     receipt['packages'][identity]['state'] = 'removed'

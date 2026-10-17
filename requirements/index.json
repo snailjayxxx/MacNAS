@@ -4626,12 +4626,13 @@
         {
           "id": "APP-02.verified_downloader_offline_cache",
           "status": "LOCAL_MAC_PASS",
-          "scope": "Actual official HTTPS downloads and SHA256; reinstall from local fixed-version DMGs. No source/signature bypass or system app installation.",
+          "scope": "Actual official HTTPS downloads and SHA256; reinstall from local fixed-version DMGs. No source/signature bypass or system app installation. Native archive copies preserve extended metadata; validated with synthetic custom xattr, unchanged byte SHA.",
           "evidence": [
             "docs/evidence/n030-2026-10-17.json",
             "docs/contracts/BUILTIN_DOWNLOADERS.md",
             "docs/decisions/ADR-034-bundled-removable-downloaders.md",
-            "docs/plans/N-030-ACCEPTANCE.md"
+            "docs/plans/N-030-ACCEPTANCE.md",
+            "docs/evidence/n030a-2026-10-17.json"
           ]
         }
       ]
@@ -4915,12 +4916,13 @@
         {
           "id": "APP-06.removable_default_downloader_lifecycle",
           "status": "LOCAL_MAC_PASS",
-          "scope": "Two real official apps installed/uninstalled/reinstalled in a new private sandbox;12 CLI steps, new-process removal persists and init does not reinsert. Apps never launched; no production host bridge.",
+          "scope": "Two real official apps installed/uninstalled/reinstalled in a new private sandbox;12 CLI steps, new-process removal persists and init does not reinsert. Apps never launched; no production host bridge. Manual app deletion/empty-slot repair and repeated uninstall verified in18 current-source CLI steps.",
           "evidence": [
             "docs/evidence/n030-2026-10-17.json",
             "docs/contracts/BUILTIN_DOWNLOADERS.md",
             "docs/decisions/ADR-034-bundled-removable-downloaders.md",
-            "docs/plans/N-030-ACCEPTANCE.md"
+            "docs/plans/N-030-ACCEPTANCE.md",
+            "docs/evidence/n030a-2026-10-17.json"
           ]
         }
       ]
@@ -4986,7 +4988,8 @@
             "docs/evidence/n030-2026-10-17.json",
             "docs/contracts/BUILTIN_DOWNLOADERS.md",
             "docs/decisions/ADR-034-bundled-removable-downloaders.md",
-            "docs/plans/N-030-ACCEPTANCE.md"
+            "docs/plans/N-030-ACCEPTANCE.md",
+            "docs/evidence/n030a-2026-10-17.json"
           ]
         }
       ]

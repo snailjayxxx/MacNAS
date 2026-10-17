@@ -6,6 +6,8 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[1]
 spec = importlib.util.spec_from_file_location('downloaders', ROOT/'scripts/manage_downloaders.py')
 P = importlib.util.module_from_spec(spec); spec.loader.exec_module(P)
+ORIGINAL_EXTRACT = P.extract_app
+REAL_RUN = subprocess.run
 
 class DownloaderTests(unittest.TestCase):
     def setUp(self):
@@ -19,7 +21,10 @@ class DownloaderTests(unittest.TestCase):
         self.catalog_patch = patch.object(P, 'CATALOG', self.catalog_file); self.catalog_patch.start()
         self.extract_patch = patch.object(P, 'extract_app', self.fake_extract); self.extract_patch.start()
         self.verify_patch = patch.object(P, 'verify_app'); self.verify_patch.start()
-        self.process_patch = patch.object(P.subprocess, 'run', return_value=subprocess.CompletedProcess([], 1, b'', b'')); self.process_patch.start()
+        def tools(arguments, **kwargs):
+            if arguments[0]=='/usr/bin/ditto': return REAL_RUN(arguments, **kwargs)
+            return subprocess.CompletedProcess(arguments, 1, b'', b'')
+        self.process_patch = patch.object(P.subprocess, 'run', side_effect=tools); self.process_patch.start()
         self.manager = P.DownloaderPackages(self.base/'owned-packages')
     def tearDown(self):
         self.process_patch.stop(); self.verify_patch.stop(); self.extract_patch.stop(); self.catalog_patch.stop(); self.tmp.cleanup()
@@ -136,5 +141,33 @@ class DownloaderTests(unittest.TestCase):
         redirect=P.HTTPSRedirect();request=P.urllib.request.Request('https://github.com/example')
         for url in ['https://release-assets.githubusercontent.com/file','https://pilotfiber.dl.sourceforge.net/file']:
             self.assertEqual(redirect.redirect_request(request,None,302,'redirect',{},url).full_url,url)
+
+    def test_manual_app_deletion_is_visible_as_needs_repair(self):
+        self.initialize(); package=self.catalog['packages'][0]
+        shutil.rmtree(self.manager.root/'installed'/package['id']/package['app_name'])
+        self.assertEqual(self.manager.status()[0]['state'],'needsRepair')
+    def test_explicit_install_repairs_empty_package_directory_and_keeps_data(self):
+        self.initialize(); package=self.catalog['packages'][0]; data=self.manager.root/'data'/package['id']/'keep';data.write_bytes(b'configuration')
+        app=self.manager.root/'installed'/package['id']/package['app_name'];shutil.rmtree(app)
+        self.manager.install(package['id'])
+        self.assertTrue(app.is_dir());self.assertEqual(data.read_bytes(),b'configuration')
+    def test_uninstall_after_manual_app_removal_is_idempotent_and_keeps_data(self):
+        self.initialize();package=self.catalog['packages'][1];data=self.manager.root/'data'/package['id']/'keep';data.write_bytes(b'configuration')
+        shutil.rmtree(self.manager.root/'installed'/package['id']/package['app_name'])
+        self.manager.uninstall(package['id']);self.manager.uninstall(package['id'])
+        self.assertEqual(self.manager.status()[1]['state'],'removed');self.assertEqual(data.read_bytes(),b'configuration')
+    def test_archive_extended_metadata_survives_cache_and_mount_working_copy(self):
+        package=self.catalog['packages'][0];key='com.macnas.synthetic-provenance';value=b'fixture-metadata'
+        archive=self.cache/package['archive'];REAL_RUN(['/usr/bin/xattr','-wx',key,value.hex(),str(archive)],check=True)
+        self.initialize();cached=self.manager.root/'offline-cache'/package['archive']
+        self.assertEqual(bytes.fromhex(REAL_RUN(['/usr/bin/xattr','-px',key,str(cached)],capture_output=True,check=True).stdout.decode().replace(' ', '').replace('\n','')),value)
+        observed=[]
+        def capture(arguments):
+            if arguments[0]=='/usr/bin/ditto' and arguments[-2]==str(cached):
+                return REAL_RUN(arguments,capture_output=True,check=True).stdout
+            if arguments[0]=='/usr/bin/hdiutil' and arguments[1]=='attach':observed.append(bytes.fromhex(REAL_RUN(['/usr/bin/xattr','-px',key,str(arguments[-1])],capture_output=True,check=True).stdout.decode().replace(' ', '').replace('\n','')))
+            return b''
+        with patch.object(P,'run',side_effect=capture):ORIGINAL_EXTRACT(cached,self.base/'app.app',package)
+        self.assertEqual(observed,[value])
 
 if __name__=='__main__':unittest.main()

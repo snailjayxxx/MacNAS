@@ -1,0 +1,992 @@
+{
+  "task": "N-030A",
+  "date": "2026-10-17",
+  "assembled_at": "2026-10-17T15:14:13.113528+09:00",
+  "status": "AUTOMATED_NATIVE_PACKAGE_AND_FIXTURE_BROWSER_PASS",
+  "scope": "Repair manual downloader app removal/empty slots and preserve archive extended metadata using native ditto; original package/UI boundaries unchanged.",
+  "source_sha256": {
+    "Package.swift": "09023b72b39b31dc54575ca6925cc2513aa09a4d6f70588851be384bdc267ea5",
+    "Sources/HelloDiagnostics/main.swift": "b04a06781130b60863f86dbb24e968de3284e0f427def19da7799586d6893aa5",
+    "Sources/MacNASCLI/main.swift": "99af235180dd8f0e3234193223a7ff710fdfecc3f0d5c40771f59f419d62a8e9",
+    "Sources/MacNASCore/BridgeJSON.swift": "324b39d7d9b259c5cbe00458a6b971d12432fcfa6418d73ef30f5680893ebc33",
+    "Sources/MacNASCore/CapabilityProbe.swift": "7deb935038d37631251e0dc6307d0ae27f02f66186ba4d6707c5671ab3ec885a",
+    "Sources/MacNASCore/CapacityLedger.swift": "59b751b5f35b118f10b4bfcdcfbc3cb9a04f968c8f3a0fb783e676caf7effec9",
+    "Sources/MacNASCore/CapacityLedgerListView.swift": "d9669ca9cb071c5e9138eaacff99e8bd43ae142ffa075cca2de18ab0ae88c94e",
+    "Sources/MacNASCore/CapacityLedgerReadAPI.swift": "ebeb4060e9cd8d0a7d403dbba7f3073d894e5d9cb647191e790df989393c3584",
+    "Sources/MacNASCore/CapacitySchema.swift": "675ca3e6142989ad80467f54fbdc383d4468dc40527c23005f20aa5dc6a1a5c2",
+    "Sources/MacNASCore/DescriptorLibrary.swift": "f54338d37b3e5328095c077b1d634280d6d2cc1021f919fdf8dfb264ec600019",
+    "Sources/MacNASCore/DesktopBridge.swift": "94fb860859ecf8bd52178c265566f924b1166056e0c9972205b01f1dbb4c5ab8",
+    "Sources/MacNASCore/DirectoryPages.swift": "b8e8d1e924076da1215ebcdb9b9fa2584ae8579815d6c8df7dc55ab55c45af92",
+    "Sources/MacNASCore/DurableFileEffects.swift": "319cf69372036fbfd2352ab3b2ffb920bfd9a89389817a6b8e0a5ea402eb622e",
+    "Sources/MacNASCore/DurableJobs.swift": "0183c67ce377b9d0fd1d6eefbe0863926525f994a8e9ca523e1e340c06bc01f9",
+    "Sources/MacNASCore/FileCopies.swift": "26e5eea9da729ec6b6f6b09532dd3c85bf0c5e6c79ddd1a0aefb4f6a5ce81294",
+    "Sources/MacNASCore/FileOperations.swift": "1c0a327c7a35a07a4030ce791ab7e10435ef77d0d2c3a70030f054289ed31270",
+    "Sources/MacNASCore/FileTransfers.swift": "dd3090d84344fa16f7fbb82eb80496270b2cd2bcb76ebebc2bd5fe17a148b7e5",
+    "Sources/MacNASCore/FixtureFileAPI.swift": "2de721a62016a2d398fce22950b61e11d07f464839073e24cb9f5fb8c1907745",
+    "Sources/MacNASCore/FixtureFileCopyAPI.swift": "a99015829d00a0e03a8b898b172088e177eb56cf27103cd3ec4afc7db6da09cf",
+    "Sources/MacNASCore/FixtureFileOperationAPI.swift": "11654bf227bfe2f6623c7e1988652791d23e4ef8309385ffad13481dae0ff811",
+    "Sources/MacNASCore/FixtureStorageAPI.swift": "86034cf2dee983e9b6e03e0249cd3b58882f8bf12d741e06cf7f21c9fbdae3bb",
+    "Sources/MacNASCore/FixtureStorageDemo.swift": "8c88422294cf3e52fec9c8a7d51315f67505684642bd92ca45af206ed7f53b68",
+    "Sources/MacNASCore/FixtureTransferAPI.swift": "982fbcc14b569b84fec11229be977496568d6f3b0fdb956367eca83dd868f138",
+    "Sources/MacNASCore/FixtureVolumeRegistry.swift": "dabf3e46d9c216cb1b8d1aaa04b27be601a131c12b0b3e522d9a9d843091962c",
+    "Sources/MacNASCore/JobPages.swift": "7a0bebb7064582720b26ad5e47ebf163dd49693552b43b4f8908b6a2c72641f0",
+    "Sources/MacNASCore/Migration4.swift": "40d9034b4c08119a6f83dc819bf2ec9e48522f01a94d41dcc61b96cd7e00c141",
+    "Sources/MacNASCore/Migration5.swift": "352d28f94d62c5a656a9ad68d07e5bc253e38dad1b34fcca7329d29946db74c8",
+    "Sources/MacNASCore/Migration6.swift": "51227aabf3fcb0620139177a906ca922b6b08cdab01ddc1730bf239cdcc86d65",
+    "Sources/MacNASCore/MigrationCoordinator.swift": "7fc57f7c709b985a540cd4fe04ba37a30397ba999150d7d65a03276b5bc9af64",
+    "Sources/MacNASCore/Models.swift": "947bafadea76a71f6c42ca95b4054f6ef0a7de06be5515c7aafd36004681e5ec",
+    "Sources/MacNASCore/PhotoSmoke.swift": "3354d7f6a7486d35cfca548821d76e95dfa41970fb6cea686b283c43b0dbd084",
+    "Sources/MacNASCore/PhysicalCapacityCrashProbe.swift": "2abc3567b08614b4e3b659ecd347bd19fcbca9c91cf49558476acaa7184d5e5b",
+    "Sources/MacNASCore/PhysicalCapacityFiles.swift": "492ba9c59a16e0f5bdf68301754474d619aeabde5444505c60a4edac0ea4cda2",
+    "Sources/MacNASCore/PhysicalCapacityNamespace.swift": "02cd77e67990d08ace4f2d52227f00ca64fc763d011ffac68c273789410037f8",
+    "Sources/MacNASCore/PhysicalCapacitySchema.swift": "740ff581a96e6ca86d679d637aea79801091c1bedcf6870fec67fc8e8e1eb042",
+    "Sources/MacNASCore/Plugins.swift": "27aee14314d494e29b2866c7e3587e7f5f2061dea28e49d22b65cdf11a3faabd",
+    "Sources/MacNASCore/PoolSimulation.swift": "3636d4a4e253ab360d4ddf02d8086539d9ba759b415c989e638db59b9c5e3c99",
+    "Sources/MacNASCore/PortableInstance.swift": "eceb6ba2a8a89a51d7223de0428d00135b63b289a811bcc992b7990440400e01",
+    "Sources/MacNASCore/PrototypePlatformAPI.swift": "387cfce71653a7b69aa5baf3ec3c6493d9fcbdd3cfbcf99b2914b206f9925f4d",
+    "Sources/MacNASCore/RecycleAuthority.swift": "dde1539e17f39ba11e284dcdccdcf1a6e2f0b710c21ccbf3501ebe7800147c07",
+    "Sources/MacNASCore/RecycleCoordinator.swift": "9a438e619ef0d15752b573015ab84f2692c75f216473f5ddec53988c342515af",
+    "Sources/MacNASCore/RecycleCrashProbe.swift": "4bee9cfb732529412bcb23b44da4d5046e37f74276368ed553b48af4a2af5af7",
+    "Sources/MacNASCore/RecycleObservationAPI.swift": "c192f04e8ac90e0eb7233245c30e92112edd3ac657942ff3ef276b611dfe5ed6",
+    "Sources/MacNASCore/RecycleVault.swift": "96069568b49d274cc2cbefbd836b671d4ff124bc670beb18b3d68cea94a3de6a",
+    "Sources/MacNASCore/SafeFS.swift": "75d9f829af31e0ecb949b81f19cc8bd00661b009605ae91ff8f59de9cfe32577",
+    "Sources/MacNASCore/SecurityGate.swift": "97b3490f8405886fb4014198bbb43e61717860115a44d4628c5bbe666c3df49f",
+    "Sources/MacNASCore/StateStore.swift": "651b2eb3b3c69fc8cc136bb98571766c2560a61366b3b2a0b84dd6c9dc97e9b4",
+    "Sources/MacNASCore/TransferDescriptors.swift": "cfedb2790ed1cc876868c0f90c4969b779128df88ba931d192c38dbe669b39f9",
+    "Sources/MacNASCore/WriteBarrier.swift": "1711b5a621a2994ebd34274762f3eccd5a63e195c91e7f18182d5658acd1ee4d",
+    "Sources/SampleFileIndex/main.swift": "4f57a1bc123eaf62baff11b6867ea8a413bbc314247cd0399f93b7874f1442ce",
+    "Tests/MacNASCoreTests/CapacityLedgerListDTOTests.swift": "0fdc6a1686096ecbad82f4455097899cb74e0eb4ec575ad58727711e409cf89e",
+    "Tests/MacNASCoreTests/CapacityLedgerReadAPITests.swift": "a312db9371f41adbbd9ddfd51e772fecc832f6dc1bbeffcd38c2a1f362155177",
+    "Tests/MacNASCoreTests/CapacityLedgerReadPipeTests.swift": "f215873f90385691c232af732a654708f3c2eb8e0539cc945573f5fb29df5270",
+    "Tests/MacNASCoreTests/CapacityLedgerTests.swift": "33cffc0f51e85b06093d77745658c59ea06541b06984d52fe209dcb2982a58fa",
+    "Tests/MacNASCoreTests/CoreTests.swift": "cbe1b6e1a92435761d43ffcdb6b8b3e9c0b629c48782270947de10574254a4d9",
+    "Tests/MacNASCoreTests/DesktopBridgeTests.swift": "b3edc4b0a4879b6c94117fe386dc0d67040bb86bea33b7c365d4f5395b76c782",
+    "Tests/MacNASCoreTests/DirectoryPageTests.swift": "f6284c89ea2c57357e5d2abeb8088953aaef83831bc2633ae39fb0d9ef636701",
+    "Tests/MacNASCoreTests/DurableIntegrationTests.swift": "b6adcf9623d7d4d5074c05fa65dcb7e9a81499bd9c48ab3ff6c6380ca8f47bbc",
+    "Tests/MacNASCoreTests/DurableJobTests.swift": "f496ffd39256e4e898c0c0da1c4835e0d16c87919931371e953522e139d2135e",
+    "Tests/MacNASCoreTests/EventConsumerStatusTests.swift": "3a319304b6959b2c47145219755fb516420783f986e3efb5ca6871d140670cfe",
+    "Tests/MacNASCoreTests/EventSourceContextTests.swift": "6da8badc79f9870fa056495d2b5ddfa07e3cb76f9dc713d1925a38a3af64a3b9",
+    "Tests/MacNASCoreTests/FileCopyPipeTests.swift": "7988d07a10239a3205f014bc90834a9210a8ac27596f84f0639d9540cc12f91c",
+    "Tests/MacNASCoreTests/FileCopyTests.swift": "152c2b43b0bc1c6c791c237e3e3546c8a1f63ca8034f3d1365e814ab109a6720",
+    "Tests/MacNASCoreTests/FileEffectJournalTests.swift": "ed0ececd280beeed382e7665b5785d133dc7cd9187ceb7eacfa055fa3918e2e3",
+    "Tests/MacNASCoreTests/FileOperationTests.swift": "d5a28a2becb34507b9fef306c464061b30f7d71c7bcf19bce10c209bf43c6188",
+    "Tests/MacNASCoreTests/FileTransferPipeTests.swift": "c42ef48d3e4a22746e7cd67b0e1101fc659c0bcfba88b4961e305813dfbee9d6",
+    "Tests/MacNASCoreTests/FileTransferTests.swift": "82045b5f31785d63861a1072c6e73c8bd666e3a3990e38e718db7d98885f8f99",
+    "Tests/MacNASCoreTests/FixtureFileTests.swift": "721318bf1b9f6733f3360c5760c6d2231eaaec50f3660dfe4af67838eb1b5ac2",
+    "Tests/MacNASCoreTests/FixtureStorageTests.swift": "66dfa46e8718e320dca8f59adf5101ccd7d57023419402c4942b46da7df9aa93",
+    "Tests/MacNASCoreTests/JobPageTests.swift": "9b634346f1914e99ceb52c3be0b90f0c6ff166b468432d3f48be4dd9a62ea8f5",
+    "Tests/MacNASCoreTests/MigrationRecoveryTests.swift": "9f8e9a4dfb2896587f98306ef91946cde99112e18938a09d2757a2732fd3fb10",
+    "Tests/MacNASCoreTests/PhysicalCapacityCrashTests.swift": "adf54aef1d4b1c75ae325ddfc1d8b55a2ad435f0f35ead67eeeabb2d55050d33",
+    "Tests/MacNASCoreTests/PhysicalCapacityTests.swift": "d643d6a34b71ee8c278f61c9def885a6c995b758db0f0c5e4967966362f07ebc",
+    "Tests/MacNASCoreTests/PrototypeAPITests.swift": "0e349d6c8707eba3b5ae4775c963aa808c2caf447f84555ed86355865e69b8e9",
+    "Tests/MacNASCoreTests/RecycleApprovalRebindingTests.swift": "c4aebb4de05aa97b7baa991b60b1bdc0d11182c27d6819af05517ab10e00c5a1",
+    "Tests/MacNASCoreTests/RecycleCoordinatorTests.swift": "527e40933224ff0df3e309aa0a4c81190e68521a026749ed94df93bf1560872d",
+    "Tests/MacNASCoreTests/RecycleCrashTests.swift": "d36ba284c3e16bb3da50c2cbc17985842c770bc57c491cde1ef3709308e68d96",
+    "Tests/MacNASCoreTests/RecycleObservationAPITests.swift": "fa5469bf67086c7b48eb1219abbc537ea44186491d478ddaf9760e119bdf6a9b",
+    "Tests/MacNASCoreTests/RecycleObservationDTOTests.swift": "2e53fc92b49e4817ff17c6c517e97ae46f0140bf677dcdcf3b72cfccb3206cdc",
+    "Tests/MacNASCoreTests/RecycleObservationPipeTests.swift": "a70b791a97fd6d2702525d34f1fe45553b0298141981782383df79d70d1eeb3f",
+    "Tests/MacNASCoreTests/RecycleVaultTests.swift": "7802b2a8f458512f4d4cbb2e85523424711d0d92d8f85bb7778542c7213fb3b7",
+    "Tests/MacNASCoreTests/RestoreCoordinatorTests.swift": "c884bba4e8aaea82d7f966d2617c4148fa647db5ffc0ff1d0bab99382a4ceb29",
+    "Tests/MacNASCoreTests/RestoreCrashTests.swift": "ce15063e44c7cde5bded5da331e63bf47f988c725dd1c8804241e6833a3d2f30",
+    "Tests/MacNASCoreTests/Schema4MigrationTests.swift": "8c798ec58da3e3edbc99953e9615cc817bf04764fc5ea87ad579d4802a576e60",
+    "Tests/MacNASCoreTests/Schema4StateStoreTests.swift": "df629cf65823310f6cba66971b8ac6d15a8159d7e8d5e617e190ff67f5e1cbf0",
+    "Tests/MacNASCoreTests/Schema5CapacityTests.swift": "c67a1e17ce33bd0925629d49afab11a1587d5056c375ab91b8db0aef6405e5bb",
+    "Tests/MacNASCoreTests/Schema6PhysicalCapacityTests.swift": "c4b4ce2fc6e784d2737bf37115208187302ba1a7e94332d2ccbea233bd2a23df",
+    "Tests/MacNASCoreTests/SmokeTests.swift": "9f808a70612068f05bfbdcd3cbb11f432467e1adc65795b2241c9898ec2a07dd",
+    "database/migrations/0001_initial.sql": "f609f4b3417afeb86aeb6bb37905da97cb58b681316ac7875e6d8184fa12628f",
+    "database/migrations/0002_app_state_revision.sql": "d77b2576f62543b30d529e1e2858bd51d49b2df3768adee5a74a461549cf23ed",
+    "database/migrations/0003_durable_jobs_outbox.sql": "300c433bd8aac1e27f6cfad341b78a5db83b72e9d902dd647c1ae31086401ccc",
+    "database/migrations/0004_recycle_effect_journal.sql": "2cf6de695201307145a5202c29c38c43ad3b00b9cefa21dc9b910a5a265d822a",
+    "database/migrations/0005_durable_capacity.sql": "db260d7975c0251793fc8b9f30db6a5c5577f474c5732499579fe04d67d68045",
+    "database/migrations/0006_physical_capacity_ownership.sql": "dd7515fadbe1851fcaaeca50b71cd6579aeed22bf57de3b00fda6cabe91e347a",
+    "scripts/build_postgresql.py": "e7f17fed45e2ab393e4dc3ca99304fc0f3ae6ee2a6c0316f504f26911f35f311",
+    "scripts/dev.py": "73437ad69862adefd011bc12be047d4ba9bea8f63e5821945109d019be199fad",
+    "scripts/dev_web.py": "6c40a27fbb0c61c3fa80504974589655faa3bfdd7a996975db5f0578cd40def0",
+    "scripts/preview_web.py": "72f9b298ea9575004374666e2728b79dbeebaeb45a22dec5999b6d23318e6ce8",
+    "scripts/test_capacity_ledger_bridge.cjs": "0e7d42b0ac65cc8189512ad7e05f6c8ea688d757fe834758ce28feefb581d3cb",
+    "scripts/test_desktop_bridge.cjs": "8c8a9a4b38ee8d0ac31fd2c414c3fc13bb4bafc19d10ec54c675b0cfec7758c9",
+    "scripts/test_directory_bridge.cjs": "8bdc20e6d00bdb0a6ea3c1e7e8749ec253796596f3ceb1f1f2340d6a63a397a6",
+    "scripts/test_file_copy_bridge.cjs": "afebe610b1bed5c664141064326a781b894847414fdf0e9ebddb905d80a4a88b",
+    "scripts/test_file_operations_bridge.cjs": "a97fa0b7f234d48b78a0153b3701a1b3c6f8e03e2b2306c8c8b3f9fa272ad15c",
+    "scripts/test_file_transfers_bridge.cjs": "347b95fcba788cd58747720652f0cbea90dd898756c03e77378f94c4e9dcdfc8",
+    "scripts/test_recycle_observation_bridge.cjs": "54c9a9401dfdb0e49ac5acbe61ff6d369e1ef097a45a20b144ca93d1b6d4c6a0",
+    "scripts/test_requirements.py": "8f406c3a5415523b44eaa44c2ee66eef30b977c19059381062bf5691cb51e470",
+    "scripts/test_web.py": "8f72f26cc47e7ebd4de8a450701d75f78e004780025a61ec3839e9840a89b79a",
+    "scripts/verify_requirements.py": "41126f01329998966e2e642528dbee5abfd5f033195e99a04d17a8acac18b6c6",
+    "web/dist/bridge-client.js": "850cdc1e0a05cca5f795e095c76e92330bd09936799a3828493b910fe243a081",
+    "web/dist/capacity-ledger-view.js": "27fcf4bcbcba6cc688d3835e68a47e8dce7501dc7e042a9a9757252c663620ca",
+    "web/dist/directory-view.js": "248002f6b887e9b0249127c2f4c64327b9178ae827a5256e6e0eeabdb32aadce",
+    "web/dist/file-copies.js": "9f218398bfb1336f358158b3077f8ae2ecddbc2dc63d47fc10ccb7eb22eed6e6",
+    "web/dist/file-copy-fixture.js": "c4fe1fcd4549a84c1691be7ba47eee81f5fd15990782e6f01cfb54db4b9a9de1",
+    "web/dist/file-operations.js": "d9b33de0512ba6216a94d49436702fdf8b57739171ec7934b1fffac765c18f0a",
+    "web/dist/file-transfers.js": "f48db144afb9113c5cd9088639db8f72c13436ee67af53aacee806757d596e50",
+    "web/dist/model.js": "1a9c39a0002baa800cd3c462f4a4078f6a2e43517d833867ce4ddb91eb37386c",
+    "web/dist/notification-reconciliation.js": "07be8e899a93fbe294ea3a3af81c677575d2dbbd0aeb6800b8f2a452ae25e34f",
+    "web/dist/notification-view.js": "c9a8799b6d603a2d895ae850ea6b62fc48a89a7f927f411ea15d397a88aefc6b",
+    "web/dist/recycle-observation.js": "bc9906d5263c8297993ca221e7ccd743fcfbdf131343b3049c7a0a5d318ed1c2",
+    "web/dist/sha256.js": "1ab09fc0e06bc594095068f0ebe93c75562bafbf89d63d93ef8831698ee3f235",
+    "web/dist/task-pages.js": "dbd07f5f37659f6cc76feab3022292c5cb71110e2346a91d5218e28ac12c91ad",
+    "web/dist/desktop.css": "0111d251240b4b635c91f339fd607916505f2ec736bb9c0abfd7d96a4ca201f3",
+    "web/dist/desktop.js": "0e70e7fa5ee96e7e93c8d0b0b2d7e191da6f798a75f56d14157c42a25495d069",
+    "web/dist/file-browser.js": "2b9decdd7a17e64a3517d9a604e03fa9cc662f0ca76bef0eea24309c56f71393",
+    "web/dist/file-copy-view.js": "d1d4b2a37af06064028c04564989b77c87677bb770ab79775d6ac588679ca3fa",
+    "web/dist/file-transfer-view.js": "dbadd893495ba39ec4d8ba3e5d32f1423d82f645dcf480bd30c980c668705d8c",
+    "web/dist/i18n.js": "ec6dbe7a04c5b69d8670596a65b355067ba419f23d42f6513cdc1e74f6fc5622",
+    "web/dist/icon.svg": "5d4e5d90ccd33021afc98eb0386a45aefc975b51b8cedd69336a5ecac623b951",
+    "web/dist/index.html": "f8e055ea97526a2b98d44aadd280eeff656812450e1d50bb3557e61530fa14d7",
+    "web/tests/bridge.test.cjs": "1d6c7fd10c73a54ab44f19cd3fada262d2f0b83409e079a6fc158c93ffe8c33e",
+    "web/tests/capacity-ledger-client.test.cjs": "e61db3d581f5c9da45f6664ead543c71bebd2e2bc0a56f2a5f3ed992b482aaf7",
+    "web/tests/capacity-ledger-view.test.cjs": "19a2fa14233d1c4726a7995d33820825a8fb199ed9085fd234210dd1bf7daedd",
+    "web/tests/client.test.cjs": "623e5ae920f1bef0951efe79a53c5b9478f116888c186ce5355f30a77465671f",
+    "web/tests/directory-pages.test.cjs": "26cd0d7a04f53142449a7e944a481dd2bec09dc890622b6f67cf22f6ffa8d104",
+    "web/tests/directory-view.test.cjs": "8fbe9bb84a46f546533e52d0ac4618e41b2e3212e0fc1a52f47279fae80aaec7",
+    "web/tests/event-consumer-status.test.cjs": "1265ec1c0fb2cc7e6289d6c37f798d2ffe1a4e05067c5ddab77d3bb19a45ab51",
+    "web/tests/file-browser.test.cjs": "1e882f305f9766fdce840ff1d568c636fefa5ef979407f64201ec3c02efc07ec",
+    "web/tests/file-copies.test.cjs": "a83e5a7384ce1dec60be19fffdb25d463a273647d0211444404832a18428d1d7",
+    "web/tests/file-copy-model.test.cjs": "88d26913150ca42d9930db8916e11e13d885df690806ca595a92898f4b1bbc6e",
+    "web/tests/file-copy-view.test.cjs": "a3bd6efa7d1a206128d152528c1714489aee105fa487634074be4227c5ad44b5",
+    "web/tests/file-operations.test.cjs": "eb80476a34dcb286e2ad08f6e37a88f81bca77bb77547211661688a0adf39e65",
+    "web/tests/file-transfer-view.test.cjs": "02d473ea02d43dee4e4d98f04b3a6536f7941c73457d31bfa24432f3835027ac",
+    "web/tests/file-transfers.test.cjs": "692c220ca5a2fe4e19a5b223da06aee4026bb87446c16d7f18a8a26d4de9e4a9",
+    "web/tests/model.test.cjs": "bf0414239c0eba43134a2b7111caece6f979bd5c5327a9de29c15c4af93d666d",
+    "web/tests/notification-reconciliation.test.cjs": "7ef061e20b80627fef6ee9ca1811a6afd6638eb77761fa0f61c3960f6e3b89b4",
+    "web/tests/notification-view.test.cjs": "50d32c94a6f1f55323158901d52a14dc048c00942f67eebef8831051bf5fa55b",
+    "web/tests/recycle-observation-client.test.cjs": "577097f2e16aa73c8a4ea2987a21fab1bfbdfde309fd153d2614ae889799134d",
+    "web/tests/recycle-observation.test.cjs": "baf8b36138d52b2b90011c45f25af0cdfad2fb79dfb0347439fec8fb06e3d5ec",
+    "web/tests/schema4-compatibility.test.cjs": "945eaed6a32cde7444b371c1de7636af7aeb5c477b0c57e41e374e391700e0bd",
+    "web/tests/task-pages.test.cjs": "a17013cc7ece58a6111b4cf66e962e5843a01a111b9e89597458431fd5cac043",
+    "web/dist/managed-recycle-observation.js": "323eadf2a36d1d4c9b99958990e2861118cdfe75252a551d33a08d42e140bf56",
+    "web/tests/managed-recycle-observation.test.cjs": "e44bc3716d0a6db91c775e27a3bf11b709ca014f99141403a1bcf66992f77263",
+    "web/dist/downloaders.js": "ca335c9517bb8a5345f60436fe84667ba8144f51273d4cdd4a35bfab43d58b05",
+    "web/tests/downloaders.test.cjs": "898debdd05befe5c0c65dfc1aa5e7b41c64d1cfe80d6c58940b057092b3e03a0",
+    "packages/downloaders.json": "2b331dbe3cc455e5bbab9abbfaafbf1c9645c14a4a8ff0675935d15cbaa75e49",
+    "packages/NOTICES.md": "de8b2dacf89333e26ff9a0c411328e687a45f15e3600c5b4c515cf9a0fbcff3e",
+    "scripts/manage_downloaders.py": "ca0b1d00191aa5acb2911e645cd46d9cb88fbccae4e5c370b0c0a0201026e0e8",
+    "scripts/test_downloaders.py": "552f3a2c688cb9a18a4d28414bf1b237364423dac1f4859b3c659335324452f3",
+    "docs/decisions/ADR-034-bundled-removable-downloaders.md": "36081e7bfe1f4ff5069d807aa09bce7d89d1f09d9d0fb26e290e7b0b5377c575",
+    "docs/contracts/BUILTIN_DOWNLOADERS.md": "0002378a332a2e39b8649f9be46eadc5e5fff7bbe80357929e2f361213057a5f",
+    "docs/plans/N-030-ACCEPTANCE.md": "6e2ea84734de515a53c31a4634a3a096cf3d7f2539a068c8a2a34a180228f2a3"
+  },
+  "validated_source_files": 161,
+  "raw_receipt_sha256": {
+    "Evidence/n030-publication-2026-10-17.json": "dae45d14d18f4e9c4fd93fdd2f3972f02732c1ec3dc1e671b95426f0e4bac397",
+    "Evidence/n030a-complete.py": "09b645bcb1d183a9b7028bb8215907d1fba1fe11f706ffb9a546f6151773afb2",
+    "Evidence/n030a-copy2-before-native-xattr-proof-sources/packages/downloaders.json": "2b331dbe3cc455e5bbab9abbfaafbf1c9645c14a4a8ff0675935d15cbaa75e49",
+    "Evidence/n030a-copy2-before-native-xattr-proof-sources/scripts/manage_downloaders.py": "4792e191311cf45594452ab9a0ff9902d704bb5b88e3ac9f4d7df25652856b18",
+    "Evidence/n030a-copy2-before-native-xattr-proof-sources/scripts/test_downloaders.py": "d2ba70e08fd1b86501e3b92fff50b97055ce8f4f684a763622dababf3ff3faa7",
+    "Evidence/n030a-copy2-metadata-red-python.log": "2bbef8d7353c2e5c44369967081f1e51d44298b56baef64aeae659ffe4b2c4ca",
+    "Evidence/n030a-downloader-repair-draft/manifest.json": "52d80d550b39a92af2aae32a7b7a6fb70b6984906f8e69df69ff9028bd02d207",
+    "Evidence/n030a-downloader-repair-draft/packages/downloaders.json": "2b331dbe3cc455e5bbab9abbfaafbf1c9645c14a4a8ff0675935d15cbaa75e49",
+    "Evidence/n030a-downloader-repair-draft/scripts/manage_downloaders.py": "ca0b1d00191aa5acb2911e645cd46d9cb88fbccae4e5c370b0c0a0201026e0e8",
+    "Evidence/n030a-downloader-repair-draft/scripts/test_downloaders.py": "552f3a2c688cb9a18a4d28414bf1b237364423dac1f4859b3c659335324452f3",
+    "Evidence/n030a-fresh-web.log": "7af33ddaf3d2e1e22bd609ec1226fa68925be29f5d691c0460f8cb8c568d3289",
+    "Evidence/n030a-native-metadata-proof.json": "5be31a5346cffb1a8b09fcadc6609ce9e75b66b3b144f347b84c94640ffec9ef",
+    "Evidence/n030a-prepare-cache-qbittorrent.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Evidence/n030a-prepare-cache-transmission.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Evidence/n030a-real-default-init.log": "b865b0bdac03a54a66382abcd7e6b8013e5c142a261d440e38f5c6c676ad0519",
+    "Evidence/n030a-real-lifecycle/01-default-status.log": "b865b0bdac03a54a66382abcd7e6b8013e5c142a261d440e38f5c6c676ad0519",
+    "Evidence/n030a-real-lifecycle/02-qbittorrent-uninstall.log": "0bd418c0ca588b3956aa3126213407f34224345ddccc4db823ebbc20da6c16c3",
+    "Evidence/n030a-real-lifecycle/03-qbittorrent-uninstall-idempotent.log": "0bd418c0ca588b3956aa3126213407f34224345ddccc4db823ebbc20da6c16c3",
+    "Evidence/n030a-real-lifecycle/04-transmission-uninstall.log": "bb24b9e62cff1d94e31534a1e6d86d371c81866009dcf7f7859805a4572bc68d",
+    "Evidence/n030a-real-lifecycle/05-transmission-uninstall-idempotent.log": "bb24b9e62cff1d94e31534a1e6d86d371c81866009dcf7f7859805a4572bc68d",
+    "Evidence/n030a-real-lifecycle/06-new-process-keeps-both-removed.log": "bb24b9e62cff1d94e31534a1e6d86d371c81866009dcf7f7859805a4572bc68d",
+    "Evidence/n030a-real-lifecycle/07-default-init-must-not-reinsert.log": "679e8c456a3c16399d1a62cb91b6aa8a660a6a4ba96bcaf7425b679782721db0",
+    "Evidence/n030a-real-lifecycle/08-qbittorrent-offline-install.log": "f1dc14537edcab10d165c98410396d757b21539e548a2a6665f201ad61014bab",
+    "Evidence/n030a-real-lifecycle/09-qbittorrent-install-idempotent.log": "f1dc14537edcab10d165c98410396d757b21539e548a2a6665f201ad61014bab",
+    "Evidence/n030a-real-lifecycle/10-transmission-offline-install.log": "b865b0bdac03a54a66382abcd7e6b8013e5c142a261d440e38f5c6c676ad0519",
+    "Evidence/n030a-real-lifecycle/11-transmission-install-idempotent.log": "b865b0bdac03a54a66382abcd7e6b8013e5c142a261d440e38f5c6c676ad0519",
+    "Evidence/n030a-real-lifecycle/12-new-process-final-status.log": "b865b0bdac03a54a66382abcd7e6b8013e5c142a261d440e38f5c6c676ad0519",
+    "Evidence/n030a-real-lifecycle/13-manual-qbittorrent-removal-is-needsRepair.log": "007779239ad283525034d2ff0b161832c79aaa34b37e508fae379551a60d4f81",
+    "Evidence/n030a-real-lifecycle/14-explicit-reinstall-repairs-empty-slot.log": "b865b0bdac03a54a66382abcd7e6b8013e5c142a261d440e38f5c6c676ad0519",
+    "Evidence/n030a-real-lifecycle/15-uninstall-missing-transmission-app.log": "f1dc14537edcab10d165c98410396d757b21539e548a2a6665f201ad61014bab",
+    "Evidence/n030a-real-lifecycle/16-uninstall-missing-app-idempotent.log": "f1dc14537edcab10d165c98410396d757b21539e548a2a6665f201ad61014bab",
+    "Evidence/n030a-real-lifecycle/17-transmission-offline-reinstall.log": "b865b0bdac03a54a66382abcd7e6b8013e5c142a261d440e38f5c6c676ad0519",
+    "Evidence/n030a-real-lifecycle/18-final-new-process-state.log": "b865b0bdac03a54a66382abcd7e6b8013e5c142a261d440e38f5c6c676ad0519",
+    "Evidence/n030a-real-lifecycle-receipt.json": "11e56169cf39998f27694c18cac0eb5b9ee5a538613103acccda487babad92af",
+    "Evidence/n030a-real-lifecycle.py": "e6d73cb7e88657cebc47632b2229b223a93246abede9ecd7a7d9be485ac3ea3f",
+    "Evidence/n030a-real-lifecycle18.log": "905ba149eeca742e1747cc8f5c16dca2a8c91bf2e4f08ed92e31be1cac0254f0",
+    "Evidence/n030a-red-receipt-before-api-correction.json": "e15e8728f2ebe6fe85afc836e050c6ce7c59e6553ea8c74c55c670d9780103b1",
+    "Evidence/n030a-red-receipt.json": "d5d22f871bf2487ba97f75542d16a171ee29a37a23994435cb14134902ea66f1",
+    "Evidence/n030a-repair-final-green-python.log": "1f4b9f209a2617547df88282d3e9c7a805bd4742f5da0b9f0bdbf53c22e73a6d",
+    "Evidence/n030a-repair-green-python.log": "e9d952d1688ddec22ee85b5cd9717922f41471d8e2baab63cdab99596818ea68",
+    "Evidence/n030a-repair-red-python.log": "f6637cecf121256db53732be42df960df4355e24bca4c2b1739d40735f3697c6",
+    "Evidence/n030a-repair-red-sources/packages/downloaders.json": "2b331dbe3cc455e5bbab9abbfaafbf1c9645c14a4a8ff0675935d15cbaa75e49",
+    "Evidence/n030a-repair-red-sources/scripts/manage_downloaders.py": "871d1ba63e6b71b30a7d9ec218a1fd0d12684abb9a44b9447a49563184b6fd54",
+    "Evidence/n030a-repair-red-sources/scripts/test_downloaders.py": "9eb6853964c7f4f3b3c05b8e0954161b5dc71bd2240ed02ccdc12e35ad21e300",
+    "Evidence/n030a-requirements-freeze.json": "ddfada11c2f853b86018d3d7f2c58909721307a9dab9282032a44de4373f83e5",
+    "Evidence/n030a-tag-synthetic-cache-metadata-qbittorrent.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Evidence/n030a-tag-synthetic-cache-metadata-transmission.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Evidence/n030a-waiting-queue-preservation/n029-c3c3b-canonical-complete.py": "ec591f7796a7e65a3476d575a6646183b3078dba0c121afa9550f6461aebfbe6",
+    "Evidence/n030a-waiting-queue-preservation/n029-c3c3b-canonical-completion-state.json": "df04736a2019266e09c15e85049e5077bee6ecf188d612a154867ee4e6c890e9",
+    "Evidence/n030a-waiting-queue-preservation/n029-c3c3b-canonical-phase.py": "089644e77d4931a9b742a3fdf1c2a88e227f23d8de1206f19b2006918baba40b",
+    "Evidence/n030a-waiting-queue-preservation/n029-c3c4a-phase.py": "2589c0f9502253e4bfdd9cc292301463aeb19afb2dfbea90c7c6fc85b8bd5cf2",
+    "Evidence/n030a-waiting-queue-preservation/n029-development-c3c3b-after-n030-driver.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Evidence/n030a-waiting-queue-preservation/receipt.json": "bd794dbdc7da41e22911c6905948ef2e437ab8883e9532431896af29a0c23787",
+    "Evidence/web-runs/20261017T151411-aa97bb1e/downloader-package-tests.log": "36d30096c80c253f58cc0e32b9b9c7770de959858d4c9a7e6e592009fdd56a47",
+    "Evidence/web-runs/20261017T151411-aa97bb1e/model-tests.log": "073c791372d26591d5e7b6feded266492f7c59886a330345bb74aa4ba5c5601f",
+    "Evidence/web-runs/20261017T151411-aa97bb1e/requirements-negative-tests.log": "203e8d11dc9529763cb172c4d4acdffe3b67db7d123ed6f2223ef9c377a8923b",
+    "Evidence/web-runs/20261017T151411-aa97bb1e/requirements.log": "0c799bf38340cce37dc1bb330081ed64b5ff7d2640be2e2cba1effa387cefa25",
+    "Evidence/web-runs/20261017T151411-aa97bb1e/source-sha256.json": "0d5a49376dc2b1d21cdd67a24a39950742691b0df59efaddb0f0c6e14c01d730",
+    "Evidence/web-runs/20261017T151411-aa97bb1e/static-http-policy-tests.log": "9eb929715e09dab33093165c3270151a1a39b215b1f2fde18923d4ace385fd8d",
+    "Evidence/web-runs/20261017T151411-aa97bb1e/summary.json": "6c9404bb9dbd088c715f46bc2a186d90a0e5b7c5dc3727c5f44a92f16e428d70",
+    "Evidence/web-runs/20261017T151411-aa97bb1e/syntax-bridge-client.js.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Evidence/web-runs/20261017T151411-aa97bb1e/syntax-capacity-ledger-view.js.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Evidence/web-runs/20261017T151411-aa97bb1e/syntax-desktop.js.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Evidence/web-runs/20261017T151411-aa97bb1e/syntax-directory-view.js.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Evidence/web-runs/20261017T151411-aa97bb1e/syntax-downloaders.js.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Evidence/web-runs/20261017T151411-aa97bb1e/syntax-file-browser.js.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Evidence/web-runs/20261017T151411-aa97bb1e/syntax-file-copies.js.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Evidence/web-runs/20261017T151411-aa97bb1e/syntax-file-copy-fixture.js.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Evidence/web-runs/20261017T151411-aa97bb1e/syntax-file-copy-view.js.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Evidence/web-runs/20261017T151411-aa97bb1e/syntax-file-operations.js.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Evidence/web-runs/20261017T151411-aa97bb1e/syntax-file-transfer-view.js.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Evidence/web-runs/20261017T151411-aa97bb1e/syntax-file-transfers.js.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Evidence/web-runs/20261017T151411-aa97bb1e/syntax-i18n.js.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Evidence/web-runs/20261017T151411-aa97bb1e/syntax-managed-recycle-observation.js.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Evidence/web-runs/20261017T151411-aa97bb1e/syntax-model.js.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Evidence/web-runs/20261017T151411-aa97bb1e/syntax-notification-reconciliation.js.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Evidence/web-runs/20261017T151411-aa97bb1e/syntax-notification-view.js.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Evidence/web-runs/20261017T151411-aa97bb1e/syntax-recycle-observation.js.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Evidence/web-runs/20261017T151411-aa97bb1e/syntax-sha256.js.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Evidence/web-runs/20261017T151411-aa97bb1e/syntax-task-pages.js.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "MacNAS/docs/evidence/n030-2026-10-17.json": "88e2d21be109614dc7eac0a0d4556fe19b667139236e9d2bedfaa39a26429601"
+  },
+  "core_full_regression": {
+    "status": "PASS",
+    "run_id": "20261017T094337-4596500a",
+    "unfiltered": true,
+    "new_unfiltered_execution": false,
+    "reused_prior_suite": true,
+    "swift_tests": 471,
+    "swift_elapsed_seconds": 10893.456,
+    "baseline_swift_tests": 456,
+    "new_swift_tests": 15,
+    "new_native_suite_counts": {
+      "CapacityLedgerListDTOTests": 3,
+      "CapacityLedgerReadAPITests": 11,
+      "CapacityLedgerReadPipeTests": 1
+    },
+    "source_receipt_count": 121,
+    "complete_core_file_count": 94,
+    "embedded_node_pipe_scenarios_included_in_swift_total": 6,
+    "embedded_node_pipe_dependencies": {
+      "scripts/test_capacity_ledger_bridge.cjs": "0e7d42b0ac65cc8189512ad7e05f6c8ea688d757fe834758ce28feefb581d3cb",
+      "scripts/test_directory_bridge.cjs": "8bdc20e6d00bdb0a6ea3c1e7e8749ec253796596f3ceb1f1f2340d6a63a397a6",
+      "scripts/test_file_copy_bridge.cjs": "afebe610b1bed5c664141064326a781b894847414fdf0e9ebddb905d80a4a88b",
+      "scripts/test_file_operations_bridge.cjs": "a97fa0b7f234d48b78a0153b3701a1b3c6f8e03e2b2306c8c8b3f9fa272ad15c",
+      "scripts/test_file_transfers_bridge.cjs": "347b95fcba788cd58747720652f0cbea90dd898756c03e77378f94c4e9dcdfc8",
+      "scripts/test_recycle_observation_bridge.cjs": "54c9a9401dfdb0e49ac5acbe61ff6d369e1ef097a45a20b144ca93d1b6d4c6a0",
+      "web/dist/bridge-client.js": "850cdc1e0a05cca5f795e095c76e92330bd09936799a3828493b910fe243a081",
+      "web/dist/capacity-ledger-view.js": "27fcf4bcbcba6cc688d3835e68a47e8dce7501dc7e042a9a9757252c663620ca",
+      "web/dist/directory-view.js": "248002f6b887e9b0249127c2f4c64327b9178ae827a5256e6e0eeabdb32aadce",
+      "web/dist/file-copies.js": "9f218398bfb1336f358158b3077f8ae2ecddbc2dc63d47fc10ccb7eb22eed6e6",
+      "web/dist/file-copy-fixture.js": "c4fe1fcd4549a84c1691be7ba47eee81f5fd15990782e6f01cfb54db4b9a9de1",
+      "web/dist/file-operations.js": "d9b33de0512ba6216a94d49436702fdf8b57739171ec7934b1fffac765c18f0a",
+      "web/dist/file-transfers.js": "f48db144afb9113c5cd9088639db8f72c13436ee67af53aacee806757d596e50",
+      "web/dist/model.js": "1a9c39a0002baa800cd3c462f4a4078f6a2e43517d833867ce4ddb91eb37386c",
+      "web/dist/recycle-observation.js": "bc9906d5263c8297993ca221e7ccd743fcfbdf131343b3049c7a0a5d318ed1c2",
+      "web/dist/sha256.js": "1ab09fc0e06bc594095068f0ebe93c75562bafbf89d63d93ef8831698ee3f235"
+    },
+    "independent_cli_pipe_tests": 16,
+    "independent_cli_pipe_dependencies": {
+      "scripts/test_desktop_bridge.cjs": "8c8a9a4b38ee8d0ac31fd2c414c3fc13bb4bafc19d10ec54c675b0cfec7758c9",
+      "web/dist/notification-reconciliation.js": "07be8e899a93fbe294ea3a3af81c677575d2dbbd0aeb6800b8f2a452ae25e34f",
+      "web/dist/notification-view.js": "c9a8799b6d603a2d895ae850ea6b62fc48a89a7f927f411ea15d397a88aefc6b",
+      "web/dist/task-pages.js": "dbd07f5f37659f6cc76feab3022292c5cb71110e2346a91d5218e28ac12c91ad"
+    },
+    "postgres_stopped": true,
+    "all_cli": "PASS",
+    "all_native_execution_sources_unchanged": true,
+    "reuse_source_report": "docs/evidence/n029-c3c2-2026-10-17.json",
+    "reuse_source_commit": "126e3c9bcef8ef7cc236d84a1d12b9632b976c38",
+    "note": "Exact unchanged94core/all actual16embedded+4independent dependencies. No new Swift suite in N-030; new standalone native-app packaging CLI is separately tested."
+  },
+  "published_native_baseline": {
+    "commit": "126e3c9bcef8ef7cc236d84a1d12b9632b976c38",
+    "report": "docs/evidence/n029-c3c2-2026-10-17.json",
+    "report_sha256": "1a27ad27f1b6c58c9eff5f16c7389180514f469ff6e6f97398796f7bdfb22004",
+    "swift_tests": 471,
+    "independent_cli_pipe_tests": 16,
+    "complete_core_files": 94,
+    "new_execution_this_stage": false,
+    "postgres_stopped": true
+  },
+  "post_native_qa_only_updates": {
+    "scripts/preview_web.py": {
+      "baseline_sha256": "65acf8174f04ff2a2d34aa34574c1f95b1861b6c32dc5e873cba08f7e12a3d6c",
+      "native_receipt_sha256": "65acf8174f04ff2a2d34aa34574c1f95b1861b6c32dc5e873cba08f7e12a3d6c",
+      "current_sha256": "72f9b298ea9575004374666e2728b79dbeebaeb45a22dec5999b6d23318e6ce8",
+      "scope": "QA-only: syntax/model/package test entry, readonly static preview whitelist or static HTTP tests. Not an actual native/Swift pipe dependency."
+    },
+    "scripts/dev_web.py": {
+      "baseline_sha256": "3d23d6905c57b237d3dd95c9cc487cedb9c70ad184f0acd742a242b25ef25b0c",
+      "native_receipt_sha256": "aea14677e9b15efddb67bbf6f368a3b53e9e9803254977a8507648e474f972a2",
+      "current_sha256": "6c40a27fbb0c61c3fa80504974589655faa3bfdd7a996975db5f0578cd40def0",
+      "scope": "QA-only: syntax/model/package test entry, readonly static preview whitelist or static HTTP tests. Not an actual native/Swift pipe dependency."
+    },
+    "scripts/test_web.py": {
+      "baseline_sha256": "e1e48c14465064f84730f69aa23b497f3ce26bf9959e027b6363f8c6ca7204f3",
+      "native_receipt_sha256": "e1e48c14465064f84730f69aa23b497f3ce26bf9959e027b6363f8c6ca7204f3",
+      "current_sha256": "8f72f26cc47e7ebd4de8a450701d75f78e004780025a61ec3839e9840a89b79a",
+      "scope": "QA-only: syntax/model/package test entry, readonly static preview whitelist or static HTTP tests. Not an actual native/Swift pipe dependency."
+    }
+  },
+  "web_checks": {
+    "status": "PASS",
+    "run_id": "20261017T151411-aa97bb1e",
+    "node_tests": 383,
+    "syntax_checks": 20,
+    "static_policy_tests": 17,
+    "python_package_tests": 26,
+    "requirements_negative_tests": 9,
+    "no_listener_started": true
+  },
+  "requirements_freeze": {
+    "status": "VERIFIED",
+    "source_sha256": {
+      "requirements/index.json": "13b350cbc66687ac874c67fa6ee331f3dc879865c9876df0e482928e94194a11",
+      "requirements/user-additions.json": "c663a4c454088b7f4e01bfb68fe5e7aa4d0dfe8477e8dbdf4c3fe2e3699d558c"
+    },
+    "receipt": "Evidence/n030a-requirements-freeze.json"
+  },
+  "requirements_verification": {
+    "status": "PASS",
+    "original_files_verified": 29,
+    "original_sources_verified": 5,
+    "parent_count": 111,
+    "priority_counts": {
+      "首版需要": 97,
+      "后续需要": 13,
+      "暂不需要": 1
+    },
+    "child_count": 913,
+    "additional_parent_count": 1,
+    "effective_parent_count": 112,
+    "effective_priority_counts": {
+      "首版需要": 97,
+      "后续需要": 14,
+      "暂不需要": 1
+    },
+    "additional_child_count": 7,
+    "database": "PostgreSQL 18, no fallback"
+  },
+  "actual_native_package_verification": {
+    "status": "PASS",
+    "captured_at": "2026-10-17T15:14:10.863326+09:00",
+    "actual_official_native_apps": true,
+    "manual_app_removal_and_empty_slot_repair": true,
+    "archive_custom_metadata_preserved": {
+      "qbittorrent": "n030a-native-archive-fixture",
+      "transmission": "n030a-native-archive-fixture"
+    },
+    "steps": [
+      {
+        "name": "01-default-status",
+        "exit": 0,
+        "result": {
+          "status": "PASS",
+          "packages": [
+            {
+              "id": "qbittorrent",
+              "name": "qBittorrent",
+              "version": "5.2.3",
+              "bundled": true,
+              "removable": true,
+              "state": "installed",
+              "data_preserved": true,
+              "auto_start": false
+            },
+            {
+              "id": "transmission",
+              "name": "Transmission",
+              "version": "4.1.3",
+              "bundled": true,
+              "removable": true,
+              "state": "installed",
+              "data_preserved": true,
+              "auto_start": false
+            }
+          ]
+        }
+      },
+      {
+        "name": "02-qbittorrent-uninstall",
+        "exit": 0,
+        "result": {
+          "status": "PASS",
+          "packages": [
+            {
+              "id": "qbittorrent",
+              "name": "qBittorrent",
+              "version": "5.2.3",
+              "bundled": true,
+              "removable": true,
+              "state": "removed",
+              "data_preserved": true,
+              "auto_start": false
+            },
+            {
+              "id": "transmission",
+              "name": "Transmission",
+              "version": "4.1.3",
+              "bundled": true,
+              "removable": true,
+              "state": "installed",
+              "data_preserved": true,
+              "auto_start": false
+            }
+          ]
+        }
+      },
+      {
+        "name": "03-qbittorrent-uninstall-idempotent",
+        "exit": 0,
+        "result": {
+          "status": "PASS",
+          "packages": [
+            {
+              "id": "qbittorrent",
+              "name": "qBittorrent",
+              "version": "5.2.3",
+              "bundled": true,
+              "removable": true,
+              "state": "removed",
+              "data_preserved": true,
+              "auto_start": false
+            },
+            {
+              "id": "transmission",
+              "name": "Transmission",
+              "version": "4.1.3",
+              "bundled": true,
+              "removable": true,
+              "state": "installed",
+              "data_preserved": true,
+              "auto_start": false
+            }
+          ]
+        }
+      },
+      {
+        "name": "04-transmission-uninstall",
+        "exit": 0,
+        "result": {
+          "status": "PASS",
+          "packages": [
+            {
+              "id": "qbittorrent",
+              "name": "qBittorrent",
+              "version": "5.2.3",
+              "bundled": true,
+              "removable": true,
+              "state": "removed",
+              "data_preserved": true,
+              "auto_start": false
+            },
+            {
+              "id": "transmission",
+              "name": "Transmission",
+              "version": "4.1.3",
+              "bundled": true,
+              "removable": true,
+              "state": "removed",
+              "data_preserved": true,
+              "auto_start": false
+            }
+          ]
+        }
+      },
+      {
+        "name": "05-transmission-uninstall-idempotent",
+        "exit": 0,
+        "result": {
+          "status": "PASS",
+          "packages": [
+            {
+              "id": "qbittorrent",
+              "name": "qBittorrent",
+              "version": "5.2.3",
+              "bundled": true,
+              "removable": true,
+              "state": "removed",
+              "data_preserved": true,
+              "auto_start": false
+            },
+            {
+              "id": "transmission",
+              "name": "Transmission",
+              "version": "4.1.3",
+              "bundled": true,
+              "removable": true,
+              "state": "removed",
+              "data_preserved": true,
+              "auto_start": false
+            }
+          ]
+        }
+      },
+      {
+        "name": "06-new-process-keeps-both-removed",
+        "exit": 0,
+        "result": {
+          "status": "PASS",
+          "packages": [
+            {
+              "id": "qbittorrent",
+              "name": "qBittorrent",
+              "version": "5.2.3",
+              "bundled": true,
+              "removable": true,
+              "state": "removed",
+              "data_preserved": true,
+              "auto_start": false
+            },
+            {
+              "id": "transmission",
+              "name": "Transmission",
+              "version": "4.1.3",
+              "bundled": true,
+              "removable": true,
+              "state": "removed",
+              "data_preserved": true,
+              "auto_start": false
+            }
+          ]
+        }
+      },
+      {
+        "name": "07-default-init-must-not-reinsert",
+        "exit": 1,
+        "result": {
+          "status": "FAILED",
+          "error": "alreadyInitialized"
+        }
+      },
+      {
+        "name": "08-qbittorrent-offline-install",
+        "exit": 0,
+        "result": {
+          "status": "PASS",
+          "packages": [
+            {
+              "id": "qbittorrent",
+              "name": "qBittorrent",
+              "version": "5.2.3",
+              "bundled": true,
+              "removable": true,
+              "state": "installed",
+              "data_preserved": true,
+              "auto_start": false
+            },
+            {
+              "id": "transmission",
+              "name": "Transmission",
+              "version": "4.1.3",
+              "bundled": true,
+              "removable": true,
+              "state": "removed",
+              "data_preserved": true,
+              "auto_start": false
+            }
+          ]
+        }
+      },
+      {
+        "name": "09-qbittorrent-install-idempotent",
+        "exit": 0,
+        "result": {
+          "status": "PASS",
+          "packages": [
+            {
+              "id": "qbittorrent",
+              "name": "qBittorrent",
+              "version": "5.2.3",
+              "bundled": true,
+              "removable": true,
+              "state": "installed",
+              "data_preserved": true,
+              "auto_start": false
+            },
+            {
+              "id": "transmission",
+              "name": "Transmission",
+              "version": "4.1.3",
+              "bundled": true,
+              "removable": true,
+              "state": "removed",
+              "data_preserved": true,
+              "auto_start": false
+            }
+          ]
+        }
+      },
+      {
+        "name": "10-transmission-offline-install",
+        "exit": 0,
+        "result": {
+          "status": "PASS",
+          "packages": [
+            {
+              "id": "qbittorrent",
+              "name": "qBittorrent",
+              "version": "5.2.3",
+              "bundled": true,
+              "removable": true,
+              "state": "installed",
+              "data_preserved": true,
+              "auto_start": false
+            },
+            {
+              "id": "transmission",
+              "name": "Transmission",
+              "version": "4.1.3",
+              "bundled": true,
+              "removable": true,
+              "state": "installed",
+              "data_preserved": true,
+              "auto_start": false
+            }
+          ]
+        }
+      },
+      {
+        "name": "11-transmission-install-idempotent",
+        "exit": 0,
+        "result": {
+          "status": "PASS",
+          "packages": [
+            {
+              "id": "qbittorrent",
+              "name": "qBittorrent",
+              "version": "5.2.3",
+              "bundled": true,
+              "removable": true,
+              "state": "installed",
+              "data_preserved": true,
+              "auto_start": false
+            },
+            {
+              "id": "transmission",
+              "name": "Transmission",
+              "version": "4.1.3",
+              "bundled": true,
+              "removable": true,
+              "state": "installed",
+              "data_preserved": true,
+              "auto_start": false
+            }
+          ]
+        }
+      },
+      {
+        "name": "12-new-process-final-status",
+        "exit": 0,
+        "result": {
+          "status": "PASS",
+          "packages": [
+            {
+              "id": "qbittorrent",
+              "name": "qBittorrent",
+              "version": "5.2.3",
+              "bundled": true,
+              "removable": true,
+              "state": "installed",
+              "data_preserved": true,
+              "auto_start": false
+            },
+            {
+              "id": "transmission",
+              "name": "Transmission",
+              "version": "4.1.3",
+              "bundled": true,
+              "removable": true,
+              "state": "installed",
+              "data_preserved": true,
+              "auto_start": false
+            }
+          ]
+        }
+      },
+      {
+        "name": "13-manual-qbittorrent-removal-is-needsRepair",
+        "exit": 0,
+        "result": {
+          "status": "PASS",
+          "packages": [
+            {
+              "id": "qbittorrent",
+              "name": "qBittorrent",
+              "version": "5.2.3",
+              "bundled": true,
+              "removable": true,
+              "state": "needsRepair",
+              "data_preserved": true,
+              "auto_start": false
+            },
+            {
+              "id": "transmission",
+              "name": "Transmission",
+              "version": "4.1.3",
+              "bundled": true,
+              "removable": true,
+              "state": "installed",
+              "data_preserved": true,
+              "auto_start": false
+            }
+          ]
+        }
+      },
+      {
+        "name": "14-explicit-reinstall-repairs-empty-slot",
+        "exit": 0,
+        "result": {
+          "status": "PASS",
+          "packages": [
+            {
+              "id": "qbittorrent",
+              "name": "qBittorrent",
+              "version": "5.2.3",
+              "bundled": true,
+              "removable": true,
+              "state": "installed",
+              "data_preserved": true,
+              "auto_start": false
+            },
+            {
+              "id": "transmission",
+              "name": "Transmission",
+              "version": "4.1.3",
+              "bundled": true,
+              "removable": true,
+              "state": "installed",
+              "data_preserved": true,
+              "auto_start": false
+            }
+          ]
+        }
+      },
+      {
+        "name": "15-uninstall-missing-transmission-app",
+        "exit": 0,
+        "result": {
+          "status": "PASS",
+          "packages": [
+            {
+              "id": "qbittorrent",
+              "name": "qBittorrent",
+              "version": "5.2.3",
+              "bundled": true,
+              "removable": true,
+              "state": "installed",
+              "data_preserved": true,
+              "auto_start": false
+            },
+            {
+              "id": "transmission",
+              "name": "Transmission",
+              "version": "4.1.3",
+              "bundled": true,
+              "removable": true,
+              "state": "removed",
+              "data_preserved": true,
+              "auto_start": false
+            }
+          ]
+        }
+      },
+      {
+        "name": "16-uninstall-missing-app-idempotent",
+        "exit": 0,
+        "result": {
+          "status": "PASS",
+          "packages": [
+            {
+              "id": "qbittorrent",
+              "name": "qBittorrent",
+              "version": "5.2.3",
+              "bundled": true,
+              "removable": true,
+              "state": "installed",
+              "data_preserved": true,
+              "auto_start": false
+            },
+            {
+              "id": "transmission",
+              "name": "Transmission",
+              "version": "4.1.3",
+              "bundled": true,
+              "removable": true,
+              "state": "removed",
+              "data_preserved": true,
+              "auto_start": false
+            }
+          ]
+        }
+      },
+      {
+        "name": "17-transmission-offline-reinstall",
+        "exit": 0,
+        "result": {
+          "status": "PASS",
+          "packages": [
+            {
+              "id": "qbittorrent",
+              "name": "qBittorrent",
+              "version": "5.2.3",
+              "bundled": true,
+              "removable": true,
+              "state": "installed",
+              "data_preserved": true,
+              "auto_start": false
+            },
+            {
+              "id": "transmission",
+              "name": "Transmission",
+              "version": "4.1.3",
+              "bundled": true,
+              "removable": true,
+              "state": "installed",
+              "data_preserved": true,
+              "auto_start": false
+            }
+          ]
+        }
+      },
+      {
+        "name": "18-final-new-process-state",
+        "exit": 0,
+        "result": {
+          "status": "PASS",
+          "packages": [
+            {
+              "id": "qbittorrent",
+              "name": "qBittorrent",
+              "version": "5.2.3",
+              "bundled": true,
+              "removable": true,
+              "state": "installed",
+              "data_preserved": true,
+              "auto_start": false
+            },
+            {
+              "id": "transmission",
+              "name": "Transmission",
+              "version": "4.1.3",
+              "bundled": true,
+              "removable": true,
+              "state": "installed",
+              "data_preserved": true,
+              "auto_start": false
+            }
+          ]
+        }
+      }
+    ],
+    "synthetic_data_sha256_before": {
+      "DeploySandbox/n030a-default-downloaders/data/qbittorrent/settings.txt": "d6f543b54091eed5d8b474ca7f8e0c7491b3783eccb4d315f9dd6f0d3c173a75",
+      "DeploySandbox/n030a-default-downloaders/data/qbittorrent/resume.dat": "be1acc73e7a396553e332253045aff801f8c40cec8e6711ce542e3868000a660",
+      "DeploySandbox/n030a-default-downloaders/data/transmission/settings.txt": "d6f543b54091eed5d8b474ca7f8e0c7491b3783eccb4d315f9dd6f0d3c173a75",
+      "DeploySandbox/n030a-default-downloaders/data/transmission/resume.dat": "be1acc73e7a396553e332253045aff801f8c40cec8e6711ce542e3868000a660",
+      "DeploySandbox/n030a-synthetic-downloads/keep.bin": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+    },
+    "synthetic_data_sha256_after": {
+      "DeploySandbox/n030a-default-downloaders/data/qbittorrent/settings.txt": "d6f543b54091eed5d8b474ca7f8e0c7491b3783eccb4d315f9dd6f0d3c173a75",
+      "DeploySandbox/n030a-default-downloaders/data/qbittorrent/resume.dat": "be1acc73e7a396553e332253045aff801f8c40cec8e6711ce542e3868000a660",
+      "DeploySandbox/n030a-default-downloaders/data/transmission/settings.txt": "d6f543b54091eed5d8b474ca7f8e0c7491b3783eccb4d315f9dd6f0d3c173a75",
+      "DeploySandbox/n030a-default-downloaders/data/transmission/resume.dat": "be1acc73e7a396553e332253045aff801f8c40cec8e6711ce542e3868000a660",
+      "DeploySandbox/n030a-synthetic-downloads/keep.bin": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83"
+    },
+    "native_executable_sha256_before": {
+      "qbittorrent": "abcf3eefbe4d421c3e86b42afbd3cdf2f453f1063aadde86208040855fc7df0b",
+      "Transmission": "5530856d01cdcd7907645814fe1be53e6fe974afe6620fb54c7125c780e61f57"
+    },
+    "native_executable_sha256_after": {
+      "qbittorrent": "abcf3eefbe4d421c3e86b42afbd3cdf2f453f1063aadde86208040855fc7df0b",
+      "Transmission": "5530856d01cdcd7907645814fe1be53e6fe974afe6620fb54c7125c780e61f57"
+    },
+    "source_sha256": {
+      "scripts/manage_downloaders.py": "ca0b1d00191aa5acb2911e645cd46d9cb88fbccae4e5c370b0c0a0201026e0e8",
+      "packages/downloaders.json": "2b331dbe3cc455e5bbab9abbfaafbf1c9645c14a4a8ff0675935d15cbaa75e49"
+    },
+    "private_root": "/Volumes/MacNAS-Dev/MacNAS-Workspace/DeploySandbox/n030a-default-downloaders",
+    "both_default_installed": true,
+    "both_independently_removed_and_reinstalled": true,
+    "removal_survives_new_process": true,
+    "default_init_refuses_reinsertion": true,
+    "reinstall_offline": true,
+    "virtual_images_detached": true,
+    "applications_launched": false,
+    "real_torrent_tasks_executed": false,
+    "system_applications_modified": false,
+    "system_settings_modified": false,
+    "macOS_runtime": "26.5.2",
+    "macOS15_runtime": "NOT_EXECUTED",
+    "cross_mac": "NOT_EXECUTED"
+  },
+  "browser_verification": {
+    "status": "PASS",
+    "source_scope": "canonical-N030-byte-bound-to-external-browser",
+    "captured_at": "2026-10-17T14:08:49.962206+09:00",
+    "fresh_canonical_browser_execution": false,
+    "external_fixture_browser_execution": true,
+    "reason": "All actual HTML/CSS/JS/icon bytes loaded during the completed isolated browser checks are identical to canonical N030. This binds existing UI evidence; no new browser execution is claimed.",
+    "functional_cases": 12,
+    "actual_native_installs_through_browser": false,
+    "source_sha256": {
+      "web/dist/index.html": "f8e055ea97526a2b98d44aadd280eeff656812450e1d50bb3557e61530fa14d7",
+      "web/dist/model.js": "1a9c39a0002baa800cd3c462f4a4078f6a2e43517d833867ce4ddb91eb37386c",
+      "web/dist/downloaders.js": "ca335c9517bb8a5345f60436fe84667ba8144f51273d4cdd4a35bfab43d58b05",
+      "web/dist/i18n.js": "ec6dbe7a04c5b69d8670596a65b355067ba419f23d42f6513cdc1e74f6fc5622",
+      "web/dist/task-pages.js": "dbd07f5f37659f6cc76feab3022292c5cb71110e2346a91d5218e28ac12c91ad",
+      "web/dist/notification-view.js": "c9a8799b6d603a2d895ae850ea6b62fc48a89a7f927f411ea15d397a88aefc6b",
+      "web/dist/file-operations.js": "d9b33de0512ba6216a94d49436702fdf8b57739171ec7934b1fffac765c18f0a",
+      "web/dist/sha256.js": "1ab09fc0e06bc594095068f0ebe93c75562bafbf89d63d93ef8831698ee3f235",
+      "web/dist/file-transfers.js": "f48db144afb9113c5cd9088639db8f72c13436ee67af53aacee806757d596e50",
+      "web/dist/file-transfer-view.js": "dbadd893495ba39ec4d8ba3e5d32f1423d82f645dcf480bd30c980c668705d8c",
+      "web/dist/file-copies.js": "9f218398bfb1336f358158b3077f8ae2ecddbc2dc63d47fc10ccb7eb22eed6e6",
+      "web/dist/file-copy-fixture.js": "c4fe1fcd4549a84c1691be7ba47eee81f5fd15990782e6f01cfb54db4b9a9de1",
+      "web/dist/file-copy-view.js": "d1d4b2a37af06064028c04564989b77c87677bb770ab79775d6ac588679ca3fa",
+      "web/dist/directory-view.js": "248002f6b887e9b0249127c2f4c64327b9178ae827a5256e6e0eeabdb32aadce",
+      "web/dist/file-browser.js": "2b9decdd7a17e64a3517d9a604e03fa9cc662f0ca76bef0eea24309c56f71393",
+      "web/dist/desktop.js": "0e70e7fa5ee96e7e93c8d0b0b2d7e191da6f798a75f56d14157c42a25495d069",
+      "web/dist/icon.svg": "5d4e5d90ccd33021afc98eb0386a45aefc975b51b8cedd69336a5ecac623b951",
+      "web/dist/desktop.css": "0111d251240b4b635c91f339fd607916505f2ec736bb9c0abfd7d96a4ca201f3"
+    },
+    "raw_sha256": {
+      "Evidence/n030-downloaders-browser-final-receipt.json": "0dea88f7ff4528548ac46b6602ee97d45d8a2b9cec175ff70fcd432e37205aa2",
+      "Evidence/n030-downloaders-browser-first-receipt.json": "4fa54b5e1aecd5dba1ab33808f30e31a08df3b56831dd6782de020500703ef8e",
+      "Evidence/n030-downloaders-final-chinese.png": "4ac81ae33b33206379c0e34f54bce07644e0578e90fb79df0069ff77268a370b",
+      "Evidence/n030-downloaders-final-chinese-state.txt": "16ef3671880f7256eb3c7a8f9841e44c6e153c1f55b80bd7b1216c88cf4b2c4d",
+      "Evidence/n030-downloaders-chinese-desktop.png": "ba0b4312d11c572d1d0bf26925619ef5e884d0be047ad7ca48cd07898108f8cc",
+      "Evidence/n030-downloaders-japanese-confirm.png": "9ff661e558989d9694d557d2e8694ec95ac1bef1ab410ae5ed8368df832f146b",
+      "Evidence/n030-downloaders-reader-state.txt": "53cb6639619ae0eac0d0b7f03cf4f859575d6c51b5b5c6c0ce42a1e284729be1",
+      "Evidence/n030-downloaders-recovery-state.txt": "b9d4bd8fa3071371674f062059d956ecdc185faea3e116131dc1fcc86679290b"
+    },
+    "screenshot": "Evidence/n030-downloaders-final-chinese.png",
+    "viewport_pixels": [
+      705,
+      864
+    ],
+    "limits": [
+      "No precise320/390/1440 or completeconsole claim",
+      "Native install CLI and explicit web fixture separately verified",
+      "Later optional extraUI check unavailable while Mac screen locked; no unlock or permission changes attempted"
+    ],
+    "reuse_reason": "Every prior actual rendered HTML/CSS/JS/icon byte remains equal to N030; this follow-up only changes native package tools/tests/docs."
+  },
+  "preserved_actual_failures": [
+    "External-volume DMG mount returned permission denied; own pinned public archive private working copy mounted readonly successfully, no permissions changed.",
+    "lipo verify_arch argument order rejected before any installed root was published; real inspection confirms both universal arm64 slices and original signatures, corrected input-first invocation.",
+    "Manual app deletion exposed wrong installed state, skipped reinstall and rejected empty-slot uninstall.",
+    "Initial metadata test used unavailable Python os.setxattr; native xattr proof then showed copyfile/copy2 dropping custom metadata, fixed by native ditto."
+  ],
+  "limits": [
+    "Private currentMac26.5.2 only;macOS15/crossMac not executed",
+    "No application/torrent startup,real user files,system apps or service/network settings modified",
+    "Webpage is explicit in-memory fixture;no production authentication/install RPC,daemon supervisor or BT tasks",
+    "Original111/97-13-1 and29sourcefiles/5uploads unchanged;SYS09verylate remains separate",
+    "No new Swift unfiltered execution;exact N029 C3C2 471/16 reused",
+    "Trusted local packaging tool is not OS sandbox or hostile same-user/physical-power-loss transaction proof"
+  ],
+  "baseline_commit": "43a074e1984bcec0d0423d960d0c56e7ec4a2d69"
+}
