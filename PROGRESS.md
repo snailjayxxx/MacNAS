@@ -1,5 +1,19 @@
 # MacNAS
 
+## 已完成：N-029 C3C3A，管理范围观察模型（2026-10-17）
+
+C3C3A新增管理范围操作观察的严格只读呈现模型：固定scope/source/原始UTF8主体/模式及operation，可预先固定entry/allocation；可见必须是完整owned记录，entry released后owned继续收费。两种意图和revision独立，未知费用为null，身份与声明不可替换、终态不复活。显式单次读取、并发拒绝、有限错误码、关闭清空和迟到隔离。
+
+新无监听前端20261017T130247-2651d480通过368项Node（新增22）、19语法、15静态策略和9需求负测；联合152份当前源码及需求前后冻结一致。
+
+完整核心94份及全部实际内嵌/独立管道依赖逐字节复核与已发布C3C2 126e3c9一致，复用其471Swift/16独立管道/全部CLI精确收据；本切片没有重跑原生套件。只有dev_web语法/模型测试入口改变，由新前端覆盖。
+
+首轮20项、复核22项模型检查均通过，没有本切片实际失败。仓库外独立纯Swift投影实际执行15项拒绝断言并输出6份虚构JSON，再由旧C1/C3C1和新模型验证；这只是数据关系，不是PG/真实文件效果或新完整回归，Native投影未并入主树。C3C2及更早失败继续按原始收据保留。
+
+本切片为MOCK；当前宿主没有该管理观察外壳的批准/来源生成器/RPC/客户端适配器，网页不加载或提供模块。matchingReported只代表报告，filesystemVerified/executionAuthorized/capacityReleaseAuthorized均为false。整体费用取C3C2完整列表，不能相加多次操作观察。没有新的文件效果、DOM/浏览器、生产认证/fencing、macOS15运行或跨Mac证明。用户要求自动连续推进、中文阶段提交/正常推送dev/bootstrap，浏览器已获准按需使用；旧迁移及正式资料边界保持。
+
+只追加FIL-01下一个有限MOCK_PASS，基线907→908子项，SYS09很后期另7条，合并915；原111父/97-13-1及合并112父/97-14-1、29规划/5来源不变。见[C3C3A证据](docs/evidence/n029-c3c3a-2026-10-17.json)、[模型契约](docs/contracts/MANAGED_RECYCLE_OBSERVATION_MODEL.md)、[验收矩阵](docs/plans/N-029-C3C3A-ACCEPTANCE.md)及[ADR-031](docs/decisions/ADR-031-managed-recycle-observation-model.md)。
+
 ## 已完成：N-029 C3C2，宿主容量账目只读列表（2026-10-17）
 
 C3C2接通Schema6管理范围的独立宿主ledgerRead批准、固定来源context和完整账目列表。每次批准更新HMAC sourceID，固定API/会话/原始UTF8管理员/角色/模式、实例/代次/DB/宿主/Schema及两份登记；真实锁和私有绑定前后检查，只读seal拒绝写转换。一个有界READ ONLY事务读取完整最多64条记录并计算六项聚合，第65条整体拒绝。具名客户端先context再显式refresh，固定借用连接，来源变化拒绝，关闭清空并隔离迟到。

@@ -1,0 +1,31 @@
+# 管理范围回收观察只读模型
+
+N-029 C3C3A只实现严格呈现模型。拟定的Native投影另在仓库外以虚构记录编译和验证；当前主树宿主没有该外壳的批准、来源生成器、消息或客户端适配器。模型及样例均为MOCK，网页不加载或提供该模块。实际管理范围物理观察由C3C3B接线和新全量另行证明。
+
+## 固定范围和外壳
+
+observationSnapshot(value,expected)、summarize(value,expected)要求expected精确包含scopeID、sourceID、ownerUserID、mode、operationID，可选entryID及allocationID。UUID均为标准小写；sourceID为64位小写hex；原始UTF8主体不正规化，非空、最多128字节且无NUL/CR/LF/不成对代理项。mode为synthetic_development、read_only_recovery或rolled_back_recovery之一，必须显式固定。来源不能从首个响应推断。
+
+响应仅含managedObservationVersion:1、context、allocation和observation。字段必须为自有可枚举数据属性；额外、缺失、继承、symbol或getter均拒绝，不调用输入getter。
+
+context精确为{contextVersion:1,source:"fixture-host",scopeID,sourceID,userID,role:"administrator",mode}，范围、标记、原始主体及模式分别与expected相等。未来宿主须为管理范围物理观察另发独立批准和不同域的来源标记；C3C2账目批准或旧C2观察批准不能代替。标记只是等值校验，不构成认证或执行许可。
+
+observation保持[原C1精确五字段正文](RECYCLE_OBSERVATION_MODEL.md)，包含原十字段record或明确null；固定operationID、主体和可选entryID。可见时allocation必须为下述owned记录；notVisible时allocation与record均为明确null，费用未知。不能用零费用替代未知。
+
+## 容量与操作记录
+
+allocation精确含allocationID、origin、intentSHA256、declaredBytes、state、revision和sha256。origin仅upload/copy，declaredBytes为0..16777216安全整数，state固定owned、revision固定3，两个SHA为64位小写hex。可选expected.allocationID固定首次结果；没有已知ID时首个可见记录固定它。
+
+非released entry的chargedBytes必须等于该allocation.declaredBytes；released entry收费为0，但allocation继续owned，保留原声明字节和摘要。容量意图与回收/恢复操作意图是不同值，不要求两个intentSHA256相等；operation revision与entry revision也独立推进。父范围完整费用只能由C3C2完整列表计算，不能把同一allocation的多次操作观察相加成整树总额。
+
+Native后续还须在真实锁下验证操作原UUID路径、原始库/owner/vault/volume、pre/post字节与SHA以及同一owned allocation关系。JavaScript公开字段不足以证明这些隐藏关系。仓库外投影样例只检查数据关系，不读取PG或载荷，也不能证明文件匹配。 操作intentSHA256沿用已发布PostgreSQL对jsonb::text的规范化摘要，不能用Swift紧凑JSON或JSON.stringify重算并比较。原独立投影的虚构摘要仅用于MOCK；实际宿主应在同一次只读查询中核验数据库摘要，并让Native投影接收经核验的读取证据。
+
+summary区分entryChargedBytes和ownedChargedBytes，未知为null；matchingReported只代表输入报告matchedPost。filesystemVerified、executionAuthorized及capacityReleaseAuthorized均为false，不提供freeBytes。不因candidateMoved、matchedPost或released声称可执行、结算、取消或释放整树费用。
+
+## 生命周期
+
+createReadOnlyModel({...expected,read,onChange?})只公开snapshot、refresh、dispose。创建/关闭不读取；refresh只调用一次read(operationID)，同时第二次拒绝busy，不重试、不创建连接或宿主批准。
+
+同一模型固定可见allocation的全部七字段和操作/entry/kind/owner/意图，revision与entryRevision分别不倒退，相同revision不能改变相应状态；终态不能复活，released不能重新收费。notVisible仍标未知，后续重新可见须继承原固定身份。分类可以随着现场变化而改变，不推导数据库写转换。
+
+失败仅显示有限错误码，保留旧外壳并标stale；任意错误消息或code getter不会进入视图。dispose清空当前外壳/错误/过期标记并忽略迟到成功或失败；reading回调立即关闭时不发送尚未发出的读取。回调异常不滞留busy。dispose只结束本地视图，不取消已执行效果、关闭借用连接或释放费用。

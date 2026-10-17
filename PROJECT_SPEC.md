@@ -1,6 +1,6 @@
 # MacNAS 工程约束
 
-2026-10-17接续：C3C2接通实际宿主账目读取。C3C2接通Schema6管理范围的独立宿主ledgerRead批准、固定来源context和完整账目列表。每次批准更新HMAC sourceID，固定API/会话/原始UTF8管理员/角色/模式、实例/代次/DB/宿主/Schema及两份登记；真实锁和私有绑定前后检查，只读seal拒绝写转换。一个有界READ ONLY事务读取完整最多64条记录并计算六项聚合，第65条整体拒绝。具名客户端先context再显式refresh，固定借用连接，来源变化拒绝，关闭清空并隔离迟到。 只限TestLab新建同设备私有合成范围；ledgerOnly不扫描载荷、不证明文件匹配、磁盘可用空间或执行资格，不认领armed、不释放owned费用。旧网页Schema3内存树和fixtures/volumes仍独立，没有管理范围物理观察/执行RPC、DOM或浏览器验收。0001–0006及Migration5/6原字节保持，没有新结构/依赖、生产NAS/认证/fencing、macOS15运行、跨Mac或断电证明。用户已允许按需使用浏览器，本切片未执行浏览器；按长期授权自动推进、中文提交并正常推送dev/bootstrap；main不合并、不强推。 [C3C2证据](docs/evidence/n029-c3c2-2026-10-17.json)记录有限验收，父需求和原始来源字节不变。
+2026-10-17接续：C3C2实际账目列表已发布，C3C3A补齐观察模型。C3C3A新增管理范围操作观察的严格只读呈现模型：固定scope/source/原始UTF8主体/模式及operation，可预先固定entry/allocation；可见必须是完整owned记录，entry released后owned继续收费。两种意图和revision独立，未知费用为null，身份与声明不可替换、终态不复活。显式单次读取、并发拒绝、有限错误码、关闭清空和迟到隔离。 本切片为MOCK；当前宿主没有该管理观察外壳的批准/来源生成器/RPC/客户端适配器，网页不加载或提供模块。matchingReported只代表报告，filesystemVerified/executionAuthorized/capacityReleaseAuthorized均为false。整体费用取C3C2完整列表，不能相加多次操作观察。没有新的文件效果、DOM/浏览器、生产认证/fencing、macOS15运行或跨Mac证明。用户要求自动连续推进、中文阶段提交/正常推送dev/bootstrap，浏览器已获准按需使用；旧迁移及正式资料边界保持。 [C3C3A证据](docs/evidence/n029-c3c3a-2026-10-17.json)记录有限结果，父需求和原始来源字节不变。
 
 目标与优先级以 `docs/planning/v0.6/` 的只读原件及当前用户补充指令为依据。111 父需求：97 首版、13 后续、1 暂不需要；全部保留在 `requirements/index.json`。
 

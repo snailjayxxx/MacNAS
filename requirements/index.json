@@ -2212,6 +2212,17 @@
             "docs/decisions/ADR-030-host-approved-capacity-ledger-read.md",
             "docs/contracts/CAPACITY_LEDGER_VIEW.md"
           ]
+        },
+        {
+          "id": "FIL-01.managed_recycle_observation_model",
+          "status": "MOCK_PASS",
+          "scope": "Proposed strict managed operation/owned-allocation envelope, fixed raw owner/mode/source and identities, conserved owned charge after entry release, finite read lifecycle/disposal. Mock only: no independent host approval/source generator/message/adapter, physical matching or execution/capacity-release authority, DOM or browser.",
+          "evidence": [
+            "docs/evidence/n029-c3c3a-2026-10-17.json",
+            "docs/contracts/MANAGED_RECYCLE_OBSERVATION_MODEL.md",
+            "docs/decisions/ADR-031-managed-recycle-observation-model.md",
+            "docs/plans/N-029-C3C3A-ACCEPTANCE.md"
+          ]
         }
       ]
     },
